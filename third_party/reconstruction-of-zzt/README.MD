@@ -117,7 +117,7 @@ Update: As of May 2025, this version of LZEXE appears to have [MIT-licensed sour
 
 ### Instructions
 
-1. Ensure that TPC.EXE from Turbo Pascal is available on your PATH (f.e. `SET PATH=C:\TP;%PATH%`).
+1. Ensure that TPC.EXE from Turbo Pascal is available on your PATH (for example, add the Turbo Pascal BIN directory to PATH).
 2. From the source code directory, run `BUILD.BAT`.
 3. The DIST directory will contain files comprising the release as outlined in the FAQ.
 

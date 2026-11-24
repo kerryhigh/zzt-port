@@ -51,7 +51,7 @@ Run the platform-independent production and serializer checks from PowerShell:
 The direct Pascal suite needs a private local Turbo Pascal 5.5 installation containing `TPC.EXE` and `TURBO.TPL`, plus DOSBox-X. The current verification host used a DOSBox-X executable; its exact release string is not present in the run record. Those toolchain binaries are intentionally excluded from this repository. Configure a local copy of the toolchain under `build/pascal-compat-run/Z` or pass `-PascalToolchain`; then run:
 
 ```powershell
-./tools/pascal-compat/verify.ps1 -DosboxExecutable "C:\path\to\dosbox-x.exe"
+./tools/pascal-compat/verify.ps1 -DosboxExecutable "<path-to-dosbox-x.exe>"
 ```
 
 The reconstructed source documents Turbo Pascal 5.5 acquisition and build requirements in [`third_party/reconstruction-of-zzt/README.MD`](third_party/reconstruction-of-zzt/README.MD). Node.js is required for JavaScript differential comparators. Verification staging, generated objects, APKs, local compiler binaries, and caches are ignored by Git. Turbo Pascal 5.5 must be obtained separately and configured locally; do not add its executables to commits.
