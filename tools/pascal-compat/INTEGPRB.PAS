@@ -12,15 +12,6 @@ var
 	ix, iy, statId: integer;
 	script: string[32];
 
-procedure WriteStat(statId: integer);
-	begin
-		with Board.Stats[statId] do begin
-			Write(output, X, ' ', Y, ' ', StepX, ' ', StepY, ' ', Cycle,
-				' ', P1, ' ', P2, ' ', P3, ' ', Follower, ' ', Leader,
-				' ', Under.Element, ' ', Under.Color, ' ', DataPos, ' ', DataLen, ' ');
-		end;
-	end;
-
 begin
 	VideoWriteText := QuietWrite;
 	New(IoTmpBuf);
@@ -77,29 +68,23 @@ begin
 	InputKeyPressed := #0;
 	InputShiftPressed := false;
 	InputShiftAccepted := false;
+	CurrentTick := 0;
+	CurrentStatTicked := 0;
+	TickTimeDuration := 0;
+	TickTimeCounter := 0;
+	GamePlayExitRequested := false;
+	Assign(output, 'INTEGPR.OUT');
+	Rewrite(output);
+	Close(output);
+	GameLoopProbeEnabled := true;
+	GameLoopProbeCapture('L', 0);
 	InputProbeSetKeyBuffer('66');
 	GameLoopProbeStopAfter := 6;
 	GameLoopProbeCycles := 0;
 	SoundProbeSetSchedule(0, 0, 0);
 	GamePlayLoop(false);
-
-	Assign(output, 'INTEGPR.OUT');
-	Rewrite(output);
-	Write(output, World.Info.Ammo, ' ', World.Info.Gems, ' ', World.Info.Health,
-		' ', World.Info.CurrentBoard, ' ', World.Info.Torches, ' ', World.Info.TorchTicks,
-		' ', World.Info.EnergizerTicks, ' ', World.Info.Score,
-		' ', World.Info.BoardTimeSec, ' ', World.Info.BoardTimeHsec,
-		' ', Ord(World.Info.IsSave), ' ', Board.StatCount, ' ');
-	for statId := 0 to 1 do WriteStat(statId);
-	Write(output, CurrentTick, ' ', CurrentStatTicked, ' ', TickSpeed,
-		' ', TickTimeDuration, ' ', TickTimeCounter, ' ', Ord(GamePaused),
-		' ', Ord(GamePlayExitRequested), ' ', InputDeltaX, ' ', InputDeltaY,
-		' ', Ord(InputKeyPressed), ' ', Length(InputProbeGetKeyBuffer), ' ');
-	for ix := 0 to BOARD_WIDTH + 1 do
-		for iy := 0 to BOARD_HEIGHT + 1 do
-			Write(output, Board.Tiles[ix][iy].Element, ' ', Board.Tiles[ix][iy].Color, ' ');
-	WriteLn(output);
-	Close(output);
+	GameLoopProbeEnabled := false;
+	GameLoopProbeCapture('F', 0);
 	WorldUnload;
 	Dispose(IoTmpBuf);
 end.

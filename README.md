@@ -10,7 +10,7 @@ Engine 2.0 covers shared world and board state, gameplay timing, element and obj
 
 ## Current status
 
-The shared engine is used by both frontends. The Windows x64 build, Android builds, serializer probes, runtime probes, and focused compiled-Pascal comparisons have passing evidence recorded in the checklists. The current Pascal suite record has 83 direct Turbo Pascal 5.5 probe sessions and a 3,399-field integrated prototype snapshot. Engine 2.0 remains **in progress**: the ten-fixture per-cycle replay corpus and multiple shared-engine/API blockers remain open. This repository does not claim complete ZZT compatibility.
+The shared engine is used by both frontends. The Windows x64 build, Android builds, serializer probes, runtime probes, and focused compiled-Pascal comparisons have passing evidence recorded in the checklists. The latest clean Pascal run passed 83 Turbo Pascal 5.5 probe sessions and 42 configured Pascal/production differential invocations. The integrated prototype now matches 30,591 fields across loaded state, loop start, six cycle checkpoints, and final state; it is not one of the ten required fixtures. Engine 2.0 remains **in progress** while the ten-fixture corpus and multiple shared-engine/API blockers remain open. This repository does not claim complete ZZT compatibility.
 
 The Android app keeps its portrait 60×25 playfield. The Windows frontend presents the DOS 80×25 character grid and supports windowed/fullscreen use. Platform implementation checklists are [`PORT_CHECKLIST.md`](PORT_CHECKLIST.md) and [`WINDOWS_PORT_CHECKLIST.md`](WINDOWS_PORT_CHECKLIST.md); their UI and device requirements do not gate Engine 2.0.
 
@@ -77,4 +77,4 @@ Upstream sources:
 
 ## Known gaps
 
-The editor mutation and high-score semantics are not yet fully centralized in the shared engine. The detailed routine-to-engine/test inventory is being frozen. The current integrated prototype checks a final snapshot only; the mandatory ten-fixture per-cycle replay and first-divergence reporting remain outstanding. Physical Android device testing is also pending, but is outside Engine 2.0's platform-independent acceptance scope.
+The editor mutation and high-score semantics are not yet fully centralized in the shared engine. The frozen routine-to-engine/test inventory still contains unclassified source entries. The integrated prototype checks a limited set of selected fields at nine checkpoints, but does not yet compare all script/alias, RNG, cell-write, sound-event, transition, and serialized-byte state required by E2-10; all ten required fixtures remain outstanding. Physical Android device testing is also pending, but is outside Engine 2.0's platform-independent acceptance scope.

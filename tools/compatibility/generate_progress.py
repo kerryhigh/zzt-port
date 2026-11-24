@@ -43,6 +43,7 @@ def main() -> None:
     compare_calls = re.findall(r"&\s*node\s+'(?:tools/[^']*/)?(compare-[^']+\.js)'", script_text)
     runner = run.get("verification", {})
     probes = runner.get("direct_pascal", {})
+    differential = runner.get("direct_differential_comparisons", {})
     integrated = runner.get("integrated_replay", {})
     evidence = runner.get("evidence_case_counts", {})
     misc = runner.get("other_suites", {})
@@ -82,10 +83,10 @@ def main() -> None:
         "## Evidence inventory",
         "",
         f"- Direct compiled-Pascal probe sessions: **{probes.get('sessions', 'not recorded')}** ({probes.get('standard_programs', 'not recorded')} standard programs; {probes.get('standalone_sessions', 'not recorded')} standalone sessions).",
-        f"- Direct Pascal-to-production differential comparisons in the current runner: **{len(compare_calls)}** configured comparator invocations; run result: **{runner.get('pascal_suite_result', 'not recorded')}**.",
+        f"- Direct Pascal-to-production differential comparisons: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; run result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
-        f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype final-snapshot fields: {integrated.get('prototype_fields_compared', 'not recorded')}; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
+        f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
         f"- Other suite results: serializer={misc.get('serializer', 'not recorded')}; runtime={misc.get('runtime', 'not recorded')}; Android CP437/key bridge={misc.get('android_compat', 'not recorded')}; Windows CTest={misc.get('windows_ctest', 'not recorded')}.",
         "",
         "## Frozen source inventory",
@@ -114,10 +115,13 @@ def main() -> None:
         "",
         f"- Required fixtures: {integrated.get('required_fixtures', 10)}.",
         f"- Completed fixtures: {integrated.get('completed_fixtures', 0)}.",
-        f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_fields_compared', 'not recorded')} final-snapshot fields; this is not counted as a complete E2-10 fixture.",
+        f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_field_comparisons', 'not recorded')} total field comparisons across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints ({integrated.get('prototype_fields_compared', 'not recorded')} fields each); this is not counted as a complete E2-10 fixture.",
         f"- Per-cycle and state-transition checkpoint comparisons: {'implemented' if integrated.get('per_cycle_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
-        "- Current per-cycle results: none recorded.",
+        *([
+            f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints × {item.get('fields_per_checkpoint', 'not recorded')} fields = {item.get('field_comparisons', 'not recorded')} comparisons; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
+            for item in integrated.get("per_cycle_results", [])
+        ] if integrated.get("per_cycle_results") else ["- Current per-cycle results: none recorded."]),
         "",
         "## Mismatches, limitations, and remaining work",
         "",

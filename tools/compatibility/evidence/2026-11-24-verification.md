@@ -7,9 +7,9 @@ This note records the latest clean cross-suite run and its limits. It does not c
 - Command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <local Turbo Pascal 5.5> -DosboxExecutable <local DOSBox-X>`.
 - The runner recreated `build/pascal-compat-verification` from the reconstructed Pascal source and controlled fixture inputs.
 - Exit code: **0**. The suite reported **83 direct Turbo Pascal 5.5 probe sessions**: 54 standard probe programs plus 29 standalone sessions.
-- All configured Pascal-to-production comparison runners in `tools/pascal-compat/verify.ps1` completed successfully. `COMPATIBILITY_PROGRESS.md` counts these configured invocations from the runner source.
-- The existing integrated prototype compared **3,399 final snapshot fields**, including both stats, scheduler/counter state, queued input, and all 1,674 board/sentinel cells.
-- The prototype used six deterministic zero-speed cycles, but emitted only a final snapshot. It is not one of the ten complete E2-10 fixtures; there are no per-cycle comparison results yet.
+- All **42** configured Pascal-to-production comparison invocations in `tools/pascal-compat/verify.ps1` completed successfully.
+- The integrated prototype compared **30,591 fields**: 3,399 selected world/stat/scheduler/input/tile fields at each of nine checkpoints (loaded initial state, game-loop start, six completed cycles, and final state). All matched. The comparator reports the earliest differing checkpoint and field with neighboring field values.
+- The prototype uses six deterministic zero-speed cycles, but it is not one of the ten complete E2-10 fixtures. Script bytes and alias graphs, RNG state, emitted cell-write/sound-event streams, board/state transitions, and generated file bytes remain outside this prototype snapshot schema.
 - Source-derived evidence remains distinct: `.HI` insertion has 256 model-generated outputs that supplement, but do not replace, the seven direct Pascal insertion scenarios.
 
 ## Other suites

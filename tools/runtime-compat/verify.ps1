@@ -339,6 +339,8 @@ $integratedGameplayArgs = @(
     '-I', $buildDir,
     '-Wl,--no-entry', '-Wl,--export=run_integrated_gameplay_checks',
     '-Wl,--export=integrated_gameplay_output_ptr', '-Wl,--export=integrated_gameplay_trace_ptr',
+    '-Wl,--export=integrated_gameplay_snapshots_ptr', '-Wl,--export=integrated_gameplay_checkpoint_headers_ptr',
+    '-Wl,--export=integrated_gameplay_snapshot_count',
     '-Wl,--export-memory', '-Wl,--gc-sections', '-Wl,--allow-undefined',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
     $oopMovementSource, '-o', $integratedGameplayWasm
