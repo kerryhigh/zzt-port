@@ -2,7 +2,7 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-24",
-    "root_revision": "59e11f5 plus E2-10 checkpoint implementation (source revision recorded after commit)",
+    "root_revision": "c2f0606; E2-10 replay checkpoint source and report committed; clean Pascal run recorded before commit",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "passed",

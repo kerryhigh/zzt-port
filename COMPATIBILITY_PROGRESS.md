@@ -92,7 +92,7 @@ Total unclassified source inventory entries: **1490**. Source locations, routine
 ## Latest verification record
 
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X; executable file version string unavailable, binary identified by SHA-256 in evidence note.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 59e11f5 plus E2-10 checkpoint implementation (source revision recorded after commit).
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: c2f0606; E2-10 replay checkpoint source and report committed; clean Pascal run recorded before commit.
 - Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <local Turbo Pascal 5.5> -DosboxExecutable <local DOSBox-X>`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
