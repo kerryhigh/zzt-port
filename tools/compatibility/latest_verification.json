@@ -1,0 +1,68 @@
+{
+  "closed_blockers": [],
+  "verification": {
+    "date": "2026-11-24",
+    "root_revision": "4698e8f (source tree verified; reporting commit follows)",
+    "libzoo_local_commit": "e5d2fe7",
+    "failing_acceptance_cases": 0,
+    "pascal_suite_result": "passed",
+    "pascal_exit_code": 0,
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <local Turbo Pascal 5.5> -DosboxExecutable <local DOSBox-X>",
+    "toolchain": {
+      "pascal": "Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository)",
+      "dosbox_x": "DOSBox-X; executable file version string unavailable, binary identified by SHA-256 in evidence note",
+      "node": "v22.19.0"
+    },
+    "direct_pascal": {
+      "sessions": 83,
+      "standard_programs": 54,
+      "standalone_sessions": 29,
+      "session_result": "all passed"
+    },
+    "evidence_case_counts": {
+      "source_derived_expectations": 256,
+      "production_only_regressions": "not enumerated; production runtime harness passed"
+    },
+    "integrated_replay": {
+      "required_fixtures": 10,
+      "completed_fixtures": 0,
+      "prototype_name": "INTEGPRB: six deterministic zero-speed cycles, final-state snapshot only",
+      "prototype_fields_compared": 3399,
+      "per_cycle_checkpoints": false,
+      "first_divergence_reporting": false,
+      "per_cycle_results": []
+    },
+    "other_suites": {
+      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0",
+      "highscore": "passed; tools/highscore-compat/verify.ps1 exit 0; 256 model rows remain source-derived",
+      "runtime": "passed; tools/runtime-compat/verify.ps1 exit 0",
+      "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
+      "android_build": "passed after shared .BRD refactor; arm64-v8a and x86_64",
+      "windows_ctest": "passed after shared .BRD refactor; engine/I-O, sharp-bilinear renderer, and PCM timing"
+    },
+    "known_unexplained_mismatches": [],
+    "known_discrepancies": [
+      "Truncated .BRD reads differ at the API boundary: Pascal records I/O error 100 and retains partial length/payload bytes; the shared production codec reports a library error and Android wrapper policy also resets/closes state. Exact engine result and reset semantics remain unresolved.",
+      "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
+      "Editor board mutations and .HI load/rank/insert/save semantics are not yet all implemented through platform-neutral production APIs.",
+      "The integrated gameplay differential compares a single final snapshot after six cycles; it has no initial, per-cycle, or transition checkpoints and does not count toward the ten required fixtures."
+    ],
+    "remaining_mandatory_work": [
+      "E2-01: complete source-to-shared-engine routine mapping; centralize editor mutations and .HI semantic operations.",
+      "E2-02: complete the exhaustive byte/error boundary matrix and resolve truncated .BRD behavior.",
+      "E2-03 through E2-09: close lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/sound, editor/high-score acceptance inventories.",
+      "E2-10: add initial/per-cycle/transition/final snapshots, first-divergence reporting, and all ten frozen replay fixtures.",
+      "E2-11: perform the final clean staging run after E2-01 through E2-10 close; repeat heap-sensitive cases and publish the completion record."
+    ],
+    "non_blocking_limitations": [
+      "Physical Android device testing, UI rendering, platform audio, and frontend adapters are outside Engine 2.0 scope.",
+      "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
+    ],
+    "recent_progress": [
+      "Moved .BRD codec into shared LibZoo API; Android JNI and the serializer harness call the same production source.",
+      "Fresh clean Pascal suite passed 83 direct sessions and the existing 3,399-field final-snapshot differential.",
+      "Serializer, high-score, runtime, Android CP437/key, and Windows native CTest suites passed after the shared .BRD change.",
+      "Frozen the initial E2-01 through E2-11 checklist and Pascal source inventory with SHA-256 hashes."
+    ]
+  }
+}

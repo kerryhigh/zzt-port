@@ -1,0 +1,16 @@
+.gradle/
+build/
+**/build/
+local.properties
+*.iml
+.idea/
+artifacts/
+**/.cxx/
+*.apk
+*.aab
+**/__pycache__/
+*.pyc
+*.log
+*.tmp
+third_party/reconstruction-of-zzt/TOOLS/LZEXE.EXE
+third_party/reconstruction-of-zzt/TOOLS/LZEXE.DOC

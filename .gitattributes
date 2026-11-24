@@ -1,0 +1,21 @@
+* text=auto eol=lf
+*.md whitespace=-blank-at-eol,-blank-at-eof
+*.PAS -text
+*.PAS whitespace=-blank-at-eol,-blank-at-eof
+*.ZZT -text
+*.BRD -text
+*.SAV -text
+*.HI -text
+*.HLP -text whitespace=-blank-at-eol,-blank-at-eof
+*.BIN -text
+*.EXE binary
+*.TPL binary
+*.JAR binary
+*.APK binary
+*.AAB binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.wav binary
+*.mp3 binary

@@ -1,0 +1,404 @@
+/**
+ * Copyright (c) 2020 Adrian Siekierka
+ *
+ * Based on a reconstruction of code from ZZT,
+ * Copyright 1991 Epic MegaGames, used with permission.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include "zoo_internal.h"
+
+#define WINDOW_STATE_START 0
+#define WINDOW_STATE_ANIM_OPEN 1
+#define WINDOW_STATE_TICK 2
+#define WINDOW_STATE_ANIM_CLOSE 3
+
+static int16_t window_x = 5;
+static int16_t window_y = 3;
+static int16_t window_width = 49;
+static int16_t window_height = 19;
+
+#define WINDOW_ANIM_MAX (window_height >> 1)
+
+void zoo_window_set_position(int16_t x, int16_t y, int16_t width, int16_t height) {
+	window_x = x;
+	window_y = y;
+	window_width = width;
+	window_height = height;
+}
+
+static void zoo_window_draw_title(zoo_text_window *window, zoo_state *state, uint8_t color, const char *title) {
+	int16_t i;
+	int16_t il = strlen(title);
+	int16_t is = window_x + ((window_width + 1 - il) >> 1);
+
+	for (i = window_x + 2; i < (window_x + window_width - 2); i++) {
+		if (i >= is && i < (is+il)) {
+			state->d_video->func_write(state->d_video, i, window_y + 1, color, title[i - is]);
+		} else {
+			state->d_video->func_write(state->d_video, i, window_y + 1, color, ' ');
+		}
+	}
+}
+
+static const char draw_patterns[4][5] = {
+	{'\xC6', '\xD1', '\xCD', '\xD1', '\xB5'}, // top
+	{'\xC6', '\xCF', '\xCD', '\xCF', '\xB5'}, // bottom
+	{' ', '\xB3', ' ', '\xB3', ' '}, // inner
+	{' ', '\xC6', '\xCD', '\xB5', ' '} // separator
+};
+
+void zoo_window_draw_pattern(zoo_state *state, int16_t x, int16_t y, int16_t width, uint8_t color, zoo_window_pattern_type ptype) {
+	int16_t ix;
+	zoo_video_driver *d_video = state->d_video;
+	const char *pattern = draw_patterns[ptype];
+
+	d_video->func_write(d_video, x, y, color, pattern[0]);
+	d_video->func_write(d_video, x + 1, y, color, pattern[1]);
+	for (ix = 2; ix < width - 2; ix++) {
+		d_video->func_write(d_video, x + ix, y, color, pattern[2]);
+	}
+	d_video->func_write(d_video, x + width - 2, y, color, pattern[3]);
+	d_video->func_write(d_video, x + width - 1, y, color, pattern[4]);
+}
+
+static ZOO_INLINE void zoo_window_draw_border(zoo_text_window *window, zoo_state *state, int16_t y, zoo_window_pattern_type ptype) {
+	zoo_window_draw_pattern(state, window_x, y, window_width, 0x0F, ptype);
+}
+
+static void zoo_window_draw_string(zoo_state *state, int16_t x, int16_t y, uint8_t color, const char *text) {
+	int16_t i;
+	for (i = 0; text[i] != '\0'; i++) {
+		state->d_video->func_write(state->d_video, x + i, y, color, (uint8_t) text[i]);
+	}
+}
+
+static void zoo_window_draw_open(zoo_text_window *window, zoo_state *state) {
+	int16_t ix;
+	int16_t y0 = window_y + window->counter;
+	int16_t y1 = window_y + window->counter + 1;
+	int16_t y2 = window_y + window_height - window->counter - 2;
+	int16_t y3 = window_y + window_height - window->counter - 1;
+
+	zoo_window_draw_border(window, state, y0, ZOO_WINDOW_PATTERN_TOP);
+	zoo_window_draw_border(window, state, y1, ZOO_WINDOW_PATTERN_INNER);
+	zoo_window_draw_border(window, state, y2, ZOO_WINDOW_PATTERN_INNER);
+	zoo_window_draw_border(window, state, y3, ZOO_WINDOW_PATTERN_BOTTOM);
+}
+
+static void zoo_window_draw_open_finish(zoo_text_window *window, zoo_state *state) {
+	zoo_window_draw_border(window, state, window_y + 2, ZOO_WINDOW_PATTERN_SEPARATOR);
+	zoo_window_draw_title(window, state, 0x1E, window->title);
+}
+
+static void zoo_window_draw_open_all(zoo_text_window *window, zoo_state *state) {
+	int16_t iy;
+
+	zoo_window_draw_border(window, state, window_y, ZOO_WINDOW_PATTERN_TOP);
+	for (iy = 1; iy < window_height - 1; iy++) {
+		zoo_window_draw_border(window, state, window_y + iy, iy == 2 ? ZOO_WINDOW_PATTERN_SEPARATOR : ZOO_WINDOW_PATTERN_INNER);	
+	}
+	zoo_window_draw_border(window, state, window_y + window_height - 1, ZOO_WINDOW_PATTERN_BOTTOM);
+}
+
+static void zoo_window_draw_line(zoo_text_window *window, zoo_state *state, int16_t line_pos, bool no_formatting) {
+	int line_y;
+	int text_x, text_width;
+	int text_offset, text_color;
+	int i;
+	bool same_line;
+	bool is_boundary, draw_arrow = false, draw_view_hint = false;
+	char *str = NULL;
+	char *tmp = NULL;
+
+	line_y = (window_y + line_pos - window->line_pos) + (window_height >> 1) + 1;
+	same_line = line_pos == window->line_pos;
+	state->d_video->func_write(state->d_video, window_x + 2, line_y, same_line ? 0x1C : 0x1E, same_line ? '\xAF' : ' ');
+	state->d_video->func_write(state->d_video, window_x + window_width - 3, line_y, same_line ? 0x1C : 0x1E, same_line ? '\xAE' : ' ');
+
+	text_offset = 0;
+	text_color = 0x1E;
+	text_x = 0;
+	text_width = (window_width - 7);
+
+	str = zoo_window_line_at(window, line_pos);
+	if (str != NULL) {
+		switch (str[0]) {
+			case '!':
+				tmp = strchr(str, ';');
+				if (tmp != NULL) str = tmp + 1;
+				draw_arrow = true;
+				text_x += 5;
+				text_color = 0x1F;
+				break;
+			case ':':
+				tmp = strchr(str, ';');
+				if (tmp != NULL) str = tmp + 1;
+				text_color = 0x1F;
+				break;
+			case '$':
+				str++;
+				text_color = 0x1F;
+				// (window_width - 8 - strlen(str)) / 2
+				text_x = (text_width - 1 - strlen(str)) >> 1;
+				break;
+		}
+	} else if (window->viewing_file && line_pos == -4) {
+		zoo_window_draw_string(state, window_x + 2, line_y, 0x1A, "   Use            to view text,");
+		zoo_window_draw_string(state, window_x + 2 + 7, line_y, 0x1F, "\x18 \x19, Enter");
+		draw_view_hint = true;
+	} else if (window->viewing_file && line_pos == -3) {
+		zoo_window_draw_string(state, window_x + 2 + 1, line_y, 0x1A, "                 to print.");
+		zoo_window_draw_string(state, window_x + 2 + 12, line_y, 0x1F, "Alt-P");
+		draw_view_hint = true;
+	}
+
+	if (str != NULL) {
+		for (i = -text_x - 1; i < (text_width - text_x); i++) {
+			if (draw_arrow && i == -3) {
+ 				state->d_video->func_write(state->d_video, window_x + 4 + i + text_x, line_y, 0x1D, '\x10');
+			} else {
+				state->d_video->func_write(state->d_video, window_x + 4 + i + text_x, line_y, text_color,
+					(i >= 0 && i < strlen(str)) ? str[i] : ' ');
+			}
+		}
+	} else if (!draw_view_hint) {
+		is_boundary = line_pos == -1 || line_pos == window->line_count;
+		for (i = 0; i < (window_width - 4); i++) {
+			state->d_video->func_write(state->d_video, window_x + 2 + i, line_y, text_color,
+				(is_boundary && ((i % 5) == 4)) ? '\x07' : ' ');
+		}
+	}
+
+}
+
+static void zoo_window_draw_text(zoo_text_window *window, zoo_state *state, bool no_formatting) {
+	int i;
+	for (i = 0; i < window_height - 4; i++) {
+		zoo_window_draw_line(window, state, window->line_pos - (window_height >> 1) + i + 2, no_formatting);
+	}
+	zoo_window_draw_title(window, state, 0x1E, window->title);
+}
+
+static void zoo_window_draw_close(zoo_text_window *window, zoo_state *state) {
+	int16_t ix, iy;
+	int16_t y0, y1;
+
+	// draw line at counter + 1
+	iy = window->counter + 1;
+	if (iy <= WINDOW_ANIM_MAX) {
+		y0 = window_y + iy;
+		y1 = window_y + window_height - iy - 1;
+
+		zoo_window_draw_border(window, state, y0, ZOO_WINDOW_PATTERN_TOP);
+		zoo_window_draw_border(window, state, y1, ZOO_WINDOW_PATTERN_BOTTOM);
+	}
+
+	// restore line at counter
+	iy = window->counter;
+	zoo_restore_display(state, window->screen_copy, window_width, window_height,
+		0, iy, window_width, 1, window_x, window_y + iy);
+	zoo_restore_display(state, window->screen_copy, window_width, window_height,
+		0, window_height - iy - 1, window_width, 1, window_x, window_y + window_height - iy - 1);
+}
+
+static bool zoo_window_jump_to_label(zoo_text_window *window, const char *label) {
+	char target[21];
+	size_t target_len;
+	int16_t i;
+
+	// Pascal stores the jump target in a 20-byte string, including its ':' prefix.
+	target[0] = ':';
+	strncpy(target + 1, label, sizeof(target) - 2);
+	target[sizeof(target) - 1] = '\0';
+	target_len = strlen(target);
+
+	for (i = 0; i < window->line_count; i++) {
+		const char *line = window->lines[i];
+		size_t j;
+		if (line == NULL || strlen(line) < target_len) continue;
+		for (j = 0; j < target_len; j++) {
+			if (zoo_toupper((uint8_t) line[j]) != zoo_toupper((uint8_t) target[j])) break;
+		}
+		if (j == target_len) {
+			window->line_pos = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// if TRUE, close the window
+static bool zoo_window_hyperlink(zoo_text_window *window, zoo_state *state, char *str) {
+	char pointer_str[21];
+	int16_t i;
+
+	for (i = 0; i < sizeof(pointer_str); i++) {
+		pointer_str[i] = str[i + 1];
+		if (pointer_str[i] == '\0' || pointer_str[i] == ';' || i == (sizeof(pointer_str) - 1)) {
+			pointer_str[i] = '\0';
+			break;
+		}
+	}
+
+	if (pointer_str[0] == '-') {
+		zoo_window_close(window);
+		if (state->d_io != NULL) {
+			if (zoo_window_open_file(state->d_io, window, pointer_str + 1)) {
+				window->viewing_file = true;
+				zoo_window_draw_text(window, state, false);
+				return false;
+			}
+		}
+	} else {
+		if (window->hyperlink_as_select) {
+			strncpy(window->hyperlink, pointer_str, sizeof(window->hyperlink));
+		} else {
+			if (zoo_window_jump_to_label(window, pointer_str)) return false;
+		}
+	}
+	return true;
+}
+
+static zoo_tick_retval zoo_window_classic_tick(zoo_state *state, zoo_text_window *window) {
+	int16_t old_line_pos = window->line_pos;
+	bool act_ok, act_cancel, should_close;
+	char *curr_str;
+
+	switch (window->state) {
+		case WINDOW_STATE_START:
+			window->screen_copy = zoo_store_display(state, window_x, window_y, window_width, window_height);
+			window->counter = WINDOW_ANIM_MAX;
+			window->state = WINDOW_STATE_ANIM_OPEN;
+			if (window->disable_transitions) {
+				zoo_window_draw_open_all(window, state);
+				goto FinishOpenWindow;
+			}
+			// fall through
+		case WINDOW_STATE_ANIM_OPEN:
+			zoo_window_draw_open(window, state);
+			if ((--window->counter) < 0) {
+				zoo_window_draw_open_finish(window, state);
+			FinishOpenWindow:
+				zoo_window_draw_text(window, state, false);
+				zoo_input_clear(&state->input);
+				window->state = WINDOW_STATE_TICK;
+			} else {
+				return RETURN_NEXT_FRAME;
+			}
+			break;
+		case WINDOW_STATE_TICK:
+			zoo_input_update(&state->input);
+
+			if (zoo_input_action_pressed(&state->input, ZOO_ACTION_LEFT)) window->line_pos -= 4;
+			else if (zoo_input_action_pressed(&state->input, ZOO_ACTION_UP)) window->line_pos--;
+
+			if (zoo_input_action_pressed(&state->input, ZOO_ACTION_RIGHT)) window->line_pos += 4;
+			else if (zoo_input_action_pressed(&state->input, ZOO_ACTION_DOWN)) window->line_pos++;
+
+			if (window->line_pos < 0) window->line_pos = 0;
+			if (window->line_pos >= window->line_count) window->line_pos = window->line_count - 1;
+
+			if (old_line_pos != window->line_pos) {
+				zoo_window_draw_text(window, state, false);
+			}
+
+			act_ok = zoo_input_action_pressed(&state->input, ZOO_ACTION_OK);
+			act_cancel = zoo_input_action_pressed(&state->input, ZOO_ACTION_CANCEL);
+			if (act_ok || act_cancel) {
+				window->state = WINDOW_STATE_ANIM_CLOSE;
+				window->accepted = act_ok;
+				if (window->disable_transitions) {
+					zoo_restore_display(state, window->screen_copy, window_width, window_height, 0, 0, window_width, window_height, window_x, window_y);
+					goto CloseWindow;
+				} else {
+					window->counter = 0;
+				}
+			}
+			break;
+		case WINDOW_STATE_ANIM_CLOSE:
+			zoo_window_draw_close(window, state);
+			if ((++window->counter) > WINDOW_ANIM_MAX) {
+				CloseWindow:
+				should_close = true;
+				if (window->accepted) {
+					curr_str = zoo_window_line_selected(window);
+					if (curr_str != NULL && curr_str[0] == '!') {
+						should_close = zoo_window_hyperlink(window, state, curr_str);
+					}
+				}
+				if (should_close) {
+					zoo_free_display(state, window->screen_copy);
+					if (!window->manual_close) {
+						zoo_window_close(window);
+					}
+					return EXIT;
+				} else {
+					zoo_restore_display(state, window->screen_copy, window_width, window_height, 0, 0, window_width, window_height, window_x, window_y);
+					zoo_free_display(state, window->screen_copy);
+					window->state = WINDOW_STATE_START;
+					zoo_input_clear(&state->input);
+					return RETURN_IMMEDIATE;
+				}
+			} else {
+				return RETURN_NEXT_FRAME;
+			} 
+			break;
+	}
+
+	return RETURN_NEXT_FRAME;
+}
+
+static const char *zw_text_ptr(const char *line) {
+	char *tmp;
+
+	switch (line[0]) {
+		case '!':
+		case ':':
+			tmp = strchr(line, ';');
+			if (tmp != NULL) return tmp + 1;
+			else return line + 1;
+		case '$':
+			return line + 1;
+		default:
+			return line;
+	}
+}
+
+static int zw_sort_compare(const void *line_a, const void *line_b) {
+	const char *str_a = zw_text_ptr(*((const char**) line_a));
+	const char *str_b = zw_text_ptr(*((const char**) line_b));
+	return strcasecmp(str_a, str_b);
+}
+
+void zoo_window_sort(zoo_state *state, zoo_text_window *window) {
+	return qsort(window->lines, window->line_count, sizeof(char*), zw_sort_compare);
+}
+
+void zoo_window_open(zoo_state *state, zoo_text_window *window) {
+	window->state = 0;
+	window->counter = 0;
+
+	zoo_call_push_callback(&(state->call_stack), (zoo_func_callback) zoo_window_classic_tick, window);
+}
