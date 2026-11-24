@@ -10,7 +10,7 @@ Engine 2.0 covers shared world and board state, gameplay timing, element and obj
 
 ## Current status
 
-The shared engine is used by both frontends. The Windows x64 build, Android builds, serializer probes, runtime probes, and focused compiled-Pascal comparisons have passing evidence recorded in the checklists. The latest clean Pascal run passed 83 Turbo Pascal 5.5 probe sessions and 42 configured Pascal/production differential invocations. The integrated prototype now matches 30,591 fields across loaded state, loop start, six cycle checkpoints, and final state; it is not one of the ten required fixtures. Engine 2.0 remains **in progress** while the ten-fixture corpus and multiple shared-engine/API blockers remain open. This repository does not claim complete ZZT compatibility.
+The shared engine is used by both frontends. The Windows x64 build, Android builds, serializer probes, runtime probes, and focused compiled-Pascal comparisons have passing evidence recorded in the checklists. The latest clean Pascal run passed 83 Turbo Pascal 5.5 probe sessions and 42 configured Pascal/production differential invocations; the shared `.HI` table also passed 16 direct Pascal byte comparisons. The integrated prototype matches 30,591 fields across loaded state, loop start, six cycle checkpoints, and final state; it is not one of the ten required fixtures. Engine 2.0 remains **in progress** while the ten-fixture corpus and multiple shared-engine/API blockers remain open. This repository does not claim complete ZZT compatibility.
 
 The Android app keeps its portrait 60×25 playfield. The Windows frontend presents the DOS 80×25 character grid and supports windowed/fullscreen use. Platform implementation checklists are [`PORT_CHECKLIST.md`](PORT_CHECKLIST.md) and [`WINDOWS_PORT_CHECKLIST.md`](WINDOWS_PORT_CHECKLIST.md); their UI and device requirements do not gate Engine 2.0.
 
@@ -44,11 +44,12 @@ Run the platform-independent production and serializer checks from PowerShell:
 
 ```powershell
 ./tools/serializer-compat/verify.ps1
+./tools/highscore-compat/verify.ps1
 ./tools/runtime-compat/verify.ps1
 ./tools/android-compat/verify.ps1
 ```
 
-The direct Pascal suite needs a private local Turbo Pascal 5.5 installation containing `TPC.EXE` and `TURBO.TPL`, plus DOSBox-X. The current verification host used a DOSBox-X executable; its exact release string is not present in the run record. Those toolchain binaries are intentionally excluded from this repository. Configure a local copy of the toolchain under `build/pascal-compat-run/Z` or pass `-PascalToolchain`; then run:
+The shared high-score harness also requires Node.js, Java 17, and the Android NDK used by this project; it compiles the actual LibZoo C implementation to WASM and separately checks Android CP437 name encoding. The direct Pascal suite needs a private local Turbo Pascal 5.5 installation containing `TPC.EXE` and `TURBO.TPL`, plus DOSBox-X. Those proprietary toolchain binaries are intentionally excluded from this repository. Configure a local copy of Turbo Pascal under `build/pascal-compat-run/Z` or pass `-PascalToolchain`; then run:
 
 ```powershell
 ./tools/pascal-compat/verify.ps1 -DosboxExecutable "<path-to-dosbox-x.exe>"
@@ -77,4 +78,4 @@ Upstream sources:
 
 ## Known gaps
 
-The editor mutation and high-score semantics are not yet fully centralized in the shared engine. The frozen routine-to-engine/test inventory still contains unclassified source entries. The integrated prototype checks a limited set of selected fields at nine checkpoints, but does not yet compare all script/alias, RNG, cell-write, sound-event, transition, and serialized-byte state required by E2-10; all ten required fixtures remain outstanding. Physical Android device testing is also pending, but is outside Engine 2.0's platform-independent acceptance scope.
+The high-score table's initialization, load/reset, save, ranking, and insertion semantics now live in shared LibZoo; Android keeps file access and CP437 name encoding in its frontend adapter. Broader editor mutations still need shared implementation and direct comparison, and the frozen routine-to-engine/test inventory still has unclassified source entries. The integrated prototype checks selected fields at nine checkpoints, but not all script/alias, RNG, cell-write, sound-event, transition, and serialized-byte state required by E2-10; all ten required fixtures remain outstanding. Physical Android device testing is also pending, but is outside Engine 2.0's platform-independent acceptance scope.

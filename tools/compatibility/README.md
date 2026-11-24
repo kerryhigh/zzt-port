@@ -2,7 +2,7 @@
 
 `acceptance_inventory.json` is the frozen initial inventory for E2-01 through E2-11. Its top-level acceptance cases come from the mandatory checklist criteria. Its source inventory enumerates the reconstructed Pascal routines, element callback routines, branch sites, OOP words, record fields, RNG sites, editor procedures, and input procedures required to finish routine-level mapping.
 
-Inventory entries without explicit D/S/P/DP/I evidence remain unclassified. A source location or nearby test name is not proof of a verified mapping. The empty fixture/output mappings are tracked as remaining work. Do not mark them complete from test counts alone.
+Inventory entries without explicit D/S/P/DP/I evidence remain unclassified unless their `scope_status` starts with `excluded_`, which records an explicit frontend/presentation exclusion. A source location or nearby test name is not proof of a verified mapping. The progress generator reports excluded and unclassified entries separately. Do not mark entries complete from test counts alone.
 
 `reference_source_hashes.sha256` records the untouched reconstructed Pascal units used to create the inventory. Do not edit those source files to obtain expected outputs. Oracle instrumentation belongs in the isolated verification staging copy, and changes to that hook must be reviewable in `tools/pascal-compat/verify.ps1`.
 

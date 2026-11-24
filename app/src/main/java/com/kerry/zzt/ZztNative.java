@@ -73,6 +73,14 @@ final class ZztNative {
     static native void copyBoard(byte[] target);
     static native int takeTransition(byte[] from, byte[] to, short[] order);
     static native int[] status();
+    static native int highScoresInitialize(byte[] table);
+    static native int highScoresLoad(byte[] table, byte[] record);
+    static native byte[] highScoresSerialize(byte[] table);
+    static native int highScoresInsertionPosition(byte[] table, int score);
+    static native int highScoresInsert(byte[] table, int position, int score, byte[] name);
+    static native int highScoreValue(byte[] table, int index);
+    static native int highScoreNameLength(byte[] table, int index);
+    static native byte[] highScoreNameBytes(byte[] table, int index);
     static native byte[] worldNameBytes();
     private static native byte[] boardNameBytes();
     static String worldName() { return decodeCp437(worldNameBytes()); }

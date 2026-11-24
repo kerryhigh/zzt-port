@@ -11,6 +11,7 @@ SOURCES += \
   $(SRCDIR)/libzoo/zoo_elements.c \
   $(SRCDIR)/libzoo/zoo_game_io.c \
   $(SRCDIR)/libzoo/zoo_game.c \
+  $(SRCDIR)/libzoo/zoo_high_scores.c \
   $(SRCDIR)/libzoo/zoo_input.c \
   $(SRCDIR)/libzoo/zoo_io.c \
   $(SRCDIR)/libzoo/zoo_oop.c \

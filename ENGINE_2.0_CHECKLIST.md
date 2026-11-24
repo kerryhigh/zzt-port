@@ -33,7 +33,7 @@ Use these labels in test names, reports, and completion notes. Never describe an
 | **DP** | Direct differential | A **D** capture is compared field-for-field or byte-for-byte with production output. |
 | **I** | Integrated replay | A full engine session replays a world, normalized event tape, and deterministic time/RNG inputs from initial load through named checkpoints against the Pascal reference. A few direct routine calls or a short isolated loop do not count as an integrated replay. |
 
-The current clean-suite record dated 2026-11-24 reports 83 direct Turbo Pascal 5.5 probe sessions (54 standard and 29 standalone), serializer/high-score/runtime suites, and all configured Pascal-to-production differentials. This is strong focused evidence, but it does not satisfy the 10-fixture **I** corpus or prove whole-game compatibility.
+The current clean-suite record dated 2026-11-24 reports 83 direct Turbo Pascal 5.5 probe sessions (54 standard and 29 standalone), serializer/high-score/runtime suites, 42 configured Pascal-to-production differential invocations, and 16 additional direct `.HI` byte comparisons. This is strong focused evidence, but it does not satisfy the 10-fixture **I** corpus or prove whole-game compatibility.
 
 ## Current compatibility work
 
@@ -43,7 +43,7 @@ The current clean-suite record dated 2026-11-24 reports 83 direct Turbo Pascal 5
 
 - [x] Reuse a shared LibZoo engine and serializer for Android and Windows rather than maintaining duplicate gameplay engines.
 - [x] Windows builds and engine/I/O smoke checks exercise the shared engine; Android host/runtime checks also exercise LibZoo.
-- [~] Flood-fill queue traversal has moved into the shared `third_party/libzoo/src/libzoo/zoo_editor.c` API and is called by the Android JNI adapter. Placement/paste/stat mutation side effects and `.HI` logic still remain in Android `native-lib.c` and `HighScores.java`; their platform-neutral implementations remain open. The four direct Pascal fill maps now compare against the shared queue implementation.
+- [~] Flood-fill traversal and `.HI` table initialization/load/reset/save/rank/insertion now use shared APIs in `third_party/libzoo/src/libzoo/zoo_editor.c` and `zoo_high_scores.c`, called by Android JNI/Java adapters. Placement/paste/stat mutation side effects remain in Android `native-lib.c`; the broader editor mutation API remains open. Four fill maps and 16 high-score byte cases compare directly against compiled Pascal.
 - [ ] Put each in-scope semantic operation behind one platform-neutral implementation/API, leaving JNI, Win32, Android Java, filesystem, rendering, input, and sound-output adapters outside it. Do not fork or duplicate game rules to satisfy this item.
 
 ### World state, board lifecycle, and transitions — [~]
@@ -58,8 +58,8 @@ The current clean-suite record dated 2026-11-24 reports 83 direct Turbo Pascal 5
 - [x] `.ZZT`/`.SAV` serialization has byte comparisons for representative world/save fixtures, including the Pascal `IsSave` distinction, title-only load, missing trailing records, short length/payload reads, raw Pascal string tails, Boolean/reserved bytes, CP437 bytes, board RLE, and unsigned `0xFFFF` record lengths.
 - [x] Board RLE direct probes cover the 255-cell split, zero-count underflow/final-run overrun, and all 256 run-count byte values.
 - [x] `.BRD` import/export has 16-record serializer checks plus direct cases for negative/unsigned length and truncated reads.
-- [x] `.HI` tests cover the 30 × 53-byte typed-file layout, signed little-endian scores, raw/noncanonical short-string bytes, embedded NUL/CP437, trailing data, missing/short reset behavior, stale name tails, tie ordering, name truncation, seven direct compiled-Pascal insertion scenarios, and eight direct compiled-Pascal `HighScoresLoad` cases comparing missing, empty, truncated, exact-size, and extended tables across all 1,590 result bytes. A further 256-case insertion suite is source-model based, not 256 direct Pascal runs.
-- [~] These are representative fixtures, not a complete field/boundary manifest for every operation and record type. The `.BRD` codec is shared in LibZoo, while Android retains stream acquisition and editor reset/close policy; `.HI` production semantics remain in Android-specific Java code.
+- [x] `.HI` table semantics use shared `zoo_high_scores.c`. Sixteen direct Pascal comparisons cover the 1,590-byte save record, eight load/reset inputs (missing, empty, lengths 1/52/53/1,589/1,590/1,597), and seven add outcomes (top, tie, last, cutoff, zero, negative, and edited name). Raw/NUL/CP437 bytes, signed scores, stale tails, trailing data, and accepted/rejected save behavior are included. A further 256-case insertion suite is source-model based, not 256 direct Pascal runs.
+- [~] These are representative fixtures, not a complete field/boundary manifest for every operation and record type. The `.BRD` and `.HI` semantic cores are shared in LibZoo; Android retains stream acquisition, CP437 name entry, and editor reset/close policy.
 - [ ] Verify every serialized field and each listed encoding/read edge below with direct Pascal outputs and the production implementation; define precisely which bytes are deterministic and which are untouched destination memory.
 
 ### Tick scheduling, clocks, timers, and RNG — [~]
@@ -116,8 +116,8 @@ The current clean-suite record dated 2026-11-24 reports 83 direct Turbo Pascal 5
 ### Editor mutations, `.BRD`, and high scores — [~]
 
 - [x] Flood fill has four direct Pascal maps; placement/paste checks cover patterns, protected player tile, plain paste, `MAX_STAT` refusal, shallow script aliases, CR/NUL payloads, and selected stat fields.
-- [x] High-score table layout, seven insertion scenarios, and eight missing/empty/truncated/exact/extended `HighScoresLoad` cases have direct compiled-Pascal comparison; 256 additional full-table insertion cases match a Pascal source model.
-- [~] Flood-fill/placement production tests currently extract Android JNI helpers; `.BRD` codec now lives in shared LibZoo; `.HI` ranking/storage remains Android Java. Editor.PAS board creation, property, stat/object, undo/state, and save mutations lack direct paired probes. High-score malformed/missing/reused table paths need Pascal execution in addition to the production tests.
+- [x] The shared `.HI` table API passes 16 direct compiled-Pascal byte comparisons: one save fixture, eight load/reset captures, and seven insertion outcomes. The Android CP437 input adapter has separate encoding checks. The 256 full-table insertion rows remain source-derived supplementary coverage.
+- [~] Flood-fill traversal and high-score table semantics are shared; placement/paste still exercises Android JNI adapters in some probes. Editor.PAS board creation, properties, other stat/object mutations, undo/state, and save mutations lack direct paired probes. `.HI` file I/O and name-entry adapters are tested separately from shared table semantics.
 - [ ] Close only semantic editor/high-score operations under E2-09. Do not add editor menus, prompts, cursor/input adapters, or visual layout to this engine checklist.
 
 ## Known quirks, discrepancies, and environment-dependent behavior
@@ -144,7 +144,7 @@ Every blocker is mandatory. A blocker closes only with committed automated evide
 
 - [ ] Produce a source-to-subsystem inventory mapping every routine in `ZZT.PAS`, `GAMEVARS.PAS`, `GAME.PAS`, `ELEMENTS.PAS`, `OOP.PAS`, `EDITOR.PAS`, `INPUT.PAS`, `KEYS.PAS`, `SOUNDS.PAS`, `TXTWIND.PAS`, and `VIDEO.PAS` to a shared production routine and at least one test, or mark it explicitly as an adapter/out of engine scope with the reason. Video/input adapters may be excluded; mutations and decisions implemented in shared code may not.
 - [x] Move `.BRD` record parsing and serialization into the shared LibZoo API (`zoo_editor_brd_*`); Android JNI calls it, and the serializer harness now compiles that same production source.
-- [ ] Move editor board mutations and `.HI` load/rank/insert/save semantics through platform-neutral APIs; frontend code may only adapt files, controls, prompts, and display. There must be one implementation of each shared semantic operation, with no frontend-specific duplicate game rules.
+- [ ] Move the remaining editor board mutations through platform-neutral APIs; frontend code may only adapt files, controls, prompts, and display. There must be one implementation of each shared semantic operation, with no frontend-specific duplicate game rules.
 - [ ] Keep one canonical test fixture/oracle path for both platform builds; no duplicated game rules or platform-specific engine fork.
 - **Pass:** inventory has zero unclassified state-mutating routines; shared semantic APIs compile in each platform build that includes the engine and are called by any frontend exposing that operation; frontend-only adapters are identified and excluded.
 
@@ -207,8 +207,8 @@ Every blocker is mandatory. A blocker closes only with committed automated evide
 
 - [ ] Inventory all state/file operations in `EDITOR.PAS`, excluding menu drawing, prompts, physical key handling, and editor cursor presentation. Cover board create/append/select/delete, board properties, tile/place/fill, object/stat add/remove, copy/paste/script aliasing, `.BRD` import/export, and save/dirty-state effects where present in the reconstructed source.
 - [ ] Compare each operation's board/world state and bytes against direct Pascal. Retain the existing four fill maps and placement/copy probes; add only uncovered mutation branches and malformed/limit cases.
-- [ ] Directly test `.HI` initialization, load/reset, exact 30-record save, rank 1/rank 30/cutoff, duplicate ties, zero/negative/boundary scores, name editing outcomes, malformed/truncated/trailing tables, CP437/NUL/stale tails, and accepted/rejected save behavior. Keep the 256-case source model as supplemental coverage.
-- [ ] Ensure the implementation exercised is the platform-neutral production implementation from E2-01, not an Android-specific helper extracted into a test harness.
+- [x] Direct `.HI` checks pass for initialization, load/reset, exact 30-record save, rank 1/rank 30/cutoff, duplicate ties, zero/negative/boundary scores, edited names, malformed/truncated/trailing tables, CP437/NUL/stale tails, and accepted/rejected save behavior. Sixteen byte-for-byte compiled-Pascal comparisons use the shared LibZoo implementation; 256 source-model rows remain supplemental.
+- [~] The shared `.HI` implementation is exercised directly, but other editor operations still use or test Android adapter helpers and need to move behind the platform-neutral API.
 - **Pass:** every in-scope source mutation and high-score data branch is direct **D**/**DP**, both `.BRD` and `.HI` use the shared semantic module, and UI-only routines are listed as excluded rather than accidentally untested core logic.
 
 ### E2-10 — Integrated gameplay replay corpus — [ ]

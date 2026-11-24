@@ -28,6 +28,7 @@ set(LIBZOO_SOURCES
 	${LIBZOO}/src/libzoo/zoo_elements.c
 	${LIBZOO}/src/libzoo/zoo_game_io.c
 	${LIBZOO}/src/libzoo/zoo_game.c
+	${LIBZOO}/src/libzoo/zoo_high_scores.c
 	${LIBZOO}/src/libzoo/zoo_editor_brd.c
 	${LIBZOO}/src/libzoo/zoo_input.c
 	${LIBZOO}/src/libzoo/zoo_io.c

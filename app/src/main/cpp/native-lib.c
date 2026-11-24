@@ -12,6 +12,7 @@
 #include "zoo_ui.h"
 #include "zoo_editor_brd.h"
 #include "zoo_editor.h"
+#include "zoo_high_scores.h"
 #include "zzt_frame_scheduler.h"
 
 #define BOARD_CELLS (ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT)
@@ -1536,4 +1537,148 @@ Java_com_kerry_zzt_ZztNative_renderAudio(JNIEnv *env, jclass clazz, jbyteArray t
     }
     pthread_mutex_unlock(&sound_mutex);
     (*env)->ReleaseByteArrayElements(env, target, samples, 0);
+}
+
+static zoo_high_score_table *high_score_table_from_java(JNIEnv *env, jbyteArray array,
+        jbyte **bytes) {
+    if (array == NULL || (*env)->GetArrayLength(env, array) != ZOO_HIGH_SCORE_TABLE_BYTES) {
+        return NULL;
+    }
+    *bytes = (*env)->GetByteArrayElements(env, array, NULL);
+    return *bytes != NULL ? (zoo_high_score_table *) *bytes : NULL;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_kerry_zzt_ZztNative_highScoresInitialize(JNIEnv *env, jclass clazz,
+        jbyteArray target) {
+    (void) clazz;
+    jbyte *bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, target, &bytes);
+    if (table == NULL) return ZOO_ERROR_INVAL;
+    zoo_high_score_table_init(table);
+    (*env)->ReleaseByteArrayElements(env, target, bytes, 0);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_kerry_zzt_ZztNative_highScoresLoad(JNIEnv *env, jclass clazz,
+        jbyteArray target, jbyteArray record) {
+    (void) clazz;
+    jbyte *table_bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, target, &table_bytes);
+    if (table == NULL) return ZOO_ERROR_INVAL;
+
+    jbyte *record_bytes = NULL;
+    jsize record_length = record != NULL ? (*env)->GetArrayLength(env, record) : 0;
+    if (record != NULL) record_bytes = (*env)->GetByteArrayElements(env, record, NULL);
+    bool read_succeeded = record_bytes != NULL
+            && record_length >= ZOO_HIGH_SCORE_TABLE_BYTES;
+    int result = zoo_high_score_table_load(table, (const uint8_t *) record_bytes,
+            record_bytes != NULL ? (size_t) record_length : 0, read_succeeded);
+
+    if (record_bytes != NULL) (*env)->ReleaseByteArrayElements(env, record, record_bytes, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, target, table_bytes, 0);
+    return result;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_com_kerry_zzt_ZztNative_highScoresSerialize(JNIEnv *env, jclass clazz,
+        jbyteArray source) {
+    (void) clazz;
+    jbyte *bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, source, &bytes);
+    if (table == NULL) return NULL;
+
+    uint8_t record[ZOO_HIGH_SCORE_TABLE_BYTES];
+    int result = zoo_high_score_table_save(table, record, sizeof(record));
+    (*env)->ReleaseByteArrayElements(env, source, bytes, JNI_ABORT);
+    if (result != 0) return NULL;
+
+    jbyteArray output = (*env)->NewByteArray(env, ZOO_HIGH_SCORE_TABLE_BYTES);
+    if (output != NULL) {
+        (*env)->SetByteArrayRegion(env, output, 0, ZOO_HIGH_SCORE_TABLE_BYTES,
+                (const jbyte *) record);
+    }
+    return output;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_kerry_zzt_ZztNative_highScoresInsertionPosition(JNIEnv *env, jclass clazz,
+        jbyteArray source, jint score) {
+    (void) clazz;
+    if (score < INT16_MIN || score > INT16_MAX) return -1;
+    jbyte *bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, source, &bytes);
+    if (table == NULL) return ZOO_ERROR_INVAL;
+    int result = zoo_high_score_insertion_position(table, (int16_t) score);
+    (*env)->ReleaseByteArrayElements(env, source, bytes, JNI_ABORT);
+    return result;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_kerry_zzt_ZztNative_highScoresInsert(JNIEnv *env, jclass clazz,
+        jbyteArray target, jint position, jint score, jbyteArray name) {
+    (void) clazz;
+    if (position < 0 || position >= ZOO_HIGH_SCORE_COUNT
+            || score < INT16_MIN || score > INT16_MAX) return ZOO_ERROR_INVAL;
+    jbyte *table_bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, target, &table_bytes);
+    if (table == NULL) return ZOO_ERROR_INVAL;
+
+    jbyte *name_bytes = NULL;
+    jsize name_length = name != NULL ? (*env)->GetArrayLength(env, name) : 0;
+    if (name != NULL) name_bytes = (*env)->GetByteArrayElements(env, name, NULL);
+    int result = name != NULL && name_length > 0 && name_bytes == NULL
+            ? ZOO_ERROR_INVAL
+            : zoo_high_score_insert_at(table, (int16_t) position, (int16_t) score,
+                    (const uint8_t *) name_bytes, (size_t) name_length);
+    if (name_bytes != NULL) (*env)->ReleaseByteArrayElements(env, name, name_bytes, JNI_ABORT);
+    (*env)->ReleaseByteArrayElements(env, target, table_bytes, 0);
+    return result;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_kerry_zzt_ZztNative_highScoreValue(JNIEnv *env, jclass clazz,
+        jbyteArray source, jint index) {
+    (void) clazz;
+    jbyte *bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, source, &bytes);
+    if (table == NULL) return ZOO_ERROR_INVAL;
+    int result = index < 0 || index >= ZOO_HIGH_SCORE_COUNT
+            ? ZOO_ERROR_INVAL : zoo_high_score_entry_score(table, (int16_t) index);
+    (*env)->ReleaseByteArrayElements(env, source, bytes, JNI_ABORT);
+    return result;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_kerry_zzt_ZztNative_highScoreNameLength(JNIEnv *env, jclass clazz,
+        jbyteArray source, jint index) {
+    (void) clazz;
+    jbyte *bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, source, &bytes);
+    if (table == NULL) return ZOO_ERROR_INVAL;
+    int result = index < 0 || index >= ZOO_HIGH_SCORE_COUNT ? ZOO_ERROR_INVAL
+            : zoo_high_score_entry_name_length(table, (int16_t) index);
+    (*env)->ReleaseByteArrayElements(env, source, bytes, JNI_ABORT);
+    return result;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_com_kerry_zzt_ZztNative_highScoreNameBytes(JNIEnv *env, jclass clazz,
+        jbyteArray source, jint index) {
+    (void) clazz;
+    if (index < 0 || index >= ZOO_HIGH_SCORE_COUNT) return NULL;
+    jbyte *bytes = NULL;
+    zoo_high_score_table *table = high_score_table_from_java(env, source, &bytes);
+    if (table == NULL) return NULL;
+
+    uint8_t name[ZOO_HIGH_SCORE_NAME_BYTES];
+    size_t length = zoo_high_score_entry_copy_name(table, (int16_t) index,
+            name, sizeof(name));
+    (*env)->ReleaseByteArrayElements(env, source, bytes, JNI_ABORT);
+    jbyteArray output = (*env)->NewByteArray(env, (jsize) length);
+    if (output != NULL && length > 0) {
+        (*env)->SetByteArrayRegion(env, output, 0, (jsize) length, (const jbyte *) name);
+    }
+    return output;
 }

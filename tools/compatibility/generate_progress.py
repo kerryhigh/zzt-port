@@ -48,7 +48,13 @@ def main() -> None:
     evidence = runner.get("evidence_case_counts", {})
     misc = runner.get("other_suites", {})
     source = inv["source_inventory"]
-    unclassified = sum(1 for group in source.values() for item in group if not item.get("evidence_class"))
+    source_entries = [item for group in source.values() for item in group]
+    explicitly_excluded = sum(1 for item in source_entries if item.get("scope_status", "").startswith("excluded_"))
+    unclassified = sum(
+        1 for item in source_entries
+        if not item.get("evidence_class") and not item.get("scope_status", "").startswith("excluded_")
+    )
+    high_score = runner.get("high_score_differential", {})
 
     known_mismatches = runner.get("known_unexplained_mismatches", [])
     discrepancies = runner.get("known_discrepancies", [])
@@ -77,13 +83,14 @@ def main() -> None:
         "## Acceptance case status",
         "",
         f"- Passing/complete: **{acceptance_counts['complete']}**; partial: **{acceptance_counts['partial']}**; pending: **{acceptance_counts['pending']}**; failing: **{run.get('verification', {}).get('failing_acceptance_cases', 'not separately enumerated')}**.",
-        f"- Unclassified source inventory entries: **{unclassified}**.",
+        f"- Unclassified source inventory entries: **{unclassified}**; explicitly excluded adapter/presentation entries: **{explicitly_excluded}**.",
         "- Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P remains unenumerated; I counts only completed full integrated fixtures.",
         "",
         "## Evidence inventory",
         "",
         f"- Direct compiled-Pascal probe sessions: **{probes.get('sessions', 'not recorded')}** ({probes.get('standard_programs', 'not recorded')} standard programs; {probes.get('standalone_sessions', 'not recorded')} standalone sessions).",
         f"- Direct Pascal-to-production differential comparisons: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; run result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
+        f"- Direct `.HI` Pascal-to-shared-engine byte comparisons: **{high_score.get('passed', 'not recorded')}/{high_score.get('configured', 'not recorded')}** passed ({high_score.get('save_cases', 'not recorded')} save, {high_score.get('load_reset_cases', 'not recorded')} load/reset, {high_score.get('add_cases', 'not recorded')} insertion cases); source-model rows: **{high_score.get('source_derived_model_rows', 'not recorded')}**.",
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
         f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
@@ -91,8 +98,8 @@ def main() -> None:
         "",
         "## Frozen source inventory",
         "",
-        "| Inventory | Cases | Classified with D/S/P/DP/I | Unclassified |",
-        "|---|---:|---:|---:|",
+        "| Inventory | Cases | Classified with D/S/P/DP/I | Explicitly excluded | Unclassified |",
+        "|---|---:|---:|---:|---:|",
     ]
     for label, key in [
         ("Pascal routines", "routines"),
@@ -106,10 +113,11 @@ def main() -> None:
     ]:
         items = source[key]
         classified = sum(1 for item in items if item.get("evidence_class"))
-        lines.append(f"| {label} | {len(items)} | {classified} | {len(items)-classified} |")
+        excluded = sum(1 for item in items if item.get("scope_status", "").startswith("excluded_"))
+        lines.append(f"| {label} | {len(items)} | {classified} | {excluded} | {len(items)-classified-excluded} |")
     lines.extend([
         "",
-        f"Total unclassified source inventory entries: **{unclassified}**. Source locations, routine-to-production candidates, callback branches, parser words, serialized fields, RNG sites, editor procedures, and input routines are kept as explicit acceptance records; an empty test mapping is not treated as coverage.",
+        f"Total unclassified source inventory entries: **{unclassified}**; explicitly excluded: **{explicitly_excluded}**. Source locations, routine-to-production candidates, callback branches, parser words, serialized fields, RNG sites, editor procedures, and input routines are kept as explicit acceptance records; an empty test mapping is not treated as coverage.",
         "",
         "## Per-cycle integrated replay",
         "",
