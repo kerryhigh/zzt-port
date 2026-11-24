@@ -39,8 +39,8 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **16/16** passed (1 save, 8 load/reset, 7 insertion cases); source-model rows: **256**.
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
 - Production-only regression cases: **not enumerated; production runtime harness passed**; the finite case inventory is still being mapped.
-- Integrated replay fixtures: **0/10** complete. Prototype comparisons: 30591 fields across 9 checkpoints; per-cycle checkpoints: present.
-- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; runtime=passed in the clean Pascal run; tools/runtime-compat/verify.ps1 exit 0; shared LibZoo flood-fill and production Android placement adapter checks pass; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=passed fresh in build/windows-editor-refactor: MSVC 14.44.35207, Windows SDK 10.0.26100, CMake 3.31.6; full x64 Release ALL_BUILD succeeded; CTest 3/3 passed (80x25 engine/I-O smoke, sharp-bilinear, PCM timing).
+- Integrated replay fixtures: **0/10** complete. Prototype comparisons: 30789 fields across 9 checkpoints; per-cycle checkpoints: present.
+- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; runtime=passed after integrated snapshot schema update; tools/runtime-compat/verify.ps1 exit 0; shared LibZoo flood-fill and production Android placement adapter checks pass; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=passed fresh in build/windows-editor-refactor: MSVC 14.44.35207, Windows SDK 10.0.26100, CMake 3.31.6; full x64 Release ALL_BUILD succeeded; CTest 3/3 passed (80x25 engine/I-O smoke, sharp-bilinear, PCM timing).
 
 ## Frozen source inventory
 
@@ -61,10 +61,11 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 
 - Required fixtures: 10.
 - Completed fixtures: 0.
-- Prototype: INTEGPRB: six zero-speed cycles with loaded, loop-start, per-cycle, and final snapshots; not one of the ten fixtures with 30591 total field comparisons across 9 checkpoints (3399 fields each); this is not counted as a complete E2-10 fixture.
-- Per-cycle and state-transition checkpoint comparisons: implemented.
+- Prototype: INTEGPRB: six zero-speed cycles with loaded, loop-start, per-cycle, and final snapshots; not one of the ten fixtures with 30789 total field comparisons across 9 checkpoints (3421 fields each); this is not counted as a complete E2-10 fixture.
+- Per-cycle checkpoint comparisons: implemented.
+- State-transition checkpoints: outstanding.
 - First-divergence reporting: implemented.
-- INTEGPRB prototype: buffered movement, two boulder pushes, and #GIVE/#IDLE: 9 checkpoints × 3399 fields = 30591 comparisons; passed (DP evidence).
+- INTEGPRB prototype: buffered movement, two boulder pushes, and #GIVE/#IDLE: 9 checkpoints × 3421 fields = 30789 comparisons; passed (DP evidence).
 
 ## Mismatches, limitations, and remaining work
 
@@ -76,7 +77,7 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 - E2-02: complete the exhaustive byte/error boundary matrix and resolve truncated .BRD behavior.
 - E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell, text-window, and logical sound acceptance cases.
 - E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.
-- E2-10: extend snapshot fields to cover scripts/aliases, RNG, cell writes, sound events, transitions, and serialized bytes; complete the ten frozen replay fixtures.
+- E2-10: add complete alias-graph, logical cell-write/sound-event, state-transition, and serialized-byte captures; create and pass the ten frozen integrated replay fixtures.
 - E2-11: perform the final clean staging run after E2-01 through E2-10 close; repeat heap-sensitive cases and publish the completion record.
 
 ### Non-blocking limitations and optional investigations
@@ -89,12 +90,12 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 - Truncated .BRD reads differ at the API boundary: Pascal records I/O error 100 and retains partial length/payload bytes; the shared production codec reports a library error and Android wrapper policy also resets/closes state. Exact engine result and reset semantics remain unresolved.
 - Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.
 - Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.
-- The integrated prototype compares a limited field schema at loaded, loop-start, per-cycle, and final checkpoints. Script bytes/alias graphs, RNG, cell-write/sound-event streams, state transitions, and generated bytes are not yet included; it does not count toward the ten required fixtures.
+- The integrated prototype now compares RNG seed words, one stat-pair script alias relation, and 19 script bytes at loaded, loop-start, per-cycle, and final checkpoints. Complete script alias graphs, logical cell-write/sound-event streams, state-transition checkpoints, and generated file bytes remain unverified; it does not count toward the ten required fixtures.
 
 ## Latest verification record
 
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: ce9f561: shared LibZoo .HI table semantics, Pascal differential harness, and E2-09 inventory metadata.
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 36336df: expanded E2-10 integrated replay snapshots and isolated Pascal timing probes.
 - Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01>; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
@@ -104,11 +105,12 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 - Fresh clean Pascal verification passed 83 direct Turbo Pascal sessions and 42 configured differentials after the shared editor-fill change.
 - Fresh offline Android debug and instrumentation APK builds passed for arm64-v8a and x86_64; the clean Windows x64 Release build and all three CTests passed.
 - Moved .BRD codec into shared LibZoo API; Android JNI and the serializer harness call the same production source.
-- Fresh clean Pascal suite passed 83 direct sessions and 42 configured direct differentials; INTEGPRB matched 30,591 fields across nine checkpoints with first-divergence reporting.
+- Fresh clean Pascal suite passed 83 direct sessions and 42 configured differentials; the integrated prototype matched 30,789 fields across nine checkpoints, including RNG and fixture script state.
 - Serializer, high-score, runtime, Android CP437/key, and Windows native CTest suites passed after the shared .BRD change.
 - Frozen the initial E2-01 through E2-11 checklist and Pascal source inventory with SHA-256 hashes.
 - Moved .HI initialization, load/reset, save, ranking, and insertion into the shared LibZoo API; Android retains file and CP437 entry adapters.
 - Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.
 - Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.
+- Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.
 
 Generated by `python tools/compatibility/generate_progress.py`. Do not edit this report manually.

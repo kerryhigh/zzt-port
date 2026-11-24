@@ -124,7 +124,8 @@ def main() -> None:
         f"- Required fixtures: {integrated.get('required_fixtures', 10)}.",
         f"- Completed fixtures: {integrated.get('completed_fixtures', 0)}.",
         f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_field_comparisons', 'not recorded')} total field comparisons across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints ({integrated.get('prototype_fields_compared', 'not recorded')} fields each); this is not counted as a complete E2-10 fixture.",
-        f"- Per-cycle and state-transition checkpoint comparisons: {'implemented' if integrated.get('per_cycle_checkpoints') else 'outstanding'}.",
+        f"- Per-cycle checkpoint comparisons: {'implemented' if integrated.get('per_cycle_checkpoints') else 'outstanding'}.",
+        f"- State-transition checkpoints: {'implemented' if integrated.get('state_transition_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
         *([
             f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints × {item.get('fields_per_checkpoint', 'not recorded')} fields = {item.get('field_comparisons', 'not recorded')} comparisons; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."

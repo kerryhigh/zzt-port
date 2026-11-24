@@ -5,13 +5,13 @@ This note records the latest clean cross-suite run and its limits. It does not c
 ## Direct Pascal and differential run
 
 - Command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <local Turbo Pascal 5.5> -DosboxExecutable <local DOSBox-X>`.
-- Source checkpoint: `ce9f561` (`engine: share .HI table semantics (E2-01/E2-09 partial)`). Reconstructed Pascal gameplay sources were not changed.
+- Source checkpoint: `36336df` (`test: extend integrated replay captures (E2-10 partial)`). Reconstructed Pascal gameplay sources were not changed; instrumentation remains in the staged verifier copy.
 - The runner recreated `build/pascal-compat-verification` from the reconstructed Pascal source and controlled fixture inputs.
 - Exit code: **0**. The suite reported **83 direct Turbo Pascal 5.5 probe sessions**: 54 standard probe programs plus 29 standalone sessions.
 - All **42** configured Pascal-to-production comparison invocations in `tools/pascal-compat/verify.ps1` completed successfully.
 - The shared `.HI` suite passed **16 additional direct byte comparisons** against the compiled Pascal outputs: one save record, eight load/reset results, and seven insertion results. Each result compares the entire 1,590-byte table. The separate 256-row insertion model remains source-derived evidence.
-- The integrated prototype compared **30,591 fields**: 3,399 selected world/stat/scheduler/input/tile fields at each of nine checkpoints (loaded initial state, game-loop start, six completed cycles, and final state). All matched. The comparator reports the earliest differing checkpoint and field with neighboring field values.
-- The prototype uses six deterministic zero-speed cycles, but it is not one of the ten complete E2-10 fixtures. Script bytes and alias graphs, RNG state, emitted cell-write/sound-event streams, board/state transitions, and generated file bytes remain outside this prototype snapshot schema.
+- The integrated prototype compared **30,789 fields**: 3,421 world/stat/scheduler/input/tile fields at each of nine checkpoints (loaded initial state, game-loop start, six completed cycles, and final state). The snapshots also include both RNG seed words, the stat 0/1 script-pointer alias relation, and all 19 bytes of the object script. All matched. The comparator reports the earliest differing checkpoint and field with neighboring field values.
+- The prototype uses six deterministic zero-speed cycles, but it is not one of the ten complete E2-10 fixtures. It does not capture complete script alias graphs, logical cell-write or sound-event streams, state-transition checkpoints, or generated file bytes. Sound, scheduler, and integrated probes now run in separate DOSBox-X sessions; GAMESCHD compilation and execution are split to keep emulator timer state reproducible.
 - Source-derived evidence remains distinct: `.HI` insertion has 256 model-generated outputs that supplement, but do not replace, the seven direct Pascal insertion scenarios. Five host-Java assertions check the Android CP437 name adapter separately.
 
 ## Other suites
