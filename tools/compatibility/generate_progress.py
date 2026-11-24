@@ -87,7 +87,7 @@ def main() -> None:
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
         f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
-        f"- Other suite results: serializer={misc.get('serializer', 'not recorded')}; runtime={misc.get('runtime', 'not recorded')}; Android CP437/key bridge={misc.get('android_compat', 'not recorded')}; Windows CTest={misc.get('windows_ctest', 'not recorded')}.",
+        f"- Other suite results: serializer={misc.get('serializer', 'not recorded')}; runtime={misc.get('runtime', 'not recorded')}; Android CP437/key bridge={misc.get('android_compat', 'not recorded')}; Android build={misc.get('android_build', 'not recorded')}; Windows CTest={misc.get('windows_ctest', 'not recorded')}.",
         "",
         "## Frozen source inventory",
         "",

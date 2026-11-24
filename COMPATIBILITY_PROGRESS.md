@@ -39,7 +39,7 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
 - Production-only regression cases: **not enumerated; production runtime harness passed**; the finite case inventory is still being mapped.
 - Integrated replay fixtures: **0/10** complete. Prototype comparisons: 30591 fields across 9 checkpoints; per-cycle checkpoints: present.
-- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; runtime=passed; tools/runtime-compat/verify.ps1 exit 0; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Windows CTest=passed after shared .BRD refactor; engine/I-O, sharp-bilinear renderer, and PCM timing.
+- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; runtime=passed; tools/runtime-compat/verify.ps1 exit 0; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24 from local GRADLE_USER_HOME build/gradle-home: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0, 64 tasks (6 executed, 58 up-to-date). The host android-compat raster/key verifier also passed in the current run.; Windows CTest=passed after shared .BRD refactor; engine/I-O, sharp-bilinear renderer, and PCM timing.
 
 ## Frozen source inventory
 
