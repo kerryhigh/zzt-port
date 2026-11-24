@@ -49,9 +49,10 @@ static uint8_t message_row_colors[60];
 static bool capture_scroll_touch_lines;
 static int scroll_touch_line_count;
 static char scroll_touch_lines[2][51];
-#define INTEGRATED_GAMEPLAY_FIELD_COUNT (51 + (62 * 27 * 2))
+#define INTEGRATED_GAMEPLAY_SCRIPT_BYTES 19
+#define INTEGRATED_GAMEPLAY_FIELD_COUNT (51 + (62 * 27 * 2) + 2 + 1 + INTEGRATED_GAMEPLAY_SCRIPT_BYTES)
 #define INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT 9
-static int16_t integrated_gameplay_snapshots[
+static int32_t integrated_gameplay_snapshots[
 	INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT][INTEGRATED_GAMEPLAY_FIELD_COUNT];
 static int16_t integrated_gameplay_checkpoint_headers[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT * 2];
 static int16_t integrated_gameplay_trace[24 * 9];
@@ -3891,8 +3892,9 @@ int32_t run_oop_production_movement_checks(void) {
 }
 
 static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
-	int16_t *out = integrated_gameplay_snapshots[checkpoint_index];
+	int32_t *out = integrated_gameplay_snapshots[checkpoint_index];
 	int16_t stat_id, ix, iy;
+	int script_index;
 	static const int16_t kinds[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 'L', 'S', 'C', 'C', 'C', 'C', 'C', 'C', 'F' };
 	static const int16_t ids[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 0, 0, 1, 2, 3, 4, 5, 6, 0 };
 
@@ -3943,6 +3945,15 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 			*out++ = state.board.tiles[ix][iy].element;
 			*out++ = state.board.tiles[ix][iy].color;
 		}
+	}
+	*out++ = state.random_seed & 0xFFFFu;
+	*out++ = state.random_seed >> 16;
+	*out++ = state.board.stats[0].data == state.board.stats[1].data ? 1 : 0;
+	for (script_index = 0; script_index < INTEGRATED_GAMEPLAY_SCRIPT_BYTES; script_index++) {
+		*out++ = state.board.stats[1].data != NULL
+			&& script_index < state.board.stats[1].data_len
+			? (uint8_t) state.board.stats[1].data[script_index]
+			: 0;
 	}
 	return (out - integrated_gameplay_snapshots[checkpoint_index]) == INTEGRATED_GAMEPLAY_FIELD_COUNT;
 }

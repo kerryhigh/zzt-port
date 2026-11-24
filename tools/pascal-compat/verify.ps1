@@ -394,11 +394,12 @@ $probeWriter = @'
 procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 	var
 		output: text;
-		ix, iy, statId: integer;
+		ix, iy, statId, scriptByteIndex: integer;
+		scriptByte: byte;
 	begin
 		Assign(output, 'INTEGPR.OUT');
 		Append(output);
-		Write(output, checkpointKind, ' ', checkpointId, ' ', 51 + ((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2), ' ',
+		Write(output, checkpointKind, ' ', checkpointId, ' ', 51 + ((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 + 1 + 19, ' ',
 			World.Info.Ammo, ' ', World.Info.Gems, ' ', World.Info.Health,
 			' ', World.Info.CurrentBoard, ' ', World.Info.Torches, ' ', World.Info.TorchTicks,
 			' ', World.Info.EnergizerTicks, ' ', World.Info.Score,
@@ -418,6 +419,14 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 		for ix := 0 to BOARD_WIDTH + 1 do
 			for iy := 0 to BOARD_HEIGHT + 1 do
 				Write(output, Board.Tiles[ix][iy].Element, ' ', Board.Tiles[ix][iy].Color, ' ');
+		Write(output, (RandSeed and $FFFF), ' ', ((RandSeed shr 16) and $FFFF), ' ',
+			Ord(Board.Stats[0].Data = Board.Stats[1].Data), ' ');
+		for scriptByteIndex := 0 to 18 do begin
+			scriptByte := 0;
+			if (Board.Stats[1].Data <> nil) and (scriptByteIndex < Board.Stats[1].DataLen) then
+				Move(Ptr(Seg(Board.Stats[1].Data^), Ofs(Board.Stats[1].Data^) + scriptByteIndex)^, scriptByte, 1);
+			Write(output, scriptByte, ' ');
+		end;
 		WriteLn(output);
 		Close(output);
 	end;
@@ -987,11 +996,20 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'INTEGPRB.PAS') -Destination (Jo
 Write-Host 'Compiling and running direct Turbo Pascal sound-tick probe: SOUNDTIK'
 Invoke-DosboxSession 'SOUNDTIK' @(
     'TPC.EXE /B /EBIN /ISRC /USRC SOUNDTIK.PAS > SOUNDTIK.LOG',
-    'BIN\SOUNDTIK.EXE',
+    'BIN\SOUNDTIK.EXE'
+)
+Write-Host 'Compiling and running the direct Turbo Pascal sound-clock probe: SOUNDCLK'
+Invoke-DosboxSession 'SOUNDCLK' @(
     'TPC.EXE /EBIN /ISRC /USRC SOUNDCLK.PAS > SOUNDCLK.LOG',
-    'BIN\SOUNDCLK.EXE',
-    'TPC.EXE /B /EBIN /ISRC /USRC GAMESCHD.PAS > GAMESCHD.LOG',
-    'BIN\GAMESCHD.EXE',
+    'BIN\SOUNDCLK.EXE'
+)
+Write-Host 'Compiling and running direct Turbo Pascal game-scheduler probe: GAMESCHD'
+Invoke-DosboxSession 'GAMESCHD-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC GAMESCHD.PAS > GAMESCHD-COMPILE.LOG'
+)
+Invoke-DosboxSession 'GAMESCHD' @('BIN\GAMESCHD.EXE')
+Write-Host 'Compiling and running integrated Turbo Pascal gameplay probe: INTEGPRB'
+Invoke-DosboxSession 'INTEGPRB' @(
     'TPC.EXE /B /EBIN /ISRC /USRC INTEGPRB.PAS > INTEGPRB.LOG',
     'BIN\INTEGPRB.EXE'
 )

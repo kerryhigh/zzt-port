@@ -5,7 +5,8 @@ const wasmPath = process.argv[3];
 if (!pascalPath || !wasmPath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm>');
 
 const cellCount = 62 * 27;
-const fieldCount = 51 + cellCount * 2;
+const scriptBytes = 19;
+const fieldCount = 51 + cellCount * 2 + 2 + 1 + scriptBytes;
 const checkpointSpecs = [
   { kind: 'L', id: 0, name: 'loaded initial state' },
   { kind: 'S', id: 0, name: 'game-loop start' },
@@ -42,6 +43,7 @@ const schedulerNames = [
   'current tick', 'current stat tick', 'tick speed', 'tick duration', 'tick counter',
   'paused', 'exit requested', 'input delta x', 'input delta y', 'key pressed', 'key buffer length',
 ];
+const tileFieldEnd = 51 + cellCount * 2;
 function describeField(index) {
   if (index < scalarNames.length) return scalarNames[index];
   if (index < 40) {
@@ -49,11 +51,17 @@ function describeField(index) {
     return `stat ${Math.floor(offset / 14)} ${statNames[offset % 14]}`;
   }
   if (index < 51) return schedulerNames[index - 40];
-  const tileField = index - 51;
-  const tileIndex = Math.floor(tileField / 2);
-  const x = Math.floor(tileIndex / 27);
-  const y = tileIndex % 27;
-  return `tile (${x},${y}) ${tileField % 2 === 0 ? 'element' : 'color'}`;
+  if (index < tileFieldEnd) {
+    const tileField = index - 51;
+    const tileIndex = Math.floor(tileField / 2);
+    const x = Math.floor(tileIndex / 27);
+    const y = tileIndex % 27;
+    return `tile (${x},${y}) ${tileField % 2 === 0 ? 'element' : 'color'}`;
+  }
+  if (index === tileFieldEnd) return 'RNG seed low word';
+  if (index === tileFieldEnd + 1) return 'RNG seed high word';
+  if (index === tileFieldEnd + 2) return 'stat 0/1 script pointer alias';
+  return `stat 1 script byte ${index - tileFieldEnd - 3}`;
 }
 
 (async () => {
@@ -100,7 +108,7 @@ function describeField(index) {
   }
   const headers = new Int16Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_checkpoint_headers_ptr(), snapshotCount * 2);
-  const actual = new Int16Array(instance.exports.memory.buffer,
+  const actual = new Int32Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_snapshots_ptr(), snapshotCount * fieldCount);
   let comparedFields = 0;
   for (let row = 0; row < checkpointSpecs.length; row++) {
@@ -128,7 +136,7 @@ function describeField(index) {
     }
   }
 
-  const final = new Int16Array(instance.exports.memory.buffer,
+  const final = new Int32Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_output_ptr(), fieldCount);
   if (final[1] !== 1 || final[11] !== 1 || final[45] !== 0 || final[46] !== 1) {
     throw new Error(`Integrated gameplay invariant failed: gems=${final[1]}, stats=${final[11]}, paused=${final[45]}, exit=${final[46]}`);

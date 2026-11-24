@@ -638,8 +638,9 @@ function pascalSoundParse(input) {
       integratedInstance.exports.integrated_gameplay_trace_ptr(), 24 * 9);
     throw new Error(`Integrated gameplay replay returned ${integratedResult}; trace=${Array.from(trace).join(' ')}`);
   }
-  const integratedOutput = new Int16Array(integratedInstance.exports.memory.buffer,
-    integratedInstance.exports.integrated_gameplay_output_ptr(), 3399);
+  const integratedFieldCount = 51 + (62 * 27 * 2) + 2 + 1 + 19;
+  const integratedOutput = new Int32Array(integratedInstance.exports.memory.buffer,
+    integratedInstance.exports.integrated_gameplay_output_ptr(), integratedFieldCount);
   if (integratedOutput[1] !== 1 || integratedOutput[11] !== 1
       || integratedOutput[45] !== 0 || integratedOutput[46] !== 1) {
     throw new Error(`Integrated gameplay invariant failed: gems=${integratedOutput[1]}, stats=${integratedOutput[11]}, paused=${integratedOutput[45]}, exit=${integratedOutput[46]}`);
