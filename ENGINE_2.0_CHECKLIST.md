@@ -43,7 +43,7 @@ The current clean-suite record dated 2026-11-24 reports 83 direct Turbo Pascal 5
 
 - [x] Reuse a shared LibZoo engine and serializer for Android and Windows rather than maintaining duplicate gameplay engines.
 - [x] Windows builds and engine/I/O smoke checks exercise the shared engine; Android host/runtime checks also exercise LibZoo.
-- [~] Editor board mutation and flood-fill/placement helpers remain in Android `native-lib.c`, and `.HI` logic remains in Android `HighScores.java`. The `.BRD` parser/serializer has now moved into `third_party/libzoo` and the Android JNI adapter calls that shared API; platform-neutral editor mutations and high-score operations remain open.
+- [~] Flood-fill queue traversal has moved into the shared `third_party/libzoo/src/libzoo/zoo_editor.c` API and is called by the Android JNI adapter. Placement/paste/stat mutation side effects and `.HI` logic still remain in Android `native-lib.c` and `HighScores.java`; their platform-neutral implementations remain open. The four direct Pascal fill maps now compare against the shared queue implementation.
 - [ ] Put each in-scope semantic operation behind one platform-neutral implementation/API, leaving JNI, Win32, Android Java, filesystem, rendering, input, and sound-output adapters outside it. Do not fork or duplicate game rules to satisfy this item.
 
 ### World state, board lifecycle, and transitions — [~]

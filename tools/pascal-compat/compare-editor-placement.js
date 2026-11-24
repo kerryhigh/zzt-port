@@ -57,7 +57,7 @@ const pascalStat = readRows(pascalStatPath, statLayouts, 'stat-paste');
       }
     }
   }
-  console.log('Turbo Pascal versus extracted Android editor helpers: pattern placement, protected player, plain tile paste, MAX_STAT refusal, and script-bearing Bomb copy/paste including Pascal shallow-data aliasing match; production no-script paste self-check also passes.');
+  console.log('Turbo Pascal versus extracted Android editor placement adapters: pattern placement, protected player, plain tile paste, MAX_STAT refusal, and script-bearing Bomb copy/paste including Pascal shallow-data aliasing match; production no-script paste self-check also passes.');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

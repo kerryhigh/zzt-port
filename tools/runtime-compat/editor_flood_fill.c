@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "zoo.h"
+#include "zoo_editor.h"
 
 #define JNIEXPORT
 #define JNICALL

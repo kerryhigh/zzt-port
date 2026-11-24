@@ -24,6 +24,7 @@ add_custom_command(
 
 set(LIBZOO_SOURCES
 	${LIBZOO}/src/libzoo/zoo_callstack.c
+	${LIBZOO}/src/libzoo/zoo_editor.c
 	${LIBZOO}/src/libzoo/zoo_elements.c
 	${LIBZOO}/src/libzoo/zoo_game_io.c
 	${LIBZOO}/src/libzoo/zoo_game.c

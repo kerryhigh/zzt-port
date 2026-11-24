@@ -434,7 +434,9 @@ $editorFloodArgs = @(
     '-Wl,--export=run_editor_placement_checks', '-Wl,--export=editor_placement_output_ptr',
     '-Wl,--export-memory', '-Wl,--gc-sections',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
-    (Join-Path $PSScriptRoot 'editor_flood_fill.c'), '-o', $editorFloodWasm
+    (Join-Path $PSScriptRoot 'editor_flood_fill.c'),
+    (Join-Path $repoRoot 'third_party\libzoo\src\libzoo\zoo_editor.c'),
+    '-o', $editorFloodWasm
 )
 & $python.Source $editorFloodExtractor `
     (Join-Path $repoRoot 'app\src\main\cpp\native-lib.c') $editorFloodFunction
@@ -446,11 +448,11 @@ if ($LASTEXITCODE -ne 0) { throw "Android editor placement helper extraction fai
     (Join-Path $repoRoot 'third_party\libzoo\src\libzoo\zoo_game.c') $statAddFunction
 if ($LASTEXITCODE -ne 0) { throw "Production stat-add extraction failed with exit code $LASTEXITCODE." }
 & $clang @editorFloodArgs
-if ($LASTEXITCODE -ne 0) { throw "Extracted Android editorFloodFill harness compilation failed with exit code $LASTEXITCODE." }
+if ($LASTEXITCODE -ne 0) { throw "Shared LibZoo editor flood-fill harness compilation failed with exit code $LASTEXITCODE." }
 & $node.Source (Join-Path $PSScriptRoot 'run.js') $wasm $windowWasm $reloadWasm $soundWasm $oopWasm $rngWasm $playerInputWasm $spinningGunWasm $blinkWallWasm $directionSeekWasm $boardEdgeWasm $transporterWasm $soundPcmWasm $playerGlyphWasm $windowFileHintsWasm $monitorWasm $boardShootWasm $oopMovementWasm $soundTickWasm $gameClockWasm $integratedGameplayWasm
 if ($LASTEXITCODE -ne 0) { throw "Game tick exit checks failed with exit code $LASTEXITCODE." }
 & $node.Source (Join-Path $PSScriptRoot 'editor-flood-fill-smoke.js') $editorFloodWasm
-if ($LASTEXITCODE -ne 0) { throw "Extracted Android editorFloodFill self-check failed with exit code $LASTEXITCODE." }
+if ($LASTEXITCODE -ne 0) { throw "Shared LibZoo editor flood-fill self-check failed with exit code $LASTEXITCODE." }
 $javac = Get-Command javac -ErrorAction Stop
 $java = Get-Command java -ErrorAction Stop
 $videoAdapter = Join-Path $repoRoot 'app\src\main\java\com\kerry\zzt\VideoAttributes.java'

@@ -66,7 +66,7 @@ const compareRows = (name, expected, actual) => {
   if (fullResult.changed !== 1334) throw new Error(`Full-interior fill count differs: production ${fullResult.changed}`);
   compareRows('full 60-by-25 board map', full.slice(1), fullResult.rows);
 
-  console.log('Turbo Pascal versus extracted Android editorFloodFill: enclosed 3-by-3, 792-cell wrap, dense 17-by-17, and full 60-by-25 board maps match.');
+  console.log('Turbo Pascal versus shared LibZoo editor flood fill: enclosed 3-by-3, 792-cell wrap, dense 17-by-17, and full 60-by-25 board maps match.');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

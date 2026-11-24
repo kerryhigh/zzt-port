@@ -1515,12 +1515,12 @@ try {
     & node 'tools/pascal-compat/compare-editor-flood-fill.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\runtime-compatibility\editor_flood_fill.wasm')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/Android editor flood-fill comparison failed with exit code $LASTEXITCODE." }
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/shared LibZoo editor flood-fill comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-placement.js' `
         (Join-Path $stageRoot 'EDPLACE.OUT') `
         (Join-Path $stageRoot 'EDSTAT.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\editor_flood_fill.wasm')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/Android editor placement/paste comparison failed with exit code $LASTEXITCODE." }
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/Android editor placement-adapter comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-element-defs.js' `
         (Join-Path $stageRoot 'ELDEFPRB.OUT') `
         (Join-Path $repoRoot 'third_party\libzoo\src\libzoo\zoo_element_defs.inc')

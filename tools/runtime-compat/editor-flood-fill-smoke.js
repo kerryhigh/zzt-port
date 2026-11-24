@@ -25,7 +25,7 @@ if (!wasmPath) throw new Error('Usage: node editor-flood-fill-smoke.js editor_fl
   if (placement.some((value, index) => value !== expectedPlacement[index])) {
     throw new Error(`Editor placement production state differs: ${placement.join(',')}`);
   }
-  console.log('Extracted Android editor helpers: flood-fill, pattern/player/tile paste, MAX_STAT refusal, and shallow script-bearing Bomb copy/paste self-check pass.');
+  console.log('Shared LibZoo flood-fill with the production Android placement adapter: four map checks plus pattern/player/tile paste, MAX_STAT refusal, and shallow script-bearing Bomb copy/paste pass.');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

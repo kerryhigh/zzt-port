@@ -7,6 +7,7 @@ TOOLSDIR := $(BASEDIR)/tools
 SOURCES := $(foreach srcf,$(SOURCES),$(abspath $(srcf)))
 SOURCES += \
   $(SRCDIR)/libzoo/zoo_callstack.c \
+  $(SRCDIR)/libzoo/zoo_editor.c \
   $(SRCDIR)/libzoo/zoo_elements.c \
   $(SRCDIR)/libzoo/zoo_game_io.c \
   $(SRCDIR)/libzoo/zoo_game.c \

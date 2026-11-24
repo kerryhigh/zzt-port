@@ -11,6 +11,7 @@
 #include "zoo_sound_pcm.h"
 #include "zoo_ui.h"
 #include "zoo_editor_brd.h"
+#include "zoo_editor.h"
 #include "zzt_frame_scheduler.h"
 
 #define BOARD_CELLS (ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT)
@@ -1153,6 +1154,24 @@ Java_com_kerry_zzt_ZztNative_editorPlaceText(JNIEnv *env, jclass clazz, jint x, 
     return 0;
 }
 
+typedef struct editor_flood_fill_context {
+    bool use_clipboard;
+    bool use_pattern_color;
+    uint8_t element;
+    uint8_t cursor_color;
+} editor_flood_fill_context;
+
+static int editor_flood_fill_apply(zoo_state *state, int16_t x, int16_t y,
+        void *opaque_context) {
+    (void) state;
+    editor_flood_fill_context *context = (editor_flood_fill_context *) opaque_context;
+    if (context->use_clipboard) return editor_paste_tile(x, y);
+    if (context->use_pattern_color) {
+        return editor_place_pattern_element(x, y, context->element, context->cursor_color);
+    }
+    return editor_place_element(x, y, context->element, context->cursor_color);
+}
+
 JNIEXPORT jint JNICALL
 Java_com_kerry_zzt_ZztNative_editorFloodFill(JNIEnv *env, jclass clazz, jint x, jint y,
         jint element, jint cursor_color, jboolean use_clipboard, jboolean use_pattern_color) {
@@ -1164,52 +1183,14 @@ Java_com_kerry_zzt_ZztNative_editorFloodFill(JNIEnv *env, jclass clazz, jint x, 
         return ZOO_ERROR_INVAL;
     }
 
-    static const int16_t dx[4] = {0, 0, -1, 1};
-    static const int16_t dy[4] = {-1, 1, 0, 0};
-    // Match the reconstructed Pascal editor's 256-entry queue and byte counters.
-    uint8_t queue_x[256] = {0};
-    uint8_t queue_y[256] = {0};
-    uint8_t to_fill = 1;
-    uint8_t filled = 0;
-    int16_t cell_x = (int16_t) x;
-    int16_t cell_y = (int16_t) y;
-    int changed = 0;
-    zoo_tile source = game.board.tiles[x][y];
-
-    while (to_fill != filled) {
-        zoo_tile before = game.board.tiles[cell_x][cell_y];
-        int result = use_clipboard
-                ? editor_paste_tile(cell_x, cell_y)
-                : (use_pattern_color == JNI_TRUE
-                        ? editor_place_pattern_element(cell_x, cell_y,
-                                (uint8_t) element, (uint8_t) cursor_color)
-                        : editor_place_element(cell_x, cell_y,
-                                (uint8_t) element, (uint8_t) cursor_color));
-        if (result < 0) return result;
-        zoo_tile after = game.board.tiles[cell_x][cell_y];
-        if (result == 0 && (before.element != after.element || before.color != after.color)) {
-            changed++;
-            for (int i = 0; i < 4; i++) {
-                int16_t next_x = cell_x + dx[i];
-                int16_t next_y = cell_y + dy[i];
-                if (next_x < 0 || next_x > ZOO_BOARD_WIDTH + 1
-                        || next_y < 0 || next_y > ZOO_BOARD_HEIGHT + 1) {
-                    continue;
-                }
-                zoo_tile candidate = game.board.tiles[next_x][next_y];
-                if (candidate.element == source.element
-                        && (source.element == ZOO_E_EMPTY || candidate.color == source.color)) {
-                    queue_x[to_fill] = (uint8_t) next_x;
-                    queue_y[to_fill] = (uint8_t) next_y;
-                    to_fill = (uint8_t) (to_fill + 1);
-                }
-            }
-        }
-        filled = (uint8_t) (filled + 1);
-        cell_x = queue_x[filled];
-        cell_y = queue_y[filled];
-    }
-    return changed;
+    editor_flood_fill_context context = {
+        use_clipboard != JNI_FALSE,
+        use_pattern_color == JNI_TRUE,
+        (uint8_t) element,
+        (uint8_t) cursor_color
+    };
+    return zoo_editor_flood_fill(&game, (int16_t) x, (int16_t) y,
+            editor_flood_fill_apply, &context);
 }
 
 JNIEXPORT jint JNICALL
