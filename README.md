@@ -12,7 +12,7 @@ Engine 2.0 covers shared world and board state, gameplay timing, element and obj
 
 The shared engine is used by both frontends. The Windows x64 build, Android builds, serializer probes, runtime probes, and focused compiled-Pascal comparisons have passing evidence recorded in the checklists. The current Pascal suite record has 83 direct Turbo Pascal 5.5 probe sessions and a 3,399-field integrated prototype snapshot. Engine 2.0 remains **in progress**: the ten-fixture per-cycle replay corpus and multiple shared-engine/API blockers remain open. This repository does not claim complete ZZT compatibility.
 
-The Android app keeps its portrait 60�25 playfield. The Windows frontend presents the DOS 80�25 character grid and supports windowed/fullscreen use. Platform implementation checklists are [`PORT_CHECKLIST.md`](PORT_CHECKLIST.md) and [`WINDOWS_PORT_CHECKLIST.md`](WINDOWS_PORT_CHECKLIST.md); their UI and device requirements do not gate Engine 2.0.
+The Android app keeps its portrait 60×25 playfield. The Windows frontend presents the DOS 80×25 character grid and supports windowed/fullscreen use. Platform implementation checklists are [`PORT_CHECKLIST.md`](PORT_CHECKLIST.md) and [`WINDOWS_PORT_CHECKLIST.md`](WINDOWS_PORT_CHECKLIST.md); their UI and device requirements do not gate Engine 2.0.
 
 ## Build
 
@@ -58,11 +58,11 @@ The reconstructed source documents Turbo Pascal 5.5 acquisition and build requir
 
 Evidence labels used in the checklist and reports:
 
-- **D** � direct probe of compiled Pascal source, with environmental hooks recorded.
-- **S** � expectation derived from Pascal source but not executed by the compiled oracle.
-- **P** � production-only regression with no matching Pascal output.
-- **DP** � direct Pascal output compared with production output.
-- **I** � integrated gameplay replay from shared initial state through named cycle and transition checkpoints.
+- **D** — direct probe of compiled Pascal source, with environmental hooks recorded.
+- **S** — expectation derived from Pascal source but not executed by the compiled oracle.
+- **P** — production-only regression with no matching Pascal output.
+- **DP** — direct Pascal output compared with production output.
+- **I** — integrated gameplay replay from shared initial state through named cycle and transition checkpoints.
 
 These categories are reported separately; focused probe counts are not a substitute for integrated gameplay coverage.
 
