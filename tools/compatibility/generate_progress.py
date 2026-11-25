@@ -11,12 +11,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 INVENTORY = ROOT / "tools/compatibility/acceptance_inventory.json"
 RUN = ROOT / "tools/compatibility/latest_verification.json"
+SERIALIZATION_MANIFEST = ROOT / "tools/compatibility/serialization_fixture_manifest.json"
 OUT = ROOT / "COMPATIBILITY_PROGRESS.md"
 
 
 def main() -> None:
     inv = json.loads(INVENTORY.read_text(encoding="utf-8"))
     run = json.loads(RUN.read_text(encoding="utf-8")) if RUN.exists() else {}
+    serialization_manifest = (
+        json.loads(SERIALIZATION_MANIFEST.read_text(encoding="utf-8"))
+        if SERIALIZATION_MANIFEST.exists()
+        else {}
+    )
+    serialization_formats = serialization_manifest.get("formats", [])
+    serialization_samples_matched = sum(
+        1
+        for item in serialization_formats
+        if item.get("comparison", {}).get("exit_code") == 0
+        and item.get("comparison", {}).get("bytes_matched")
+        == item.get("comparison", {}).get("bytes_total")
+    )
     by_blocker: defaultdict[str, list[dict]] = defaultdict(list)
     acceptance_counts = Counter(item["status"] for item in inv["acceptance_cases"])
     unclassified_acceptance = [item for item in inv["acceptance_cases"] if not item.get("evidence_class")]
@@ -108,6 +122,11 @@ def main() -> None:
         f"- Direct `.HI` Pascal-to-shared-engine byte comparisons: **{high_score.get('passed', 'not recorded')}/{high_score.get('configured', 'not recorded')}** passed ({high_score.get('save_cases', 'not recorded')} save, {high_score.get('load_reset_cases', 'not recorded')} load/reset, {high_score.get('add_cases', 'not recorded')} insertion cases); source-model rows: **{high_score.get('source_derived_model_rows', 'not recorded')}**.",
         f"- Direct Pascal `.BRD` `BoardClose` record: **{pascal_boardclose.get('record_bytes_matched', 'not recorded')}/{pascal_boardclose.get('record_size_bytes', 'not recorded')}** payload bytes matched through shared LibZoo import/export; external file: {pascal_boardclose.get('fixture_size_bytes', 'not recorded')} bytes; SHA-256 `{pascal_boardclose.get('sha256', 'not recorded')}`.",
         f"- Direct Pascal `BoardClose`/`WorldSave` differential: **{pascal_boardclose_worldsave.get('bytes_matched', 'not recorded')}/{pascal_boardclose_worldsave.get('world_size_bytes', 'not recorded')}** full `.ZZT` bytes matched production serialization; SHA-256 `{pascal_boardclose_worldsave.get('sha256', 'not recorded')}`; unexplained mismatches: {pascal_boardclose_worldsave.get('byte_differences', 'not recorded')}.",
+        f"- Source-produced legacy-format samples in [`serialization_fixture_manifest.json`](tools/compatibility/serialization_fixture_manifest.json): **{serialization_samples_matched}/{len(serialization_formats)}** have complete byte comparisons; this establishes one valid sample per listed format, not the outstanding serialized-field and malformed-boundary matrix.",
+        *([
+            f"  - `{item.get('format', 'unknown')}`: {item.get('comparison', {}).get('bytes_matched', 'not recorded')}/{item.get('comparison', {}).get('bytes_total', 'not recorded')} bytes; SHA-256 `{item.get('sha256', 'not recorded')}`; {'pass' if item.get('comparison', {}).get('exit_code') == 0 and item.get('comparison', {}).get('bytes_matched') == item.get('comparison', {}).get('bytes_total') else 'pending/fail'} ({item.get('evidence_class', 'unclassified')})."
+            for item in serialization_formats
+        ] if serialization_formats else ["  - No source-produced serialization samples are recorded in a manifest."]),
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
         f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",

@@ -42,6 +42,11 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **16/16** passed (1 save, 8 load/reset, 7 insertion cases); source-model rows: **256**.
 - Direct Pascal `.BRD` `BoardClose` record: **289/289** payload bytes matched through shared LibZoo import/export; external file: 291 bytes; SHA-256 `e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd`.
 - Direct Pascal `BoardClose`/`WorldSave` differential: **25928/25928** full `.ZZT` bytes matched production serialization; SHA-256 `5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa`; unexplained mismatches: 0.
+- Source-produced legacy-format samples in [`serialization_fixture_manifest.json`](tools/compatibility/serialization_fixture_manifest.json): **4/4** have complete byte comparisons; this establishes one valid sample per listed format, not the outstanding serialized-field and malformed-boundary matrix.
+  - `.ZZT`: 25928/25928 bytes; SHA-256 `5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa`; pass (DP).
+  - `.SAV`: 26465/26465 bytes; SHA-256 `956ffd4165a10113f2b1c9fb9a396018bfa1eb59c566dffb612285f93eb41f37`; pass (DP).
+  - `.BRD`: 289/289 bytes; SHA-256 `e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd`; pass (DP).
+  - `.HI`: 1590/1590 bytes; SHA-256 `419fceab58ebf6880d90ba7d87b3584f08ac8af63564eab0d86276e7544da09c`; pass (DP).
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
 - Production-only regression cases: **not enumerated; one targeted E2-02 short-header safe-reopen regression passed**; the finite case inventory is still being mapped.
 - Integrated replay fixtures: **0/10** complete. Prototype comparisons: 41690 fields across 12 checkpoints; per-cycle checkpoints: present.

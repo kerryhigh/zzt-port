@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "acceptance_case": "E2-02-AC001",
+  "last_verified": "2026-11-25",
+  "runner": "tools/pascal-compat/verify.ps1",
+  "status": "partial",
+  "note": "One compiled-Pascal source-produced sample per legacy format has a passing production byte comparison. Outputs are generated in the ignored Pascal staging directory; this manifest records their reproducible source, hashes, and comparison paths. The full serialized-field and boundary fixture matrix is incomplete.",
+  "formats": [
+    {
+      "format": ".ZZT",
+      "source_probe": "tools/pascal-compat/BOARDENC.PAS",
+      "source_operation": "Load DEMO.ZZT, replace the current 60x25 playfield tiles, call BoardClose, then WorldSave('BOARDENC', '.ZZT').",
+      "staging_output": "build/pascal-compat-verification/BOARDENC.ZZT",
+      "size_bytes": 25928,
+      "sha256": "5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa",
+      "evidence_class": "DP",
+      "production_path": "zoo_board_open -> zoo_board_close -> zoo_io_world_write",
+      "comparison": {
+        "tool": "tools/pascal-compat/compare-pascal-boardenc.js",
+        "bytes_matched": 25928,
+        "bytes_total": 25928,
+        "exit_code": 0
+      }
+    },
+    {
+      "format": ".SAV",
+      "source_probe": "tools/pascal-compat/WORLDSAV.PAS",
+      "source_operation": "Load DEMO.ZZT, set save-state semantics, and call WorldSave with the .SAV extension.",
+      "staging_output": "build/pascal-compat-verification/PASOUT.SAV",
+      "size_bytes": 26465,
+      "sha256": "956ffd4165a10113f2b1c9fb9a396018bfa1eb59c566dffb612285f93eb41f37",
+      "evidence_class": "DP",
+      "production_path": "zoo_world_save",
+      "comparison": {
+        "tool": "tools/pascal-compat/compare-save.js",
+        "bytes_matched": 26465,
+        "bytes_total": 26465,
+        "exit_code": 0
+      }
+    },
+    {
+      "format": ".BRD",
+      "source_probe": "tools/pascal-compat/BOARDENC.PAS",
+      "source_operation": "Capture the BoardClose record with a DOS two-byte length prefix.",
+      "staging_output": "build/pascal-compat-verification/BOARDENC.BRD",
+      "size_bytes": 291,
+      "payload_bytes": 289,
+      "sha256": "e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd",
+      "evidence_class": "DP",
+      "production_path": "zoo_editor_brd_import_record -> zoo_editor_brd_parse -> zoo_editor_brd_serialize",
+      "comparison": {
+        "tool": "tools/pascal-compat/compare-pascal-boardenc.js",
+        "bytes_matched": 289,
+        "bytes_total": 289,
+        "exit_code": 0,
+        "note": "The length word is validated; production import/export compares the complete record payload."
+      }
+    },
+    {
+      "format": ".HI",
+      "source_probe": "tools/pascal-compat/HISAVPRB.PAS",
+      "source_operation": "Call reconstructed-Pascal HighScoresSave for the complete high-score table.",
+      "staging_output": "build/pascal-compat-verification/PASPROBE.HI",
+      "size_bytes": 1590,
+      "sha256": "419fceab58ebf6880d90ba7d87b3584f08ac8af63564eab0d86276e7544da09c",
+      "evidence_class": "DP",
+      "production_path": "shared LibZoo high-score table save/load implementation",
+      "comparison": {
+        "tool": "tools/highscore-compat/verify.ps1",
+        "bytes_matched": 1590,
+        "bytes_total": 1590,
+        "exit_code": 0,
+        "note": "This source-produced save is one of sixteen direct Pascal high-score byte comparisons."
+      }
+    }
+  ],
+  "existing_boundary_probes": [
+    "tools/pascal-compat/SHORTLEN.PAS",
+    "tools/pascal-compat/NEGLEN.PAS",
+    "tools/pascal-compat/WORLDTIT.PAS",
+    "tools/pascal-compat/FULLLOAD.PAS",
+    "tools/pascal-compat/BOARDDEC.PAS",
+    "tools/pascal-compat/BOARDRLE.PAS",
+    "tools/pascal-compat/BRDIOPRB.PAS",
+    "tools/pascal-compat/NEGBRD.PAS",
+    "tools/pascal-compat/HILOADPRB.PAS",
+    "tools/serializer-compat/",
+    "tools/highscore-compat/"
+  ],
+  "boundary_matrix_complete": false,
+  "remaining": [
+    "Check in a versioned generated fixture set for every required serialized field and value boundary across the four formats.",
+    "Complete truncation-at-every-boundary and malformed/error-class comparisons where the corresponding DOS operation supports them.",
+    "Resolve the direct Pascal short-header BoardOpen path under a stable, documented allocator history."
+  ]
+}

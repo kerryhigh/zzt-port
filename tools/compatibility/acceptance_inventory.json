@@ -126,13 +126,14 @@
         "tools/serializer-compat/world_roundtrip.c (run_editor_brd_record_roundtrip, run_pascal_boardclose_worldsave)"
       ],
       "test_fixture": [
+        "tools/compatibility/serialization_fixture_manifest.json (source-produced .ZZT/.SAV/.BRD/.HI samples with hashes and comparison outcomes)",
         "tools/pascal-compat/BOARDENC.PAS (source BoardClose output capture)",
         "tools/pascal-compat/compare-pascal-boardenc.js",
         "build/pascal-compat-verification/BOARDENC.BRD (generated staging fixture; not committed)",
         "build/pascal-compat-verification/BOARDENC.ZZT (generated Pascal WorldSave output; not committed)"
       ],
       "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa.",
-      "verification_result": "Partial DP: the 289-byte Pascal BoardClose record round-trips through shared LibZoo .BRD import/export, and the complete 25,928-byte Pascal WorldSave output matches the production zoo_board_close plus zoo_io_world_write output byte-for-byte. The clean full runner passed 84/84 direct Pascal sessions and 44/44 configured comparison invocations. A checked-in four-format manifest, per-field/boundary matrix, and full malformed/error coverage remain outstanding.",
+      "verification_result": "Partial DP: the checked-in serialization fixture manifest records one source-produced .ZZT, .SAV, .BRD, and .HI sample, each with a complete matching byte comparison and SHA-256. The 289-byte Pascal BoardClose record round-trips through shared LibZoo .BRD import/export, and the complete 25,928-byte Pascal WorldSave output matches production zoo_board_close plus zoo_io_world_write byte-for-byte. The clean full runner passed 84/84 direct Pascal sessions and 44/44 configured comparison invocations. The required per-field/boundary matrix and full malformed/error coverage remain outstanding.",
       "required_evidence_classes": [
         "D",
         "DP"
