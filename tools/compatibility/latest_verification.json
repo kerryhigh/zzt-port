@@ -2,10 +2,10 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "6a8198a755a7bae1440238b9f89b86dac52865e1: test: compare Pascal BoardClose bytes (E2-02 partial)",
+    "root_revision": "c7dcbd22007f48c6e251cd8e0036497e43bfda5b: test: compare Pascal BoardClose WorldSave output (E2-02 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 84/84 direct Turbo Pascal 5.5 sessions and 44/44 configured Pascal-to-production differentials. The direct Pascal BoardClose probe emitted a 291-byte length-prefixed .BRD; all 289 record bytes matched the shared LibZoo import/export path. Runtime compatibility passed. The integrated prototype matched 12 checkpoints and 41,690 state fields, two sound events / 20 fields, nine cell writes / 36 fields, and 565 deterministic bytes in a generated 961-byte fresh-world SAV. Both engines then loaded the exact Pascal-generated SAV (WorldLoad=true; zoo_world_load=0) and generated a round-trip SAV with all 949 preserved non-pointer bytes matching; only 12 process-specific stat pointer positions were classified. The integrated probe is compiled and run in separate DOSBox-X sessions to control inherited allocator history. The short-header BoardOpen attempt remains excluded because it has no stable oracle result; the BRDXFER modal-boundary intervention is documented separately.",
+    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 84/84 direct Turbo Pascal 5.5 sessions and 44/44 configured Pascal-to-production comparison invocations. The compiled-Pascal BoardClose/WorldSave output matched shared LibZoo zoo_board_close plus zoo_io_world_write byte-for-byte across the complete 25,928-byte .ZZT (SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa); the 289-byte Pascal board record separately matched shared .BRD import/export. Runtime compatibility passed. The integrated prototype matched 12 checkpoints and 41,690 state fields, two sound events / 20 fields, nine cell writes / 36 fields, and 565 deterministic bytes in a generated 961-byte fresh-world SAV. Both engines then loaded the exact Pascal-generated SAV (WorldLoad=true; zoo_world_load=0) and generated a round-trip SAV with all 949 preserved non-pointer bytes matching; only 12 process-specific stat pointer positions were classified. The integrated probe is compiled and run in separate DOSBox-X sessions to control inherited allocator history. The short-header BoardOpen attempt remains excluded because it has no stable oracle result; the BRDXFER modal-boundary intervention is documented separately.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -59,13 +59,13 @@
       "sessions": 84,
       "standard_programs": 54,
       "standalone_sessions": 30,
-      "session_result": "84/84 configured sessions passed in the latest clean runner; BOARDENC additionally emits a complete binary .BRD fixture."
+      "session_result": "84/84 configured sessions passed in the latest clean runner; BOARDENC additionally emits a complete binary .BRD fixture and Pascal WorldSave .ZZT output."
     },
     "direct_differential_comparisons": {
       "configured": 44,
       "passed": 44,
       "failed": 0,
-      "result": "44/44 configured comparisons passed in the latest clean full runner, including a full-byte compiled-Pascal BoardClose/shared LibZoo .BRD round-trip; zero unexplained mismatches in configured cases; short-header editor-state comparison remains pending"
+      "result": "44/44 configured comparison invocations passed in the latest clean full runner, including full-byte Pascal BoardClose/WorldSave versus shared LibZoo world serialization (25,928 bytes) and a separate 289-byte .BRD parser/export round-trip; zero unexplained mismatches in configured cases; short-header editor-state comparison remains pending"
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -254,7 +254,7 @@
       }
     },
     "other_suites": {
-      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; direct Pascal BoardClose .BRD record matched all 289 bytes through shared LibZoo; short-payload DP and short-header safe-reopen P cases passed",
+      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record also matched through shared .BRD import/export; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
       "runtime": "passed; tools/runtime-compat/verify.ps1 rebuilt the updated integrated WebAssembly harness and exited 0; the clean full Pascal/production run also passed its integrated runtime and differential gates",
       "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
@@ -298,7 +298,7 @@
       "Added dynamic L/S/T/C/F replay checkpoints and normalized game-role comparison. The clean Pascal suite passed 84 direct sessions and 43/43 configured differentials; the prototype matched 34,744 fields across ten checkpoints, plus sound and cell-write traces. E2-10 remains at 0/10 required fixtures.",
       "Added generated .SAV differential capture to the E2-10 prototype. The clean run still passed 84 direct Pascal sessions and 43/43 configured differentials; ten state checkpoints, 34,744 fields, two sound events, nine cell writes, and 565 deterministic save bytes matched. Another 396 fresh-world undefined/pointer bytes are classified; the prototype remains 0/10 required fixtures and Pascal save error outcomes remain open.",
       "Extended INTEGPRB through a second state transition, same-file .SAV load, and round-trip save. The clean full run passed 84 direct Pascal sessions and 43/43 configured comparisons; 12 checkpoints/41,690 fields matched, WorldLoad=true matched zoo_world_load=0, 565 fresh-world stable bytes and 949 loaded-file bytes matched. Compiling and running the allocator-sensitive replay in separate fresh DOSBox-X sessions standardizes its allocation history. E2-10 remains partial at 0/10 fixtures.",
-      "Added full binary capture for the source-produced BoardClose .BRD record. The clean full Pascal runner passed 84 direct sessions and 44/44 configured comparisons; shared LibZoo round-tripped all 289 record bytes. E2-02 AC001 is now partial; the four-format fixture manifest and field/error matrix remain open."
+      "Added a direct Pascal BoardClose/WorldSave differential at the actual file boundary. The clean full runner passed 84 direct sessions and 44/44 configured comparison invocations; all 25,928 .ZZT bytes matched shared LibZoo output, and the 289-byte board record still round-trips through shared .BRD import/export. E2-02 AC001 remains partial; the four-format fixture manifest and field/error matrix remain open."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -327,7 +327,7 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "6a8198a755a7bae1440238b9f89b86dac52865e1",
+      "source_revision": "c7dcbd22007f48c6e251cd8e0036497e43bfda5b",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 84,
       "configured_differentials_passed": 44,
@@ -338,7 +338,7 @@
       "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT build/pascal-compat-verification/INTEGCEL.OUT build/pascal-compat-verification/INTEGSAV.SAV build/pascal-compat-verification/INTEGLOD.OUT build/pascal-compat-verification/INTEG2SV.SAV",
       "integrated_differential_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "complete clean runner; 84 direct sessions and 44/44 configured differentials passed, including 289-byte source-produced BoardClose record compared byte-for-byte; runtime checks passed; 12 integrated checkpoints / 41,690 fields, same-file Pascal WorldLoad=true and production zoo_world_load=0, 565 fresh-world stable save bytes and 949 loaded-file round-trip bytes matched; E2-02 and E2-10 remain open",
+      "status": "complete clean runner; 84 direct sessions and 44/44 configured comparison invocations passed; Pascal BoardClose/WorldSave and shared LibZoo matched the complete 25,928-byte .ZZT, and the 289-byte BoardClose record round-trip passed; runtime checks passed; 12 integrated checkpoints / 41,690 fields, same-file Pascal WorldLoad=true and production zoo_world_load=0, 565 fresh-world stable save bytes and 949 loaded-file round-trip bytes matched; E2-02 and E2-10 remain open",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
       "integrated_checkpoint_count": 12,
       "integrated_state_fields_compared": 41690,
@@ -365,6 +365,18 @@
         "production_api": "zoo_editor_brd_import_record -> zoo_editor_brd_parse -> zoo_editor_brd_serialize",
         "record_bytes_matched": 289,
         "record_byte_differences": 0,
+        "comparison_exit_code": 0,
+        "fixture_corpus_completion_credit": 0
+      },
+      "pascal_boardclose_worldsave": {
+        "evidence_class": "DP",
+        "probe": "tools/pascal-compat/BOARDENC.PAS",
+        "fixture_path": "build/pascal-compat-verification/BOARDENC.ZZT",
+        "world_size_bytes": 25928,
+        "sha256": "5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa",
+        "production_api": "zoo_board_open -> zoo_board_close -> zoo_io_world_write",
+        "bytes_matched": 25928,
+        "byte_differences": 0,
         "comparison_exit_code": 0,
         "fixture_corpus_completion_credit": 0
       }

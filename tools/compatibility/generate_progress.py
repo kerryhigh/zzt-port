@@ -71,6 +71,7 @@ def main() -> None:
     limitations = runner.get("non_blocking_limitations", [])
     remaining = runner.get("remaining_mandatory_work", [])
     pascal_boardclose = runner.get("latest_attempt", {}).get("pascal_boardclose_brd", {})
+    pascal_boardclose_worldsave = runner.get("latest_attempt", {}).get("pascal_boardclose_worldsave", {})
 
     lines = [
         "# Engine 2.0 compatibility progress",
@@ -106,6 +107,7 @@ def main() -> None:
         f"- Direct Pascal-to-production differential invocations in the last completed full suite: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; last complete result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
         f"- Direct `.HI` Pascal-to-shared-engine byte comparisons: **{high_score.get('passed', 'not recorded')}/{high_score.get('configured', 'not recorded')}** passed ({high_score.get('save_cases', 'not recorded')} save, {high_score.get('load_reset_cases', 'not recorded')} load/reset, {high_score.get('add_cases', 'not recorded')} insertion cases); source-model rows: **{high_score.get('source_derived_model_rows', 'not recorded')}**.",
         f"- Direct Pascal `.BRD` `BoardClose` record: **{pascal_boardclose.get('record_bytes_matched', 'not recorded')}/{pascal_boardclose.get('record_size_bytes', 'not recorded')}** payload bytes matched through shared LibZoo import/export; external file: {pascal_boardclose.get('fixture_size_bytes', 'not recorded')} bytes; SHA-256 `{pascal_boardclose.get('sha256', 'not recorded')}`.",
+        f"- Direct Pascal `BoardClose`/`WorldSave` differential: **{pascal_boardclose_worldsave.get('bytes_matched', 'not recorded')}/{pascal_boardclose_worldsave.get('world_size_bytes', 'not recorded')}** full `.ZZT` bytes matched production serialization; SHA-256 `{pascal_boardclose_worldsave.get('sha256', 'not recorded')}`; unexplained mismatches: {pascal_boardclose_worldsave.get('byte_differences', 'not recorded')}.",
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
         f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",

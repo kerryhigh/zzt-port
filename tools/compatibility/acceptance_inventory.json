@@ -122,15 +122,17 @@
       "evidence_class": "DP",
       "production_implementation": [
         "third_party/libzoo/src/libzoo/zoo_editor_brd.c (zoo_editor_brd_import_record, zoo_editor_brd_parse, zoo_editor_brd_serialize)",
-        "tools/serializer-compat/world_roundtrip.c (run_editor_brd_record_roundtrip)"
+        "third_party/libzoo/src/libzoo/zoo_game_io.c (zoo_board_close, zoo_io_world_write)",
+        "tools/serializer-compat/world_roundtrip.c (run_editor_brd_record_roundtrip, run_pascal_boardclose_worldsave)"
       ],
       "test_fixture": [
         "tools/pascal-compat/BOARDENC.PAS (source BoardClose output capture)",
         "tools/pascal-compat/compare-pascal-boardenc.js",
-        "build/pascal-compat-verification/BOARDENC.BRD (generated staging fixture; not committed)"
+        "build/pascal-compat-verification/BOARDENC.BRD (generated staging fixture; not committed)",
+        "build/pascal-compat-verification/BOARDENC.ZZT (generated Pascal WorldSave output; not committed)"
       ],
-      "oracle_output": "BOARDENC.BRD (291 bytes including the two-byte length prefix; SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd); compiled Turbo Pascal BoardClose generated a 289-byte record payload.",
-      "verification_result": "Partial DP: compiled Pascal BoardClose produced one valid length-prefixed .BRD; shared LibZoo import/export matched all 289 record bytes. The clean full runner passed 84/84 direct Pascal sessions and 44/44 configured Pascal-to-production comparisons, including this case. A four-format manifest, per-field/boundary matrix, and full malformed/error coverage remain outstanding.",
+      "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa.",
+      "verification_result": "Partial DP: the 289-byte Pascal BoardClose record round-trips through shared LibZoo .BRD import/export, and the complete 25,928-byte Pascal WorldSave output matches the production zoo_board_close plus zoo_io_world_write output byte-for-byte. The clean full runner passed 84/84 direct Pascal sessions and 44/44 configured comparison invocations. A checked-in four-format manifest, per-field/boundary matrix, and full malformed/error coverage remain outstanding.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -223,7 +225,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-      "verification_result": "Partial: a clean direct BRDXFER session ran the short-payload EditorTransferBoard path with a documented staged post-Escape modal-boundary substitution; its outcome and seven selected initialized board/player fields match shared LibZoo. No stable direct Pascal final state exists for short-header BoardOpen, and untouched-buffer suffix behavior remains pending.",
+    "verification_result": "Partial: a clean direct BRDXFER session ran the short-payload EditorTransferBoard path with a documented staged post-Escape modal-boundary substitution; its outcome and seven selected initialized board/player fields match shared LibZoo. A compiled-Pascal BoardClose/WorldSave case also matches all 25,928 output bytes against shared LibZoo. No stable direct Pascal final state exists for short-header BoardOpen, and untouched-buffer suffix behavior remains pending.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -248,7 +250,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-      "verification_result": "Partial: the latest clean run passed 43 configured Pascal-to-production comparison invocations and 16 direct .HI byte comparisons with zero unexplained mismatches in those cases. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
+    "verification_result": "Partial: the latest clean run passed 44 configured Pascal-to-production comparison invocations and 16 direct .HI byte comparisons with zero unexplained mismatches in those cases. One full Pascal BoardClose/WorldSave output matched shared LibZoo for all 25,928 bytes. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -1230,12 +1232,18 @@
           "third_party/reconstruction-of-zzt/SRC/GAME.PAS:40",
           "third_party/reconstruction-of-zzt/SRC/GAME.PAS:152"
         ],
-        "production_implementation": [],
-        "test_fixture": [],
-        "oracle_output": null,
-        "evidence_class": null,
-        "verification_result": "unclassified",
-        "scope_status": "requires_shared_mapping_or_adapter_exclusion"
+    "production_implementation": [
+      "third_party/libzoo/src/libzoo/zoo_game_io.c (zoo_board_close, zoo_io_world_write)"
+    ],
+    "test_fixture": [
+      "tools/pascal-compat/BOARDENC.PAS",
+      "tools/pascal-compat/compare-pascal-boardenc.js",
+      "build/pascal-compat-verification/BOARDENC.ZZT (generated staging output; not committed)"
+    ],
+    "oracle_output": "A compiled-Pascal BoardClose followed by WorldSave produced a 25,928-byte .ZZT; shared LibZoo BoardClose/world-write output matched all bytes (SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa).",
+    "evidence_class": "DP",
+    "verification_result": "partial: one deterministic DEMO-board mutation/save case matches byte-for-byte; this does not verify every BoardClose branch, allocator context, or serialized-field boundary.",
+    "scope_status": "shared_engine_mapping_verified_for_captured_path"
       },
       {
         "id": "E2-03-ROUTINE-GAME-BOARDCREATE",
