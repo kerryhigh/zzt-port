@@ -2,7 +2,7 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-24",
-    "root_revision": "b6c6f13: test: trace Pascal .BRD IOResult clearing (E2-02 partial)",
+    "root_revision": "642f0c0: test: capture editor .BRD short-payload reset (E2-02 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "passed",
@@ -23,7 +23,20 @@
         "next_ioresult": 0,
         "destination_bytes": [16, 32, 165, 165]
       },
-      "editor_transfer_end_to_end": "pending"
+      "editor_transfer_end_to_end": "passed for short payload; short length header remains unresolved",
+      "editor_transfer_probe": {
+        "probe": "tools/pascal-compat/BRDXFER.PAS",
+        "evidence_class": "D",
+        "result": "passed",
+        "fixture": "length word declares four payload bytes; file contains two",
+        "staging_interventions": [
+          "EDITOR.PAS supplies the import choice and fixture filename at the existing prompt boundaries.",
+          "GAME.PAS supplies Escape at the existing DisplayIOError acknowledgement input boundary; its IOResult checks and import behavior remain unchanged."
+        ],
+        "output": "board 0 255 0 4 31 30 12 0",
+        "interpretation": "The source EditorTransferBoard operation reaches BoardCreate after the short payload read.",
+        "short_header": "not captured; source-derived flow calls BoardOpen after the existing board buffer has been freed"
+      }
     },
     "toolchain": {
       "pascal": "Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository)",
@@ -32,9 +45,9 @@
       "python": "3.13.7"
     },
     "direct_pascal": {
-      "sessions": 83,
+      "sessions": 84,
       "standard_programs": 54,
-      "standalone_sessions": 29,
+      "standalone_sessions": 30,
       "session_result": "all passed"
     },
     "direct_differential_comparisons": {
@@ -97,7 +110,7 @@
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
-      "Truncated .BRD reads remain unresolved at the editor-operation boundary. Direct BRDIOPRB evidence now records IOResult 100 followed by 0; source-derived review shows DisplayIOError calls IOResult twice, so EditorTransferBoard's short-length path proceeds to BoardOpen after freeing the prior buffer, while a short payload reaches the final error branch. The freed-buffer result has not been captured under a controlled Pascal allocation history, and Android currently resets the board for both shapes.",
+      "Truncated .BRD editor imports remain unresolved at the short-header boundary. Direct BRDXFER evidence confirms the short-payload path reaches BoardCreate after the error dialog; source-derived review predicts the short-header path reaches BoardOpen after freeing the prior buffer, but that allocator-sensitive result is not captured. Android currently resets for both shapes, so only short-payload behavior is directly matched.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
       "The integrated prototype now compares RNG seed words, one stat-pair script alias relation, and 19 script bytes at loaded, loop-start, per-cycle, and final checkpoints. Complete script alias graphs, logical cell-write/sound-event streams, state-transition checkpoints, and generated file bytes remain unverified; it does not count toward the ten required fixtures."
@@ -126,7 +139,7 @@
       "Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.",
       "Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.",
       "Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.",
-      "E2-02: a fresh clean run passed 83 direct Pascal sessions and 42/42 configured comparisons. BRDIOPRB now proves the first IOResult consumes error 100; end-to-end EditorTransferBoard state after a short length header remains pending."
+      "E2-02: a fresh clean run passed 84 direct Pascal sessions and 42/42 configured comparisons. BRDIOPRB proves the first IOResult consumes error 100; BRDXFER directly captures the real EditorTransferBoard short-payload BoardCreate reset. The one-byte header branch remains unresolved."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
