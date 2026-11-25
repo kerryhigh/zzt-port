@@ -5,7 +5,7 @@ This is the latest clean compatibility run for the current E2-02 editor-transfer
 ## Direct Pascal and differential run
 
 - Command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <Turbo Pascal 5.5 directory> -DosboxExecutable <DOSBox-X 2026.10.01 executable>`.
-- Working source checkpoint before this evidence update: local `main` at `72ab1a3` plus the staged working-tree changes for E2-02; reconstructed Pascal gameplay sources were unchanged.
+- Working source checkpoint: local root Git revision `1c4d5ef` (`fix: share Pascal .BRD editor transfer semantics (E2-02 partial)`); reconstructed Pascal gameplay sources were unchanged.
 - The runner recreated `build/pascal-compat-verification` from the reconstructed source and controlled fixtures.
 - Exit code: **0**. **84 direct Turbo Pascal 5.5 sessions passed**: 54 standard programs and 30 standalone sessions.
 - **43/43 configured Pascal-to-production comparisons passed**, including the short-payload editor transfer outcome and seven selected board/player fields.
