@@ -131,6 +131,11 @@ def main() -> None:
             f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints × {item.get('fields_per_checkpoint', 'not recorded')} fields = {item.get('field_comparisons', 'not recorded')} comparisons; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
             for item in integrated.get("per_cycle_results", [])
         ] if integrated.get("per_cycle_results") else ["- Current per-cycle results: none recorded."]),
+        *([
+            f"  - {checkpoint.get('checkpoint', 'unnamed checkpoint')}: {checkpoint.get('fields_compared', 'not recorded')} fields; {checkpoint.get('result', 'unclassified')}."
+            for item in integrated.get("per_cycle_results", [])
+            for checkpoint in item.get("checkpoint_results", [])
+        ] or ["- Per-checkpoint results: not recorded."]),
         "",
         "## Mismatches, limitations, and remaining work",
         "",
