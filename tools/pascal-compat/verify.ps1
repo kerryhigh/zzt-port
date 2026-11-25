@@ -1228,6 +1228,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSND.OUT') -PathType
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGCEL.OUT') -PathType Leaf)) {
     throw "Integrated Pascal gameplay probe did not write INTEGCEL.OUT. See $stageRoot\INTEGPRB.LOG."
 }
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSAV.SAV') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGSAV.SAV. See $stageRoot\INTEGPRB.LOG."
+}
 
 # Exercise the original nested EditorFloodFill routine directly. The test-only
 # EditorLoop insertion bypasses menu/input handling and returns immediately.
@@ -1927,7 +1930,8 @@ try {
         (Join-Path $stageRoot 'INTEGPR.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
         (Join-Path $stageRoot 'INTEGSND.OUT') `
-        (Join-Path $stageRoot 'INTEGCEL.OUT')
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
 }
 finally {

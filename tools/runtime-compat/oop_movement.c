@@ -55,6 +55,7 @@ static char scroll_touch_lines[2][51];
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE 516
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY 8192
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_STRIDE 4
+#define INTEGRATED_GAMEPLAY_SAVE_CAPACITY 65536
 static int32_t integrated_gameplay_snapshots[
 	INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY][INTEGRATED_GAMEPLAY_MAX_FIELDS];
 static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY];
@@ -71,6 +72,10 @@ static int32_t integrated_gameplay_cell_events[
 static int32_t integrated_gameplay_cell_event_count_value;
 static int32_t integrated_gameplay_cell_event_overflow_value;
 static bool integrated_gameplay_cell_capture_enabled;
+static uint8_t integrated_gameplay_save_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
+static int32_t integrated_gameplay_save_length_value;
+static int32_t integrated_gameplay_save_result_value;
+static int32_t integrated_gameplay_save_overflow_value;
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
 
@@ -4080,6 +4085,7 @@ int32_t run_integrated_gameplay_checks(void) {
 	int16_t last_game_state;
 	bool last_paused;
 	int16_t transition_count = 0;
+	zoo_io_handle save_handle;
 
 	memset(&state, 0, sizeof(state));
 	memset(&video, 0, sizeof(video));
@@ -4095,6 +4101,10 @@ int32_t run_integrated_gameplay_checks(void) {
 	integrated_gameplay_cell_event_count_value = 0;
 	integrated_gameplay_cell_event_overflow_value = 0;
 	integrated_gameplay_cell_capture_enabled = false;
+	memset(integrated_gameplay_save_bytes, 0, sizeof(integrated_gameplay_save_bytes));
+	integrated_gameplay_save_length_value = 0;
+	integrated_gameplay_save_result_value = -1;
+	integrated_gameplay_save_overflow_value = 0;
 	video.func_write = test_video_write;
 	state.d_video = &video;
 	state.func_draw_sidebar = test_sidebar_update;
@@ -4212,6 +4222,15 @@ int32_t run_integrated_gameplay_checks(void) {
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].element = ZOO_E_PLAYER;
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].color = zoo_element_defs[ZOO_E_PLAYER].color;
 	state.sound.block_queueing = false;
+	save_handle = zoo_io_open_file_mem(integrated_gameplay_save_bytes,
+		INTEGRATED_GAMEPLAY_SAVE_CAPACITY, MODE_WRITE);
+	integrated_gameplay_save_result_value = zoo_world_save(&state, &save_handle);
+	integrated_gameplay_save_length_value = (int32_t) save_handle.func_tell(&save_handle);
+	if (integrated_gameplay_save_length_value >= INTEGRATED_GAMEPLAY_SAVE_CAPACITY) {
+		integrated_gameplay_save_overflow_value = 1;
+		return 12;
+	}
+	if (integrated_gameplay_save_result_value != 0) return 13;
 	if (!capture_integrated_gameplay_snapshot(
 			integrated_gameplay_snapshot_count_value, 'F', 0)) return 4;
 	return cycles == 6 ? 0 : 3;
@@ -4275,6 +4294,22 @@ int32_t integrated_gameplay_cell_event_overflow(void) {
 
 int32_t integrated_gameplay_cell_event_stride(void) {
 	return INTEGRATED_GAMEPLAY_CELL_EVENT_STRIDE;
+}
+
+uint32_t integrated_gameplay_save_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_gameplay_save_bytes;
+}
+
+int32_t integrated_gameplay_save_length(void) {
+	return integrated_gameplay_save_length_value;
+}
+
+int32_t integrated_gameplay_save_result(void) {
+	return integrated_gameplay_save_result_value;
+}
+
+int32_t integrated_gameplay_save_overflow(void) {
+	return integrated_gameplay_save_overflow_value;
 }
 
 uint32_t integrated_gameplay_trace_ptr(void) {

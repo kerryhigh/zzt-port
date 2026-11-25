@@ -51,6 +51,9 @@ begin
 	New(IoTmpBuf);
 	RandSeed := 0;
 	WorldCreate;
+	{ TWorldInfo.unk1 is not initialized by WorldCreate. Set this one undefined
+	  word to match the production harness's zeroed allocation history. }
+	World.Info.unk1 := 0;
 	BoardCreate;
 	World.Info.Health := 100;
 	World.Info.Gems := 0;
@@ -136,8 +139,9 @@ begin
 	GameLoopProbeEnabled := false;
 	SoundProbeQueueCapture(false);
 	SoundProbeWriteQueueEvents('INTEGSND.OUT');
-	GameLoopProbeCapture('F', 0);
 	WriteCellWriteEvents('INTEGCEL.OUT');
+	WorldSave('INTEGSAV', '.SAV');
+	GameLoopProbeCapture('F', 0);
 	FreeMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 	GameLoopProbeCellWriteEvents := nil;
 	WorldUnload;
