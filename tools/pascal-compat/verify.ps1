@@ -1245,7 +1245,7 @@ $expectedOutputs = [ordered]@{
     'SHORTLEN.OUT' = @('short-len 1 15 0 272')
     'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
     'NEGBRD.OUT' = @('negative-brd 1 -1')
-    'BRDIOPRB.OUT' = @('partial-length 100 4610', 'short-payload 0 100 16 32 165 165')
+    'BRDIOPRB.OUT' = @('partial-length 100 4610 next-IOResult 0', 'short-payload 0 100 next-IOResult 0 16 32 165 165')
     'PLRTORCH.OUT' = @('0 199 30 12')
     'PLAYERST.OUT' = @(
         'shoot-held-right ammo 1 input 0 0 dir 1 0 stats 1 target 18 15 sound 2 6 bullet 11 10 0 1 0 100 under 0 0 64 1 48 1 32 1',

@@ -8,7 +8,7 @@ var
 	output: text;
 	lengthWord: word;
 	firstByte, secondByte: byte;
-	readError, headerError, payloadError: integer;
+	readError, readAgainError, headerError, payloadError, payloadAgainError: integer;
 	buffer: PBuffer;
 begin
 	firstByte := $02;
@@ -21,10 +21,12 @@ begin
 	Reset(f, 1);
 	BlockRead(f, lengthWord, 2);
 	readError := IOResult;
+	readAgainError := IOResult;
 	Close(f);
 	Assign(output, 'BRDIOPRB.OUT');
 	Rewrite(output);
-	WriteLn(output, 'partial-length ', readError, ' ', lengthWord);
+	WriteLn(output, 'partial-length ', readError, ' ', lengthWord,
+		' next-IOResult ', readAgainError);
 
 	lengthWord := 4;
 	firstByte := $10;
@@ -43,8 +45,10 @@ begin
 	FillChar(buffer^, lengthWord, $A5);
 	BlockRead(f, buffer^, lengthWord);
 	payloadError := IOResult;
+	payloadAgainError := IOResult;
 	Close(f);
-	WriteLn(output, 'short-payload ', headerError, ' ', payloadError, ' ',
+	WriteLn(output, 'short-payload ', headerError, ' ', payloadError,
+		' next-IOResult ', payloadAgainError, ' ',
 		buffer^[0], ' ', buffer^[1], ' ', buffer^[2], ' ', buffer^[3]);
 	Close(output);
 	FreeMem(buffer, lengthWord);
