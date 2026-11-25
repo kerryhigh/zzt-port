@@ -514,27 +514,197 @@
     {
       "id": "E2-10-F04",
       "scenario": "object stat order plus multiple interacting OOP scripts",
-      "status": "pending",
+      "status": "complete",
       "evidence_classes": [
         "D",
         "DP",
         "I"
       ],
       "source_locations": [
-        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop",
-        "third_party/reconstruction-of-zzt/SRC/OOP.PAS:OOP run and dispatch paths"
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop,AddStat",
+        "third_party/reconstruction-of-zzt/SRC/OOP.PAS:OopExecute"
       ],
       "production_implementation": [
-        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick",
-        "third_party/libzoo/src/libzoo/zoo_oop.c:OOP run and dispatch paths"
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick,zoo_stat_add",
+        "third_party/libzoo/src/libzoo/zoo_elements.c:zoo_e_object_tick",
+        "third_party/libzoo/src/libzoo/zoo_oop.c:zoo_oop_execute",
+        "tools/runtime-compat/oop_movement.c:run_integrated_script_stat_order_checks"
       ],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "test_fixture": "tools/pascal-compat/STATORD.PAS",
+      "oracle_probe": "tools/pascal-compat/STATORD.PAS",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
       "verification": {
-        "result": "pending",
-        "fixture_completion_credit": 0
-      }
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "ca271c7be437f6b7adf205b2c4a984055ef1814c",
+        "clean_runner_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 88,
+        "pascal_to_production_differential_invocations_in_clean_run": "48/48",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "T1",
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "C5",
+          "C6",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 12,
+        "fields_compared_by_checkpoint": [
+          {
+            "checkpoint": "L0",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "S0",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T1",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C1",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C2",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C3",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C4",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C5",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C6",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3",
+            "fields_compared": 3492,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "F0",
+            "fields_compared": 3492,
+            "result": "matched"
+          }
+        ],
+        "state_field_comparisons": 41904,
+        "state_field_differences": 0,
+        "stat_order_and_script_assertions": {
+          "board_stat_count_excludes_player_stat_0": true,
+          "board_stat_count": 2,
+          "stat_order": [
+            1,
+            2
+          ],
+          "stat_1_position": [
+            20,
+            5
+          ],
+          "stat_2_position": [
+            10,
+            5
+          ],
+          "first_script_active_cycle": "C2",
+          "stat_1_sets_flag_and_gives_gem": true,
+          "stat_2_observes_flag_and_gives_ammo_in_same_script_cycle": true,
+          "final_gems": 1,
+          "final_ammo": 1
+        },
+        "logical_sound_events": 0,
+        "logical_sound_event_fields": 0,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 5,
+        "ordered_playfield_cell_write_fields": 20,
+        "cell_write_differences": 0,
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 974,
+          "generated_save_sha256": "16e9ab5cf42ddf0c72d68ecbd05f25fd034155199c55a5a8c6f7294e053fb3b1",
+          "stable_serialized_bytes_compared": 598,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 376,
+          "classified_pointer_differences": 6,
+          "round_trip_save_size_bytes": 974,
+          "round_trip_save_sha256": "8bb39b5208775a2efe2426ad74a2a3d8590adff3e8d41dd5f632de51fb599140",
+          "round_trip_stable_serialized_bytes_compared": 962,
+          "round_trip_stable_serialized_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 12
+        },
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 88918,
+            "sha256": "7e173faf48e75472ff4b07a6caefd12037437001fbaabebb26847e4a41cb0bc3"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 5,
+            "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 57,
+            "sha256": "4b25266c6a292c445c6b5a850eccc9a5c8928eadc9c1d84a41624d9ba289d82a"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 974,
+            "sha256": "16e9ab5cf42ddf0c72d68ecbd05f25fd034155199c55a5a8c6f7294e053fb3b1"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 974,
+            "sha256": "8bb39b5208775a2efe2426ad74a2a3d8590adff3e8d41dd5f632de51fb599140"
+          }
+        ],
+        "fixture_completion_credit": 1,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-object-stat-order.md"
+      },
+      "runner": "tools/pascal-compat/verify.ps1",
+      "staging_interventions": [
+        "Set RandSeed to zero before WorldCreate and set World.Info.unk1 to zero because WorldCreate leaves it undefined while the zero-initialized production harness starts at zero.",
+        "Construct the player and Objects with the original BoardCreate/AddStat path; the source explicitly supplies color $0A for each Object.",
+        "Use zero TickSpeed, SoundProbeSetSchedule(0,0,0), and the normalized InputProbeSetKeyBuffer('66') before the original GamePlayLoop so six logical cycles are deterministic.",
+        "Capture VideoWriteText cell writes and SoundQueue requests at their logical boundaries; do not replace gameplay callbacks or the original loop.",
+        "Compile and execute STATORD in separate fresh DOSBox-X sessions to control compiler-inherited DOS allocator history.",
+        "Use the modeled production board-data heap for fixture script bytes, preserving dynamic script state and save pointer classification."
+      ]
     },
     {
       "id": "E2-10-F05",
