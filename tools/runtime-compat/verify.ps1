@@ -348,6 +348,11 @@ $integratedGameplayArgs = @(
 	'-Wl,--export=integrated_gameplay_cell_event_overflow', '-Wl,--export=integrated_gameplay_cell_event_stride',
 	'-Wl,--export=integrated_gameplay_save_bytes_ptr', '-Wl,--export=integrated_gameplay_save_length',
 	'-Wl,--export=integrated_gameplay_save_result', '-Wl,--export=integrated_gameplay_save_overflow',
+	'-Wl,--export=integrated_gameplay_reload_input_bytes_ptr', '-Wl,--export=integrated_gameplay_reload_input_capacity',
+	'-Wl,--export=integrated_gameplay_reload_from_pascal_save', '-Wl,--export=integrated_gameplay_reload_result',
+	'-Wl,--export=integrated_gameplay_finish_roundtrip', '-Wl,--export=integrated_gameplay_roundtrip_save_bytes_ptr',
+	'-Wl,--export=integrated_gameplay_roundtrip_save_length', '-Wl,--export=integrated_gameplay_roundtrip_save_result',
+	'-Wl,--export=integrated_gameplay_roundtrip_save_overflow',
     '-Wl,--export-memory', '-Wl,--gc-sections', '-Wl,--allow-undefined',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
     $oopMovementSource, '-o', $integratedGameplayWasm

@@ -5,7 +5,9 @@ const wasmPath = process.argv[3];
 const soundPath = process.argv[4];
 const cellPath = process.argv[5];
 const savePath = process.argv[6];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV>');
+const loadResultPath = process.argv[7];
+const roundtripSavePath = process.argv[8];
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV>');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -31,7 +33,7 @@ checkpointSpecs.push(
 );
 for (let row = 2; row < checkpointHeaders.length; row++) {
   const header = checkpointHeaders[row];
-  if (header.kind === 'T' && header.id === nextTransitionId) {
+  if (header.kind === 'T' && header.id === nextTransitionId && nextTransitionId <= 3) {
     checkpointSpecs.push({ kind: 'T', id: header.id, name: `state transition ${header.id}` });
     nextTransitionId++;
   } else if (header.kind === 'C' && header.id === nextCycleId && nextCycleId <= 6) {
@@ -43,8 +45,8 @@ for (let row = 2; row < checkpointHeaders.length; row++) {
     throw new Error(`Invalid checkpoint order or identity at row ${row + 1}: ${header.kind}/${header.id}`);
   }
 }
-if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== 7) {
-  throw new Error(`Integrated replay requires six ordered cycles and a final state; cycles=${nextCycleId - 1}`);
+if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== 7 || nextTransitionId !== 4) {
+  throw new Error(`Integrated replay requires three ordered transitions, six ordered cycles, and a final state; transitions=${nextTransitionId - 1}, cycles=${nextCycleId - 1}`);
 }
 const expectedSnapshots = expectedLines.map((line, rowIndex) => {
   const fields = line.trim().split(/\s+/);
@@ -192,7 +194,7 @@ function parseCellWrites(path) {
   return { count, overflow, events };
 }
 
-function integratedSaveNondeterministicRanges(bytes) {
+function integratedSaveNondeterministicRanges(bytes, loadedFromFile = false) {
   const ranges = [];
   const add = (start, length, label) => {
     if (start < 0 || length < 0 || start + length > bytes.length) {
@@ -200,21 +202,21 @@ function integratedSaveNondeterministicRanges(bytes) {
     }
     if (length > 0) ranges.push({ start, length, label });
   };
-  const emptyStringTail = (lengthOffset, maxLength, label) => {
+  const emptyStringTail = (lengthOffset, maxLength, label, classifyUndefinedTail) => {
     if (lengthOffset < 0 || lengthOffset >= bytes.length) throw new Error(`Missing serialized string length for ${label}`);
     const length = bytes[lengthOffset];
     if (length > maxLength) throw new Error(`Serialized string ${label} has invalid length ${length}`);
-    if (length === 0) add(lengthOffset + 1, maxLength, `${label} empty-string tail`);
+    if (classifyUndefinedTail && length === 0) add(lengthOffset + 1, maxLength, `${label} empty-string tail`);
   };
 
   if (bytes.length < 514 || bytes.readInt16LE(0) !== -1) {
     throw new Error('Integrated save is not a version-marked ZZT world file');
   }
-  emptyStringTail(29, 20, 'world name');
+  emptyStringTail(29, 20, 'world name', !loadedFromFile);
   for (let flag = 0; flag < 10; flag++) {
-    emptyStringTail(50 + (flag * 21), 20, `world flag ${flag + 1}`);
+    emptyStringTail(50 + (flag * 21), 20, `world flag ${flag + 1}`, !loadedFromFile);
   }
-  add(265, 14, 'WorldInfo.unkPad (uninitialized Pascal record bytes)');
+  if (!loadedFromFile) add(265, 14, 'WorldInfo.unkPad (uninitialized Pascal record bytes)');
 
   const boardCount = bytes.readInt16LE(2);
   if (boardCount < 0 || boardCount > 100) throw new Error(`Invalid integrated save board count ${boardCount}`);
@@ -227,7 +229,7 @@ function integratedSaveNondeterministicRanges(bytes) {
     if (boardEnd > bytes.length || boardLength < 51 + 86 + 2) {
       throw new Error(`Serialized board ${boardId} length ${boardLength} is truncated or too short`);
     }
-    emptyStringTail(boardStart, 50, `board ${boardId} name`);
+    emptyStringTail(boardStart, 50, `board ${boardId} name`, !loadedFromFile);
 
     let boardInfoStart = boardStart + 51;
     let cells = 0;
@@ -240,9 +242,11 @@ function integratedSaveNondeterministicRanges(bytes) {
       cells += runLength;
       boardInfoStart += 3;
     }
-    emptyStringTail(boardInfoStart + 7, 58, `board ${boardId} message`);
-    add(boardInfoStart + 66, 2, `board ${boardId} uninitialized start-player coordinates`);
-    add(boardInfoStart + 70, 16, `board ${boardId} TBoardInfo.unkPad`);
+    emptyStringTail(boardInfoStart + 7, 58, `board ${boardId} message`, !loadedFromFile);
+    if (!loadedFromFile) {
+      add(boardInfoStart + 66, 2, `board ${boardId} uninitialized start-player coordinates`);
+      add(boardInfoStart + 70, 16, `board ${boardId} TBoardInfo.unkPad`);
+    }
 
     const statCount = bytes.readInt16LE(boardInfoStart + 86);
     if (statCount < 0 || statCount > 150) throw new Error(`Serialized board ${boardId} has invalid stat count ${statCount}`);
@@ -251,7 +255,7 @@ function integratedSaveNondeterministicRanges(bytes) {
       if (statOffset + 33 > boardEnd) throw new Error(`Serialized board ${boardId} stat ${statId} is truncated`);
       const dataLength = bytes.readInt16LE(statOffset + 23);
       add(statOffset + 17, 4, `board ${boardId} stat ${statId} Pascal data pointer`);
-      add(statOffset + 25, 8, `board ${boardId} stat ${statId} unused pointer/reserved bytes`);
+      if (!loadedFromFile) add(statOffset + 25, 8, `board ${boardId} stat ${statId} unused pointer/reserved bytes`);
       statOffset += 33;
       if (dataLength > 0) statOffset += dataLength;
       if (statOffset > boardEnd) throw new Error(`Serialized board ${boardId} stat ${statId} script exceeds its board record`);
@@ -263,6 +267,45 @@ function integratedSaveNondeterministicRanges(bytes) {
   }
   if (fileOffset !== bytes.length) throw new Error(`Integrated save has ${bytes.length - fileOffset} unclassified trailing byte(s)`);
   return ranges;
+}
+
+function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile) {
+  if (productionSave.length !== pascalSave.length) {
+    throw new Error(`${label}: first serialized-byte divergence at file length: Pascal=${pascalSave.length}, production=${productionSave.length}`);
+  }
+  const ranges = integratedSaveNondeterministicRanges(pascalSave, loadedFromFile);
+  const classifiedFields = new Map();
+  for (const range of ranges) {
+    for (let offset = range.start; offset < range.start + range.length; offset++) {
+      if (classifiedFields.has(offset)) throw new Error(`${label}: serialized byte ${offset} was classified twice as nondeterministic`);
+      classifiedFields.set(offset, range.label);
+    }
+  }
+  let comparedBytes = 0;
+  let classifiedBytes = 0;
+  const classifiedDifferences = new Map();
+  for (let byteIndex = 0; byteIndex < pascalSave.length; byteIndex++) {
+    const nondeterministicField = classifiedFields.get(byteIndex);
+    if (nondeterministicField) {
+      classifiedBytes++;
+      if (productionSave[byteIndex] !== pascalSave[byteIndex]) {
+        classifiedDifferences.set(nondeterministicField,
+          (classifiedDifferences.get(nondeterministicField) || 0) + 1);
+      }
+      continue;
+    }
+    if (productionSave[byteIndex] !== pascalSave[byteIndex]) {
+      const from = Math.max(0, byteIndex - 8);
+      const to = Math.min(pascalSave.length - 1, byteIndex + 8);
+      const context = [];
+      for (let at = from; at <= to; at++) {
+        context.push(`${at}:Pascal=0x${pascalSave[at].toString(16).padStart(2, '0')},production=0x${productionSave[at].toString(16).padStart(2, '0')}`);
+      }
+      throw new Error(`${label}: first stable serialized-byte divergence at offset ${byteIndex}: Pascal=0x${pascalSave[byteIndex].toString(16).padStart(2, '0')}, production=0x${productionSave[byteIndex].toString(16).padStart(2, '0')}; context=[${context.join(' ')}]`);
+    }
+    comparedBytes++;
+  }
+  return { comparedBytes, classifiedBytes, classifiedDifferences };
 }
 
 (async () => {
@@ -309,45 +352,34 @@ function integratedSaveNondeterministicRanges(bytes) {
   const productionSaveOverflow = instance.exports.integrated_gameplay_save_overflow();
   if (productionSaveResult !== 0) throw new Error(`Production integrated save returned ${productionSaveResult}; expected success`);
   if (productionSaveOverflow !== 0) throw new Error('Production integrated save exceeded its fixed output buffer');
-  if (productionSaveLength !== pascalSave.length) {
-    throw new Error(`First serialized-byte divergence at file length: Pascal=${pascalSave.length}, production=${productionSaveLength}`);
-  }
   const productionSave = new Uint8Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_save_bytes_ptr(), productionSaveLength);
-  const saveRanges = integratedSaveNondeterministicRanges(pascalSave);
-  const nondeterministicSaveFields = new Map();
-  for (const range of saveRanges) {
-    for (let offset = range.start; offset < range.start + range.length; offset++) {
-      if (nondeterministicSaveFields.has(offset)) {
-        throw new Error(`Serialized byte ${offset} was classified twice as nondeterministic`);
-      }
-      nondeterministicSaveFields.set(offset, range.label);
-    }
+  const generatedSaveComparison = compareSerializedSave('Generated fresh-world SAV', pascalSave, productionSave, false);
+
+  const pascalLoadResult = Number(fs.readFileSync(loadResultPath, 'ascii').trim());
+  if (pascalLoadResult !== 1) throw new Error(`Compiled Pascal WorldLoad returned ${pascalLoadResult}; expected true/success`);
+  const reloadCapacity = instance.exports.integrated_gameplay_reload_input_capacity();
+  if (pascalSave.length > reloadCapacity) throw new Error(`Pascal SAV length ${pascalSave.length} exceeds production reload input capacity ${reloadCapacity}`);
+  const reloadInput = new Uint8Array(instance.exports.memory.buffer,
+    instance.exports.integrated_gameplay_reload_input_bytes_ptr(), pascalSave.length);
+  reloadInput.set(pascalSave);
+  const productionLoadCall = instance.exports.integrated_gameplay_reload_from_pascal_save(pascalSave.length);
+  const productionLoadResult = instance.exports.integrated_gameplay_reload_result();
+  if (productionLoadCall !== 0 || productionLoadResult !== 0) {
+    throw new Error(`Production zoo_world_load failed: call=${productionLoadCall}, result=${productionLoadResult}`);
   }
-  let saveComparedBytes = 0;
-  let classifiedSaveBytes = 0;
-  const classifiedSaveDifferences = new Map();
-  for (let byteIndex = 0; byteIndex < pascalSave.length; byteIndex++) {
-    const nondeterministicField = nondeterministicSaveFields.get(byteIndex);
-    if (nondeterministicField) {
-      classifiedSaveBytes++;
-      if (productionSave[byteIndex] !== pascalSave[byteIndex]) {
-        classifiedSaveDifferences.set(nondeterministicField,
-          (classifiedSaveDifferences.get(nondeterministicField) || 0) + 1);
-      }
-      continue;
-    }
-    if (productionSave[byteIndex] !== pascalSave[byteIndex]) {
-      const from = Math.max(0, byteIndex - 8);
-      const to = Math.min(pascalSave.length - 1, byteIndex + 8);
-      const context = [];
-      for (let at = from; at <= to; at++) {
-        context.push(`${at}:Pascal=0x${pascalSave[at].toString(16).padStart(2, '0')},production=0x${productionSave[at].toString(16).padStart(2, '0')}`);
-      }
-      throw new Error(`First serialized-byte divergence at offset ${byteIndex}: Pascal=0x${pascalSave[byteIndex].toString(16).padStart(2, '0')}, production=0x${productionSave[byteIndex].toString(16).padStart(2, '0')}; context=[${context.join(' ')}]`);
-    }
-    saveComparedBytes++;
-  }
+  const roundtripCall = instance.exports.integrated_gameplay_finish_roundtrip();
+  if (roundtripCall !== 0) throw new Error(`Production round-trip save returned ${roundtripCall}`);
+  const roundtripSaveResult = instance.exports.integrated_gameplay_roundtrip_save_result();
+  const roundtripSaveOverflow = instance.exports.integrated_gameplay_roundtrip_save_overflow();
+  if (roundtripSaveResult !== 0) throw new Error(`Production round-trip zoo_world_save returned ${roundtripSaveResult}`);
+  if (roundtripSaveOverflow !== 0) throw new Error('Production round-trip save exceeded its fixed output buffer');
+  const pascalRoundtripSave = fs.readFileSync(roundtripSavePath);
+  const productionRoundtripLength = instance.exports.integrated_gameplay_roundtrip_save_length();
+  const productionRoundtripSave = new Uint8Array(instance.exports.memory.buffer,
+    instance.exports.integrated_gameplay_roundtrip_save_bytes_ptr(), productionRoundtripLength);
+  const roundtripSaveComparison = compareSerializedSave(
+    'Loaded-file round-trip SAV', pascalRoundtripSave, productionRoundtripSave, true);
 
   const snapshotCount = instance.exports.integrated_gameplay_snapshot_count();
   if (snapshotCount !== checkpointSpecs.length) {
@@ -487,8 +519,8 @@ function integratedSaveNondeterministicRanges(bytes) {
     }
   }
   const checkpointFieldCounts = expectedSnapshots.map(snapshot => snapshot.fieldCount);
-  const classifiedDiffSummary = [...classifiedSaveDifferences.entries()]
+  const classifiedDiffSummary = [...generatedSaveComparison.classifiedDifferences.entries()]
     .map(([field, count]) => `${field} (${count} differing byte${count === 1 ? '' : 's'})`)
     .join('; ') || 'none';
-  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields); generated SAV matched ${saveComparedBytes} deterministic bytes, with ${classifiedSaveBytes} positions classified as uninitialized Pascal padding or nonportable pointers (${classifiedDiffSummary}); first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
+  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields); generated fresh-world SAV matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} uninitialized/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

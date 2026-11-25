@@ -1215,10 +1215,13 @@ Invoke-DosboxSession 'GAMESCHD-COMPILE' @(
 )
 Invoke-DosboxSession 'GAMESCHD' @('BIN\GAMESCHD.EXE')
 Write-Host 'Compiling and running integrated Turbo Pascal gameplay probe: INTEGPRB'
-Invoke-DosboxSession 'INTEGPRB' @(
-    'TPC.EXE /B /EBIN /ISRC /USRC INTEGPRB.PAS > INTEGPRB.LOG',
-    'BIN\INTEGPRB.EXE'
+Invoke-DosboxSession 'INTEGPRB-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC INTEGPRB.PAS > INTEGPRB-COMPILE.LOG'
 )
+# Run the heap-sensitive replay in a fresh DOSBox session. Leaving Turbo Pascal's
+# compiler process in the same DOS session changes the inherited DOS allocator
+# history and makes the probe's post-loop capture intermittently terminate.
+Invoke-DosboxSession 'INTEGPRB' @('BIN\INTEGPRB.EXE')
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGPR.OUT') -PathType Leaf)) {
     throw "Integrated Pascal gameplay probe did not write INTEGPR.OUT. See $stageRoot\INTEGPRB.LOG."
 }
@@ -1230,6 +1233,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGCEL.OUT') -PathType
 }
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSAV.SAV') -PathType Leaf)) {
     throw "Integrated Pascal gameplay probe did not write INTEGSAV.SAV. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGLOD.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGLOD.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEG2SV.SAV') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEG2SV.SAV after reloading INTEGSAV.SAV. See $stageRoot\INTEGPRB.LOG."
 }
 
 # Exercise the original nested EditorFloodFill routine directly. The test-only
@@ -1931,7 +1940,9 @@ try {
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
         (Join-Path $stageRoot 'INTEGSND.OUT') `
         (Join-Path $stageRoot 'INTEGCEL.OUT') `
-        (Join-Path $stageRoot 'INTEGSAV.SAV')
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
 }
 finally {

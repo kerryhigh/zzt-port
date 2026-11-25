@@ -45,6 +45,8 @@ var
 	output: text;
 	ix, iy, statId: integer;
 	script, script2: string[32];
+	roundTripLoaded: boolean;
+	loadOutput: text;
 
 begin
 	VideoWriteText := CaptureCellWrite;
@@ -141,6 +143,15 @@ begin
 	SoundProbeWriteQueueEvents('INTEGSND.OUT');
 	WriteCellWriteEvents('INTEGCEL.OUT');
 	WorldSave('INTEGSAV', '.SAV');
+	GameLoopProbeCapture('T', 2);
+	roundTripLoaded := WorldLoad('INTEGSAV', '.SAV', false);
+	Assign(loadOutput, 'INTEGLOD.OUT');
+	Rewrite(loadOutput);
+	WriteLn(loadOutput, Ord(roundTripLoaded));
+	Close(loadOutput);
+	if not roundTripLoaded then RunError(255);
+	GameLoopProbeCapture('T', 3);
+	WorldSave('INTEG2SV', '.SAV');
 	GameLoopProbeCapture('F', 0);
 	FreeMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 	GameLoopProbeCellWriteEvents := nil;

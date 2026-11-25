@@ -76,6 +76,12 @@ static uint8_t integrated_gameplay_save_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY]
 static int32_t integrated_gameplay_save_length_value;
 static int32_t integrated_gameplay_save_result_value;
 static int32_t integrated_gameplay_save_overflow_value;
+static uint8_t integrated_gameplay_reload_input_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
+static int32_t integrated_gameplay_reload_result_value;
+static uint8_t integrated_gameplay_roundtrip_save_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
+static int32_t integrated_gameplay_roundtrip_save_length_value;
+static int32_t integrated_gameplay_roundtrip_save_result_value;
+static int32_t integrated_gameplay_roundtrip_save_overflow_value;
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
 
@@ -4105,6 +4111,12 @@ int32_t run_integrated_gameplay_checks(void) {
 	integrated_gameplay_save_length_value = 0;
 	integrated_gameplay_save_result_value = -1;
 	integrated_gameplay_save_overflow_value = 0;
+	memset(integrated_gameplay_reload_input_bytes, 0, sizeof(integrated_gameplay_reload_input_bytes));
+	integrated_gameplay_reload_result_value = -1;
+	memset(integrated_gameplay_roundtrip_save_bytes, 0, sizeof(integrated_gameplay_roundtrip_save_bytes));
+	integrated_gameplay_roundtrip_save_length_value = 0;
+	integrated_gameplay_roundtrip_save_result_value = -1;
+	integrated_gameplay_roundtrip_save_overflow_value = 0;
 	video.func_write = test_video_write;
 	state.d_video = &video;
 	state.func_draw_sidebar = test_sidebar_update;
@@ -4232,8 +4244,64 @@ int32_t run_integrated_gameplay_checks(void) {
 	}
 	if (integrated_gameplay_save_result_value != 0) return 13;
 	if (!capture_integrated_gameplay_snapshot(
-			integrated_gameplay_snapshot_count_value, 'F', 0)) return 4;
+			integrated_gameplay_snapshot_count_value, 'T', 2)) return 4;
 	return cycles == 6 ? 0 : 3;
+}
+
+uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_gameplay_reload_input_bytes;
+}
+
+int32_t integrated_gameplay_reload_input_capacity(void) {
+	return INTEGRATED_GAMEPLAY_SAVE_CAPACITY;
+}
+
+int32_t integrated_gameplay_reload_from_pascal_save(int32_t length) {
+	zoo_io_handle load_handle;
+	if (length <= 0 || length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 14;
+	load_handle = zoo_io_open_file_mem(integrated_gameplay_reload_input_bytes,
+		(size_t) length, MODE_READ);
+	integrated_gameplay_reload_result_value = zoo_world_load(&state, &load_handle, false);
+	if (integrated_gameplay_reload_result_value != 0) return 15;
+	if (!capture_integrated_gameplay_snapshot(
+			integrated_gameplay_snapshot_count_value, 'T', 3)) return 16;
+	return 0;
+}
+
+int32_t integrated_gameplay_finish_roundtrip(void) {
+	zoo_io_handle save_handle;
+	save_handle = zoo_io_open_file_mem(integrated_gameplay_roundtrip_save_bytes,
+		INTEGRATED_GAMEPLAY_SAVE_CAPACITY, MODE_WRITE);
+	integrated_gameplay_roundtrip_save_result_value = zoo_world_save(&state, &save_handle);
+	integrated_gameplay_roundtrip_save_length_value = (int32_t) save_handle.func_tell(&save_handle);
+	if (integrated_gameplay_roundtrip_save_length_value >= INTEGRATED_GAMEPLAY_SAVE_CAPACITY) {
+		integrated_gameplay_roundtrip_save_overflow_value = 1;
+		return 17;
+	}
+	if (integrated_gameplay_roundtrip_save_result_value != 0) return 18;
+	if (!capture_integrated_gameplay_snapshot(
+			integrated_gameplay_snapshot_count_value, 'F', 0)) return 19;
+	return 0;
+}
+
+uint32_t integrated_gameplay_roundtrip_save_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_gameplay_roundtrip_save_bytes;
+}
+
+int32_t integrated_gameplay_roundtrip_save_length(void) {
+	return integrated_gameplay_roundtrip_save_length_value;
+}
+
+int32_t integrated_gameplay_roundtrip_save_result(void) {
+	return integrated_gameplay_roundtrip_save_result_value;
+}
+
+int32_t integrated_gameplay_roundtrip_save_overflow(void) {
+	return integrated_gameplay_roundtrip_save_overflow_value;
+}
+
+int32_t integrated_gameplay_reload_result(void) {
+	return integrated_gameplay_reload_result_value;
 }
 
 uint32_t integrated_gameplay_output_ptr(void) {
