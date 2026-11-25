@@ -395,7 +395,9 @@ type
 	PGameLoopProbeCellWriteEventArray = ^TGameLoopProbeCellWriteEventArray;
 var
 	GameLoopProbeStopAfter, GameLoopProbeCycles, GameLoopProbeStartTick: integer;
+	GameLoopProbeTransitionCount, GameLoopProbeLastBoard, GameLoopProbeLastState: integer;
 	GameLoopProbeEnabled: boolean;
+	GameLoopProbeLastPaused, GameLoopProbeCycleCompleted: boolean;
 	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
 	GameLoopProbeCellWriteCount: longint;
 	GameLoopProbeCellWriteEvents: PGameLoopProbeCellWriteEventArray;
@@ -433,7 +435,7 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 						Board.Stats[statId].DataLen;
 			end;
 		end;
-		checkpointFieldCount := 12 + (14 * liveStatCount) + 11 +
+		checkpointFieldCount := 13 + (14 * liveStatCount) + 11 +
 			((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 +
 			(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer) + 2;
 		Assign(output, 'INTEGPR.OUT');
@@ -444,6 +446,12 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 			' ', World.Info.EnergizerTicks, ' ', World.Info.Score,
 			' ', World.Info.BoardTimeSec, ' ', World.Info.BoardTimeHsec,
 			' ', Ord(World.Info.IsSave), ' ', Board.StatCount, ' ');
+		if GameStateElement = E_PLAYER then
+			Write(output, 1, ' ')
+		else if GameStateElement = E_MONITOR then
+			Write(output, 2, ' ')
+		else
+			Write(output, 0, ' ');
 		for statId := 0 to Board.StatCount do begin
 			with Board.Stats[statId] do begin
 				Write(output, X, ' ', Y, ' ', StepX, ' ', StepY, ' ', Cycle,
@@ -504,22 +512,61 @@ $startStatAnchor = 'CurrentStatTicked := Board.StatCount + 1;'
 $startStatIndex = $gamePlayLoop.IndexOf($startStatAnchor, $startTickIndex + $startTickAnchor.Length, [StringComparison]::Ordinal)
 if ($startStatIndex -lt 0) { throw 'Could not locate GamePlayLoop stat initialization for the integrated snapshot.' }
 $startStatEnd = $startStatIndex + $startStatAnchor.Length
-$gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tif GameLoopProbeEnabled then begin`r`n`t`t`tGameLoopProbeCapture('S', 0);`r`n`t`t`tGameLoopProbeCellCaptureEnabled := true;`r`n`t`tend;" + $gamePlayLoop.Substring($startStatEnd)
+$gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tGameLoopProbeTransitionCount := 0;`r`n`t`tGameLoopProbeCycleCompleted := false;`r`n`t`tif GameLoopProbeEnabled then begin`r`n`t`t`tGameLoopProbeCapture('S', 0);`r`n`t`t`tGameLoopProbeLastBoard := World.Info.CurrentBoard;`r`n`t`t`tGameLoopProbeLastState := GameStateElement;`r`n`t`t`tGameLoopProbeLastPaused := GamePaused;`r`n`t`t`tGameLoopProbeCellCaptureEnabled := true;`r`n`t`tend;" + $gamePlayLoop.Substring($startStatEnd)
 $cycleAdvancePattern = '(?s)(CurrentStatTicked := 0;\s*InputUpdate;)'
 if ([regex]::Matches($gamePlayLoop, $cycleAdvancePattern).Count -ne 1) {
     throw 'Could not uniquely locate the completed GamePlayLoop cycle for zero-speed instrumentation.'
 }
 $cycleProbe = @'
-if GameLoopProbeStopAfter > 0 then begin
-	GameLoopProbeCycles := GameLoopProbeCycles + 1;
-	if GameLoopProbeCycles >= GameLoopProbeStopAfter then
-		GamePlayExitRequested := true;
-end;
-if GameLoopProbeEnabled then
-	GameLoopProbeCapture('C', GameLoopProbeCycles);
+GameLoopProbeCycleCompleted := true;
 '@
 $cycleProbeReplacement = '$1' + "`r`n`t`t`t`t`t" + $cycleProbe.Trim()
 $gamePlayLoop = [regex]::Replace($gamePlayLoop, $cycleAdvancePattern, $cycleProbeReplacement, 1)
+$unpauseTransitionPattern = '(?s)(GamePaused := false;\s*SidebarClearLine\(5\);\s*CurrentTick := Random\(100\);\s*CurrentStatTicked := Board.StatCount \+ 1;\s*World.Info.IsSave := true;)'
+if ([regex]::Matches($gamePlayLoop, $unpauseTransitionPattern).Count -ne 1) {
+    throw 'Could not uniquely locate the paused player-movement transition for the integrated replay.'
+}
+$unpauseTransitionProbe = @'
+if GameLoopProbeEnabled then begin
+	GameLoopProbeLastBoard := World.Info.CurrentBoard;
+	GameLoopProbeLastState := GameStateElement;
+	GameLoopProbeLastPaused := GamePaused;
+	GameLoopProbeTransitionCount := GameLoopProbeTransitionCount + 1;
+	GameLoopProbeCapture('T', GameLoopProbeTransitionCount);
+end;
+'@
+$unpauseTransitionReplacement = '$1' + "`r`n`t`t`t`t`t" + $unpauseTransitionProbe.Trim()
+$gamePlayLoop = [regex]::Replace($gamePlayLoop, $unpauseTransitionPattern, $unpauseTransitionReplacement, 1)
+$loopEndAnchor = 'until (exitLoop or GamePlayExitRequested) and GamePlayExitRequested;'
+if ([regex]::Matches($gamePlayLoop, [regex]::Escape($loopEndAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the GamePlayLoop iteration boundary for state-transition checkpoints.'
+}
+$iterationProbe = @'
+if GameLoopProbeEnabled then begin
+	if (World.Info.CurrentBoard <> GameLoopProbeLastBoard) or
+		(GameStateElement <> GameLoopProbeLastState) or
+		(GamePaused <> GameLoopProbeLastPaused) then begin
+		GameLoopProbeLastBoard := World.Info.CurrentBoard;
+		GameLoopProbeLastState := GameStateElement;
+		GameLoopProbeLastPaused := GamePaused;
+		GameLoopProbeTransitionCount := GameLoopProbeTransitionCount + 1;
+		GameLoopProbeCapture('T', GameLoopProbeTransitionCount);
+	end;
+end;
+if GameLoopProbeCycleCompleted then begin
+	GameLoopProbeCycleCompleted := false;
+	if GameLoopProbeEnabled or (GameLoopProbeStopAfter > 0) then begin
+		GameLoopProbeCycles := GameLoopProbeCycles + 1;
+		if (GameLoopProbeStopAfter > 0) and
+			(GameLoopProbeCycles >= GameLoopProbeStopAfter) then
+			GamePlayExitRequested := true;
+		if GameLoopProbeEnabled then
+			GameLoopProbeCapture('C', GameLoopProbeCycles);
+	end;
+end;
+'@
+$loopEndReplacement = $iterationProbe.Trim() + "`r`n`t`t" + $loopEndAnchor
+$gamePlayLoop = $gamePlayLoop.Replace($loopEndAnchor, $loopEndReplacement)
 $stagedGame = $stagedGame.Substring(0, $gamePlayLoopStart) + $gamePlayLoop + $stagedGame.Substring($gameTitleLoopStart)
 [IO.File]::WriteAllText($stagedGamePath, $stagedGame, [Text.UTF8Encoding]::new($false))
 

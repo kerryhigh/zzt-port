@@ -49,16 +49,17 @@ static uint8_t message_row_colors[60];
 static bool capture_scroll_touch_lines;
 static int scroll_touch_line_count;
 static char scroll_touch_lines[2][51];
-#define INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT 9
+#define INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY 16
 #define INTEGRATED_GAMEPLAY_MAX_FIELDS 65536
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY 64
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE 516
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY 8192
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_STRIDE 4
 static int32_t integrated_gameplay_snapshots[
-	INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT][INTEGRATED_GAMEPLAY_MAX_FIELDS];
-static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT];
-static int16_t integrated_gameplay_checkpoint_headers[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT * 2];
+	INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY][INTEGRATED_GAMEPLAY_MAX_FIELDS];
+static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY];
+static int16_t integrated_gameplay_checkpoint_headers[INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY * 2];
+static int32_t integrated_gameplay_snapshot_count_value;
 static int16_t integrated_gameplay_trace[24 * 9];
 static int32_t integrated_gameplay_sound_events[
 	INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY][INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE];
@@ -3946,15 +3947,16 @@ int32_t run_oop_production_movement_checks(void) {
 	return 0;
 }
 
-static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
-	int32_t *out = integrated_gameplay_snapshots[checkpoint_index];
+static int capture_integrated_gameplay_snapshot(int checkpoint_index, int16_t checkpoint_kind, int16_t checkpoint_id) {
+	int32_t *out;
 	int16_t stat_id, alias_id, ix, iy;
 	int32_t stat_slots;
 	int32_t script_bytes = 0;
 	int32_t sound_fields;
 	int script_index;
-	static const int16_t kinds[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 'L', 'S', 'C', 'C', 'C', 'C', 'C', 'C', 'F' };
-	static const int16_t ids[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 0, 0, 1, 2, 3, 4, 5, 6, 0 };
+	if (checkpoint_index < 0 || checkpoint_index >= INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY
+			|| checkpoint_index != integrated_gameplay_snapshot_count_value) return 0;
+	out = integrated_gameplay_snapshots[checkpoint_index];
 	if (state.board.stat_count < 0 || state.board.stat_count > ZOO_MAX_STAT) return 0;
 	stat_slots = (int32_t) state.board.stat_count + 1;
 	for (stat_id = 0; stat_id <= state.board.stat_count; stat_id++) {
@@ -3970,13 +3972,13 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	}
 	if (state.sound.buffer_len < 0 || state.sound.buffer_len > 255) return 0;
 	sound_fields = 8 + state.sound.buffer_len;
-	if (12 + (14 * stat_slots) + 11 + (62 * 27 * 2) + 2
+	if (13 + (14 * stat_slots) + 11 + (62 * 27 * 2) + 2
 			+ (stat_slots * stat_slots) + script_bytes + sound_fields + 2 > INTEGRATED_GAMEPLAY_MAX_FIELDS) {
 		return 0;
 	}
 
-	integrated_gameplay_checkpoint_headers[checkpoint_index * 2] = kinds[checkpoint_index];
-	integrated_gameplay_checkpoint_headers[checkpoint_index * 2 + 1] = ids[checkpoint_index];
+	integrated_gameplay_checkpoint_headers[checkpoint_index * 2] = checkpoint_kind;
+	integrated_gameplay_checkpoint_headers[checkpoint_index * 2 + 1] = checkpoint_id;
 	*out++ = state.world.info.ammo;
 	*out++ = state.world.info.gems;
 	*out++ = state.world.info.health;
@@ -3989,6 +3991,7 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	*out++ = state.world.info.board_time_hsec;
 	*out++ = state.world.info.is_save ? 1 : 0;
 	*out++ = state.board.stat_count;
+	*out++ = state.game_state == GS_PLAY ? 1 : (state.game_state == GS_TITLE ? 2 : 0);
 	for (stat_id = 0; stat_id <= state.board.stat_count; stat_id++) {
 		zoo_stat *stat = &state.board.stats[stat_id];
 		*out++ = stat->x;
@@ -4059,7 +4062,9 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	*out++ = integrated_gameplay_cell_event_count_value;
 	*out++ = integrated_gameplay_cell_event_overflow_value;
 	integrated_gameplay_snapshot_lengths[checkpoint_index] = (int32_t) (out - integrated_gameplay_snapshots[checkpoint_index]);
-	return integrated_gameplay_snapshot_lengths[checkpoint_index] <= INTEGRATED_GAMEPLAY_MAX_FIELDS;
+	if (integrated_gameplay_snapshot_lengths[checkpoint_index] > INTEGRATED_GAMEPLAY_MAX_FIELDS) return 0;
+	integrated_gameplay_snapshot_count_value++;
+	return 1;
 }
 
 int32_t run_integrated_gameplay_checks(void) {
@@ -4071,12 +4076,17 @@ int32_t run_integrated_gameplay_checks(void) {
 	int16_t previous_tick;
 	int16_t stat_id;
 	int16_t tick_result;
+	int16_t last_board;
+	int16_t last_game_state;
+	bool last_paused;
+	int16_t transition_count = 0;
 
 	memset(&state, 0, sizeof(state));
 	memset(&video, 0, sizeof(video));
 	memset(integrated_gameplay_snapshots, 0, sizeof(integrated_gameplay_snapshots));
 	memset(integrated_gameplay_snapshot_lengths, 0, sizeof(integrated_gameplay_snapshot_lengths));
 	memset(integrated_gameplay_checkpoint_headers, 0, sizeof(integrated_gameplay_checkpoint_headers));
+	integrated_gameplay_snapshot_count_value = 0;
 	memset(integrated_gameplay_sound_events, 0, sizeof(integrated_gameplay_sound_events));
 	integrated_gameplay_sound_event_count_value = 0;
 	integrated_gameplay_sound_event_overflow_value = 0;
@@ -4096,6 +4106,8 @@ int32_t run_integrated_gameplay_checks(void) {
 	state.sound.enabled = false;
 	state.sound.current_priority = -1;
 	state.sound.duration_counter = 1;
+	/* Match the Pascal fixture's E_PLAYER game-state marker before its loaded snapshot. */
+	state.game_state = GS_PLAY;
 	integrated_schedule_enabled = true;
 	integrated_elapsed_nanos = 0;
 	zoo_world_create(&state);
@@ -4129,12 +4141,15 @@ int32_t run_integrated_gameplay_checks(void) {
 	state.board.stats[stat_id].data_pos = 0;
 	state.tick_speed = 0;
 	state.game_paused = true;
-	if (!capture_integrated_gameplay_snapshot(0)) return 4;
+	if (!capture_integrated_gameplay_snapshot(0, 'L', 0)) return 4;
 	force_elapsed_for_tick_check = true;
 	zoo_game_start(&state, GS_PLAY);
 	zoo_input_key_press(&state.input, '6');
 	zoo_input_key_press(&state.input, '6');
-	if (!capture_integrated_gameplay_snapshot(1)) return 4;
+	if (!capture_integrated_gameplay_snapshot(1, 'S', 0)) return 4;
+	last_board = state.world.info.current_board;
+	last_game_state = state.game_state;
+	last_paused = state.game_paused;
 	integrated_gameplay_sound_capture_enabled = true;
 	integrated_gameplay_cell_capture_enabled = true;
 
@@ -4157,6 +4172,20 @@ int32_t run_integrated_gameplay_checks(void) {
 			return 10 - state.error_value;
 		}
 		calls++;
+		if (state.world.info.current_board != last_board
+				|| state.game_state != last_game_state
+				|| state.game_paused != last_paused) {
+			last_board = state.world.info.current_board;
+			last_game_state = state.game_state;
+			last_paused = state.game_paused;
+			transition_count++;
+			if (!capture_integrated_gameplay_snapshot(
+					integrated_gameplay_snapshot_count_value, 'T', transition_count)) {
+				force_elapsed_for_tick_check = false;
+				integrated_schedule_enabled = false;
+				return 4;
+			}
+		}
 		if (state.current_stat_tick == 0 && state.current_tick != previous_tick) {
 			cycles++;
 			if (cycles == 6) state.game_play_exit_requested = true;
@@ -4165,7 +4194,8 @@ int32_t run_integrated_gameplay_checks(void) {
 				integrated_schedule_enabled = false;
 				return 11;
 			}
-			if (!capture_integrated_gameplay_snapshot(cycles + 1)) {
+			if (!capture_integrated_gameplay_snapshot(
+					integrated_gameplay_snapshot_count_value, 'C', cycles)) {
 				force_elapsed_for_tick_check = false;
 				integrated_schedule_enabled = false;
 				return 4;
@@ -4182,12 +4212,13 @@ int32_t run_integrated_gameplay_checks(void) {
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].element = ZOO_E_PLAYER;
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].color = zoo_element_defs[ZOO_E_PLAYER].color;
 	state.sound.block_queueing = false;
-	if (!capture_integrated_gameplay_snapshot(8)) return 4;
+	if (!capture_integrated_gameplay_snapshot(
+			integrated_gameplay_snapshot_count_value, 'F', 0)) return 4;
 	return cycles == 6 ? 0 : 3;
 }
 
 uint32_t integrated_gameplay_output_ptr(void) {
-	return (uint32_t) (uintptr_t) integrated_gameplay_snapshots[8];
+	return (uint32_t) (uintptr_t) integrated_gameplay_snapshots[integrated_gameplay_snapshot_count_value - 1];
 }
 
 uint32_t integrated_gameplay_snapshots_ptr(void) {
@@ -4207,11 +4238,11 @@ int32_t integrated_gameplay_snapshot_stride(void) {
 }
 
 int32_t integrated_gameplay_output_length(void) {
-	return integrated_gameplay_snapshot_lengths[8];
+	return integrated_gameplay_snapshot_lengths[integrated_gameplay_snapshot_count_value - 1];
 }
 
 int32_t integrated_gameplay_snapshot_count(void) {
-	return INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT;
+	return integrated_gameplay_snapshot_count_value;
 }
 
 uint32_t integrated_gameplay_sound_events_ptr(void) {

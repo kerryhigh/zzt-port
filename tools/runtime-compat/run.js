@@ -641,7 +641,7 @@ function pascalSoundParse(input) {
   const integratedFieldCount = integratedInstance.exports.integrated_gameplay_output_length();
   const integratedOutput = new Int32Array(integratedInstance.exports.memory.buffer,
     integratedInstance.exports.integrated_gameplay_output_ptr(), integratedFieldCount);
-  const integratedSchedulerStart = 12 + (integratedOutput[11] + 1) * 14;
+  const integratedSchedulerStart = 13 + (integratedOutput[11] + 1) * 14;
   const integratedPaused = integratedOutput[integratedSchedulerStart + 5];
   const integratedExitRequested = integratedOutput[integratedSchedulerStart + 6];
   if (integratedOutput[0] !== 1 || integratedOutput[1] !== 1 || integratedOutput[11] !== 2

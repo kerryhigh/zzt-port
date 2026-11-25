@@ -10,17 +10,41 @@ const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
 const statFieldCount = 14;
 const schedulerFieldCount = 11;
-const checkpointSpecs = [
+const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
+const checkpointSpecs = [];
+let nextTransitionId = 1;
+let nextCycleId = 1;
+const checkpointHeaders = expectedLines.map((line, rowIndex) => {
+  const fields = line.trim().split(/\s+/);
+  if (fields.length < 3) throw new Error(`Malformed Pascal checkpoint header at row ${rowIndex + 1}`);
+  return { kind: fields[0], id: Number(fields[1]), fieldCount: Number(fields[2]), fields };
+});
+if (checkpointHeaders.length < 9
+    || checkpointHeaders[0].kind !== 'L' || checkpointHeaders[0].id !== 0
+    || checkpointHeaders[1].kind !== 'S' || checkpointHeaders[1].id !== 0) {
+  throw new Error('Integrated replay must start with L0 loaded state followed by S0 game-loop start');
+}
+checkpointSpecs.push(
   { kind: 'L', id: 0, name: 'loaded initial state' },
   { kind: 'S', id: 0, name: 'game-loop start' },
-  ...Array.from({ length: 6 }, (_, index) => ({ kind: 'C', id: index + 1, name: `cycle ${index + 1}` })),
-  { kind: 'F', id: 0, name: 'final state' },
-];
-const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
-if (expectedLines.length !== checkpointSpecs.length) {
-  throw new Error(`Pascal integrated replay has ${expectedLines.length} checkpoints; expected ${checkpointSpecs.length}`);
+);
+for (let row = 2; row < checkpointHeaders.length; row++) {
+  const header = checkpointHeaders[row];
+  if (header.kind === 'T' && header.id === nextTransitionId) {
+    checkpointSpecs.push({ kind: 'T', id: header.id, name: `state transition ${header.id}` });
+    nextTransitionId++;
+  } else if (header.kind === 'C' && header.id === nextCycleId && nextCycleId <= 6) {
+    checkpointSpecs.push({ kind: 'C', id: header.id, name: `cycle ${header.id}` });
+    nextCycleId++;
+  } else if (header.kind === 'F' && header.id === 0 && row === checkpointHeaders.length - 1) {
+    checkpointSpecs.push({ kind: 'F', id: 0, name: 'final state' });
+  } else {
+    throw new Error(`Invalid checkpoint order or identity at row ${row + 1}: ${header.kind}/${header.id}`);
+  }
 }
-
+if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== 7) {
+  throw new Error(`Integrated replay requires six ordered cycles and a final state; cycles=${nextCycleId - 1}`);
+}
 const expectedSnapshots = expectedLines.map((line, rowIndex) => {
   const fields = line.trim().split(/\s+/);
   const spec = checkpointSpecs[rowIndex];
@@ -38,6 +62,7 @@ const expectedSnapshots = expectedLines.map((line, rowIndex) => {
 const scalarNames = [
   'ammo', 'gems', 'health', 'current board', 'torches', 'torch ticks',
   'energizer ticks', 'score', 'board seconds', 'board hundredths', 'save flag', 'stat count',
+  'game state element (player/monitor role)',
 ];
 const statNames = [
   'x', 'y', 'step x', 'step y', 'cycle', 'p1', 'p2', 'p3',
@@ -56,7 +81,7 @@ function describeField(index, statCount, values) {
   const statSlots = statCount + 1;
   const statFieldEnd = scalarNames.length + statSlots * statFieldCount;
   if (index < statFieldEnd) {
-    const offset = index - 12;
+    const offset = index - scalarNames.length;
     return `stat ${Math.floor(offset / statFieldCount)} ${statNames[offset % statFieldCount]}`;
   }
   const schedulerStart = statFieldEnd;
