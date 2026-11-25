@@ -418,7 +418,7 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 		end;
 		checkpointFieldCount := 12 + (14 * liveStatCount) + 11 +
 			((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 +
-			(liveStatCount * liveStatCount) + totalScriptBytes;
+			(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer);
 		Assign(output, 'INTEGPR.OUT');
 		Append(output);
 		Write(output, checkpointKind, ' ', checkpointId, ' ', checkpointFieldCount, ' ',
@@ -464,6 +464,11 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 				end;
 			end;
 		end;
+		Write(output, SoundCurrentPriority, ' ', SoundBufferPos, ' ', Length(SoundBuffer),
+			' ', Ord(SoundIsPlaying), ' ', Ord(SoundEnabled), ' ', Ord(SoundBlockQueueing),
+			' ', SoundDurationCounter, ' ', SoundDurationMultiplier, ' ');
+		for scriptByteIndex := 1 to Length(SoundBuffer) do
+			Write(output, Ord(SoundBuffer[scriptByteIndex]), ' ');
 		WriteLn(output);
 		Close(output);
 	end;
@@ -902,6 +907,8 @@ $stagedSound = $stagedSound.Replace(
     $soundInterfaceAnchor + $newline + "`tprocedure SoundProbeTick;" + $newline +
         "`tprocedure SoundProbeSetTime(hour, minute, sec, hSec: word);" + $newline +
         "`tprocedure SoundProbeSetSchedule(startHsecs, stallAfterPoll, stallExtraPits: integer);" + $newline +
+        "`tprocedure SoundProbeQueueCapture(enabled: boolean);" + $newline +
+        "`tprocedure SoundProbeWriteQueueEvents(filename: string);" + $newline +
         "`tfunction SoundProbeGetScheduleCycleCount: integer;" + $newline +
         "`tfunction SoundProbeGetScheduleCycleHsec(index: integer): integer;"
 )
@@ -912,9 +919,26 @@ if (-not $stagedSound.Contains($soundProbeVarAnchor)) {
 $soundProbeTimeVars = @'
 uses Crt, Dos;
 
+const
+    SoundProbeQueueEventCapacity = 64;
+
+type
+    TSoundProbeQueueEvent = record
+        RequestPriority, RequestLength: integer;
+        RequestBytes: array[1..255] of byte;
+        ResultPriority, ResultPosition, ResultLength, ResultPlaying: integer;
+        ResultBytes: array[1..255] of byte;
+    end;
+    TSoundProbeQueueEventArray = array[1..SoundProbeQueueEventCapacity] of TSoundProbeQueueEvent;
+    PSoundProbeQueueEventArray = ^TSoundProbeQueueEventArray;
+
 var
     SoundProbeTimeEnabled: boolean;
     SoundProbeScheduleEnabled: boolean;
+    SoundProbeQueueCaptureEnabled: boolean;
+    SoundProbeQueueEventCount: integer;
+    SoundProbeQueueEventOverflow: boolean;
+    SoundProbeQueueEvents: PSoundProbeQueueEventArray;
     SoundProbeHour, SoundProbeMinute, SoundProbeSecond, SoundProbeHsec: word;
     SoundProbeScheduleStartHsecs, SoundProbeScheduleCurrentHsecs,
         SoundProbeScheduleStallAfterPoll,
@@ -922,6 +946,67 @@ var
         SoundProbeScheduleCycleCount: integer;
     SoundProbeScheduleElapsedNanos: longint;
     SoundProbeScheduleCycleHsecs: array[0..4] of integer;
+
+procedure SoundProbeQueueCapture(enabled: boolean);
+begin
+    if enabled then begin
+        if SoundProbeQueueEvents = nil then
+            GetMem(SoundProbeQueueEvents, SizeOf(TSoundProbeQueueEventArray));
+        SoundProbeQueueEventCount := 0;
+        SoundProbeQueueEventOverflow := false;
+    end;
+    SoundProbeQueueCaptureEnabled := enabled;
+end;
+
+procedure SoundProbeCaptureQueue(priority: integer; pattern: string);
+var
+    i, eventIndex: integer;
+begin
+    if SoundProbeQueueCaptureEnabled then begin
+        if (SoundProbeQueueEventCount < SoundProbeQueueEventCapacity) and
+            (Length(pattern) <= 255) and (Length(SoundBuffer) <= 255) then begin
+            SoundProbeQueueEventCount := SoundProbeQueueEventCount + 1;
+            eventIndex := SoundProbeQueueEventCount;
+            with SoundProbeQueueEvents^[eventIndex] do begin
+                RequestPriority := priority;
+                RequestLength := Length(pattern);
+                for i := 1 to RequestLength do
+                    RequestBytes[i] := Ord(pattern[i]);
+                ResultPriority := SoundCurrentPriority;
+                ResultPosition := SoundBufferPos;
+                ResultLength := Length(SoundBuffer);
+                ResultPlaying := Ord(SoundIsPlaying);
+                for i := 1 to ResultLength do
+                    ResultBytes[i] := Ord(SoundBuffer[i]);
+            end;
+        end else
+            SoundProbeQueueEventOverflow := true;
+    end;
+end;
+
+procedure SoundProbeWriteQueueEvents(filename: string);
+var
+    output: text;
+    eventIndex, byteIndex: integer;
+begin
+    Assign(output, filename);
+    Rewrite(output);
+    WriteLn(output, SoundProbeQueueEventCount, ' ', Ord(SoundProbeQueueEventOverflow));
+    for eventIndex := 1 to SoundProbeQueueEventCount do begin
+        with SoundProbeQueueEvents^[eventIndex] do begin
+            Write(output, RequestPriority, ' ', RequestLength, ' ');
+            for byteIndex := 1 to RequestLength do Write(output, RequestBytes[byteIndex], ' ');
+            Write(output, ResultPriority, ' ', ResultPosition, ' ', ResultLength, ' ', ResultPlaying, ' ');
+            for byteIndex := 1 to ResultLength do Write(output, ResultBytes[byteIndex], ' ');
+            WriteLn(output);
+        end;
+    end;
+    Close(output);
+    if SoundProbeQueueEvents <> nil then begin
+        FreeMem(SoundProbeQueueEvents, SizeOf(TSoundProbeQueueEventArray));
+        SoundProbeQueueEvents := nil;
+    end;
+end;
 
 procedure SoundProbeSetTime(hour, minute, sec, hSec: word);
 begin
@@ -970,6 +1055,20 @@ begin
 end;
 '@
 $stagedSound = $stagedSound.Replace($soundProbeVarAnchor, $soundProbeTimeVars.TrimEnd())
+$soundQueueImplementationStart = $stagedSound.LastIndexOf('procedure SoundQueue(priority: integer; pattern: string);', [StringComparison]::Ordinal)
+$soundQueueImplementationEnd = $stagedSound.IndexOf('procedure SoundClearQueue;', $soundQueueImplementationStart, [StringComparison]::Ordinal)
+if ($soundQueueImplementationStart -lt 0 -or $soundQueueImplementationEnd -lt 0) {
+    throw 'Could not isolate the staged SoundQueue implementation for logical event capture.'
+}
+$soundQueueImplementation = $stagedSound.Substring($soundQueueImplementationStart, $soundQueueImplementationEnd - $soundQueueImplementationStart)
+$soundQueueFinalEnd = $soundQueueImplementation.LastIndexOf('end;', [StringComparison]::Ordinal)
+if ($soundQueueFinalEnd -lt 0) { throw 'Could not locate the staged SoundQueue body end for logical event capture.' }
+$soundQueueImplementation = $soundQueueImplementation.Insert(
+    $soundQueueFinalEnd,
+    "`t`tif SoundProbeQueueCaptureEnabled then SoundProbeCaptureQueue(priority, pattern);" + $newline
+)
+$stagedSound = $stagedSound.Substring(0, $soundQueueImplementationStart) +
+    $soundQueueImplementation + $stagedSound.Substring($soundQueueImplementationEnd)
 $elapsedRoutineAnchor = 'function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;'
 $elapsedRoutineStart = $stagedSound.LastIndexOf($elapsedRoutineAnchor, [StringComparison]::Ordinal)
 if ($elapsedRoutineStart -lt 0) { throw 'Could not locate SoundHasTimeElapsed for deterministic clock injection.' }
@@ -1057,6 +1156,9 @@ Invoke-DosboxSession 'INTEGPRB' @(
 )
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGPR.OUT') -PathType Leaf)) {
     throw "Integrated Pascal gameplay probe did not write INTEGPR.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSND.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGSND.OUT. See $stageRoot\INTEGPRB.LOG."
 }
 
 # Exercise the original nested EditorFloodFill routine directly. The test-only
@@ -1751,7 +1853,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production Lion tick comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $stageRoot 'INTEGPR.OUT') `
-        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm')
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
 }
 finally {

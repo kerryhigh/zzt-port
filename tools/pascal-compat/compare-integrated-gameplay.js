@@ -2,7 +2,8 @@ const fs = require('node:fs');
 
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
-if (!pascalPath || !wasmPath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm>');
+const soundPath = process.argv[4];
+if (!pascalPath || !wasmPath || !soundPath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT>');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -45,6 +46,10 @@ const schedulerNames = [
   'current tick', 'current stat tick', 'tick speed', 'tick duration', 'tick counter',
   'paused', 'exit requested', 'input delta x', 'input delta y', 'key pressed', 'key buffer length',
 ];
+const soundNames = [
+  'priority', 'buffer position', 'buffer length', 'playing',
+  'enabled', 'queue blocked', 'duration counter', 'duration multiplier',
+];
 function describeField(index, statCount, values) {
   if (index < scalarNames.length) return scalarNames[index];
   const statSlots = statCount + 1;
@@ -74,6 +79,7 @@ function describeField(index, statCount, values) {
     return `script pointer alias stat ${Math.floor(aliasIndex / aliasGraphSize)}=${aliasIndex % aliasGraphSize}`;
   }
   let scriptByteIndex = index - aliasGraphStart - aliasGraphFields;
+  let scriptBytes = 0;
   for (let statId = 0; statId <= statCount; statId++) {
     const dataLength = values[scalarNames.length + statId * statFieldCount + 13];
     let isFirstOwner = dataLength > 0;
@@ -85,8 +91,49 @@ function describeField(index, statCount, values) {
     const capturedLength = isFirstOwner ? dataLength : 0;
     if (scriptByteIndex < capturedLength) return `stat ${statId} script byte ${scriptByteIndex}`;
     scriptByteIndex -= capturedLength;
+    scriptBytes += capturedLength;
   }
+  const soundStart = aliasGraphStart + aliasGraphFields + scriptBytes;
+  const soundField = index - soundStart;
+  if (soundField >= 0 && soundField < soundNames.length) return `sound ${soundNames[soundField]}`;
+  if (soundField >= soundNames.length) return `sound queue byte ${soundField - soundNames.length}`;
   return `script byte ${scriptByteIndex} (unclassified)`;
+}
+
+function parseSoundEvents(path) {
+  const raw = fs.readFileSync(path, 'ascii').trim();
+  if (!raw) throw new Error('Pascal integrated sound-event output is empty');
+  const tokens = raw.split(/\s+/).map(Number);
+  if (tokens.some(value => !Number.isInteger(value))) throw new Error('Pascal integrated sound-event output contains a non-integer token');
+  const count = tokens[0];
+  const overflow = tokens[1];
+  if (!Number.isInteger(count) || count < 0 || ![0, 1].includes(overflow)) {
+    throw new Error('Pascal integrated sound-event header is malformed');
+  }
+  let cursor = 2;
+  const events = [];
+  for (let eventIndex = 0; eventIndex < count; eventIndex++) {
+    if (cursor + 2 > tokens.length) throw new Error(`Pascal sound event ${eventIndex} is truncated before its request header`);
+    const priority = tokens[cursor++];
+    const requestLength = tokens[cursor++];
+    if (requestLength < 0 || requestLength > 255 || cursor + requestLength + 4 > tokens.length) {
+      throw new Error(`Pascal sound event ${eventIndex} has an invalid request length ${requestLength}`);
+    }
+    const requestBytes = tokens.slice(cursor, cursor + requestLength);
+    cursor += requestLength;
+    const resultPriority = tokens[cursor++];
+    const resultPosition = tokens[cursor++];
+    const resultLength = tokens[cursor++];
+    const resultPlaying = tokens[cursor++];
+    if (resultLength < 0 || resultLength > 255 || cursor + resultLength > tokens.length) {
+      throw new Error(`Pascal sound event ${eventIndex} has an invalid result length ${resultLength}`);
+    }
+    const resultBytes = tokens.slice(cursor, cursor + resultLength);
+    cursor += resultLength;
+    events.push({ priority, requestLength, requestBytes, resultPriority, resultPosition, resultLength, resultPlaying, resultBytes });
+  }
+  if (cursor !== tokens.length) throw new Error(`Pascal sound-event output has ${tokens.length - cursor} unclassified trailing token(s)`);
+  return { count, overflow, events };
 }
 
 (async () => {
@@ -181,6 +228,55 @@ function describeField(index, statCount, values) {
   if (final[0] !== 1 || final[1] !== 1 || final[11] !== 2 || paused !== 0 || exitRequested !== 1) {
     throw new Error(`Integrated gameplay invariant failed: ammo=${final[0]}, gems=${final[1]}, stats=${final[11]}, paused=${paused}, exit=${exitRequested}`);
   }
+  const expectedSound = parseSoundEvents(soundPath);
+  if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');
+  const actualSoundCount = instance.exports.integrated_gameplay_sound_event_count();
+  const actualSoundOverflow = instance.exports.integrated_gameplay_sound_event_overflow();
+  const actualSoundStride = instance.exports.integrated_gameplay_sound_event_stride();
+  const expectedSoundStride = 516;
+  if (actualSoundOverflow !== 0) throw new Error('Production integrated sound-event capture overflowed or saw an invalid event length');
+  if (actualSoundStride !== expectedSoundStride) throw new Error(`Production sound-event stride ${actualSoundStride}; expected ${expectedSoundStride}`);
+  if (actualSoundCount !== expectedSound.count) {
+    throw new Error(`First sound-event divergence at event count: Pascal=${expectedSound.count}, production=${actualSoundCount}; Pascal context=${JSON.stringify(expectedSound.events.slice(-2))}`);
+  }
+  const actualSoundBase = instance.exports.integrated_gameplay_sound_events_ptr();
+  const actualSound = new Int32Array(instance.exports.memory.buffer,
+    actualSoundBase, actualSoundCount * actualSoundStride);
+  const soundFieldNames = ['priority', 'request length', 'result priority', 'result position', 'result length', 'result playing'];
+  let soundComparedFields = 0;
+  for (let eventIndex = 0; eventIndex < expectedSound.count; eventIndex++) {
+    const expected = expectedSound.events[eventIndex];
+    const base = eventIndex * actualSoundStride;
+    const actualRequestLength = actualSound[base + 1];
+    const actualResultLength = actualSound[base + 259];
+    const scalarExpected = [expected.priority, expected.requestLength, expected.resultPriority,
+      expected.resultPosition, expected.resultLength, expected.resultPlaying];
+    const scalarActual = [actualSound[base], actualRequestLength, actualSound[base + 257],
+      actualSound[base + 258], actualResultLength, actualSound[base + 260]];
+    for (let fieldIndex = 0; fieldIndex < scalarExpected.length; fieldIndex++) {
+      if (scalarActual[fieldIndex] !== scalarExpected[fieldIndex]) {
+        const from = Math.max(0, eventIndex - 1);
+        const to = Math.min(expectedSound.count - 1, eventIndex + 1);
+        throw new Error(`First sound-event divergence at event ${eventIndex}, ${soundFieldNames[fieldIndex]}: Pascal=${scalarExpected[fieldIndex]}, production=${scalarActual[fieldIndex]}; surrounding Pascal events=${JSON.stringify(expectedSound.events.slice(from, to + 1))}`);
+      }
+      soundComparedFields++;
+    }
+    const byteComparisons = [
+      { name: 'request byte', expected: expected.requestBytes, start: base + 2 },
+      { name: 'queued byte', expected: expected.resultBytes, start: base + 261 },
+    ];
+    for (const bytes of byteComparisons) {
+      for (let byteIndex = 0; byteIndex < bytes.expected.length; byteIndex++) {
+        const observed = actualSound[bytes.start + byteIndex];
+        if (observed !== bytes.expected[byteIndex]) {
+          const from = Math.max(0, eventIndex - 1);
+          const to = Math.min(expectedSound.count - 1, eventIndex + 1);
+          throw new Error(`First sound-event divergence at event ${eventIndex}, ${bytes.name} ${byteIndex}: Pascal=${bytes.expected[byteIndex]}, production=${observed}; surrounding Pascal events=${JSON.stringify(expectedSound.events.slice(from, to + 1))}`);
+        }
+        soundComparedFields++;
+      }
+    }
+  }
   const checkpointFieldCounts = expectedSnapshots.map(snapshot => snapshot.fieldCount);
-  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); first-divergence reports identify checkpoint, field, tile, and surrounding values`);
+  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); first-divergence reports identify checkpoint/event, field, tile, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

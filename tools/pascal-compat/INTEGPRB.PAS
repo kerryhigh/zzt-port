@@ -69,6 +69,9 @@ begin
 	SoundCurrentPriority := -1;
 	SoundBlockQueueing := false;
 	SoundBuffer := '';
+	SoundBufferPos := 1;
+	SoundDurationCounter := 1;
+	SoundDurationMultiplier := 1;
 	InputDeltaX := 0;
 	InputDeltaY := 0;
 	InputKeyPressed := #0;
@@ -88,8 +91,12 @@ begin
 	GameLoopProbeStopAfter := 6;
 	GameLoopProbeCycles := 0;
 	SoundProbeSetSchedule(0, 0, 0);
+	SoundProbeQueueCapture(false);
+	SoundProbeQueueCapture(true);
 	GamePlayLoop(false);
 	GameLoopProbeEnabled := false;
+	SoundProbeQueueCapture(false);
+	SoundProbeWriteQueueEvents('INTEGSND.OUT');
 	GameLoopProbeCapture('F', 0);
 	WorldUnload;
 	Dispose(IoTmpBuf);

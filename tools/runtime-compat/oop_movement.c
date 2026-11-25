@@ -51,11 +51,18 @@ static int scroll_touch_line_count;
 static char scroll_touch_lines[2][51];
 #define INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT 9
 #define INTEGRATED_GAMEPLAY_MAX_FIELDS 65536
+#define INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY 64
+#define INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE 516
 static int32_t integrated_gameplay_snapshots[
 	INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT][INTEGRATED_GAMEPLAY_MAX_FIELDS];
 static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT];
 static int16_t integrated_gameplay_checkpoint_headers[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT * 2];
 static int16_t integrated_gameplay_trace[24 * 9];
+static int32_t integrated_gameplay_sound_events[
+	INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY][INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE];
+static int32_t integrated_gameplay_sound_event_count_value;
+static int32_t integrated_gameplay_sound_event_overflow_value;
+static bool integrated_gameplay_sound_capture_enabled;
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
 
@@ -170,7 +177,33 @@ void zoo_window_open(zoo_state *test_state, zoo_text_window *window) {
 #include "../../third_party/libzoo/src/libzoo/zoo_elements.c"
 #include "../../third_party/libzoo/src/libzoo/zoo_input.c"
 #include "../../third_party/libzoo/src/libzoo/zoo_oop.c"
+#ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
+#define zoo_sound_queue zoo_sound_queue_untraced
+#endif
 #include "../../third_party/libzoo/src/libzoo/zoo_sound.c"
+#ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
+#undef zoo_sound_queue
+void zoo_sound_queue(zoo_sound_state *sound, int16_t priority, const uint8_t *data, int16_t len) {
+	int32_t *event;
+	int index;
+	zoo_sound_queue_untraced(sound, priority, data, len);
+	if (!integrated_gameplay_sound_capture_enabled) return;
+	if (integrated_gameplay_sound_event_count_value >= INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY
+			|| len < 0 || len > 255 || sound->buffer_len < 0 || sound->buffer_len > 255) {
+		integrated_gameplay_sound_event_overflow_value = 1;
+		return;
+	}
+	event = integrated_gameplay_sound_events[integrated_gameplay_sound_event_count_value++];
+	event[0] = priority;
+	event[1] = len;
+	for (index = 0; index < len; index++) event[2 + index] = data[index];
+	event[257] = sound->current_priority;
+	event[258] = sound->buffer_pos + 1;
+	event[259] = sound->buffer_len;
+	event[260] = sound->is_playing ? 1 : 0;
+	for (index = 0; index < sound->buffer_len; index++) event[261 + index] = sound->buffer[index];
+}
+#endif
 
 bool zoo_has_hsecs_elapsed(zoo_state *test_state, int16_t *counter, int16_t value) {
 	if (!force_elapsed_for_tick_check) return false;
@@ -3896,6 +3929,7 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	int16_t stat_id, alias_id, ix, iy;
 	int32_t stat_slots;
 	int32_t script_bytes = 0;
+	int32_t sound_fields;
 	int script_index;
 	static const int16_t kinds[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 'L', 'S', 'C', 'C', 'C', 'C', 'C', 'C', 'F' };
 	static const int16_t ids[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 0, 0, 1, 2, 3, 4, 5, 6, 0 };
@@ -3912,8 +3946,10 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 			if (!earlier_owner) script_bytes += stat->data_len;
 		}
 	}
+	if (state.sound.buffer_len < 0 || state.sound.buffer_len > 255) return 0;
+	sound_fields = 8 + state.sound.buffer_len;
 	if (12 + (14 * stat_slots) + 11 + (62 * 27 * 2) + 2
-			+ (stat_slots * stat_slots) + script_bytes > INTEGRATED_GAMEPLAY_MAX_FIELDS) {
+			+ (stat_slots * stat_slots) + script_bytes + sound_fields > INTEGRATED_GAMEPLAY_MAX_FIELDS) {
 		return 0;
 	}
 
@@ -3987,6 +4023,17 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 			}
 		}
 	}
+	*out++ = state.sound.current_priority;
+	*out++ = state.sound.buffer_pos + 1;
+	*out++ = state.sound.buffer_len;
+	*out++ = state.sound.is_playing ? 1 : 0;
+	*out++ = state.sound.enabled ? 1 : 0;
+	*out++ = state.sound.block_queueing ? 1 : 0;
+	*out++ = state.sound.duration_counter;
+	*out++ = state.sound.duration_multiplier;
+	for (script_index = 0; script_index < state.sound.buffer_len; script_index++) {
+		*out++ = state.sound.buffer[script_index];
+	}
 	integrated_gameplay_snapshot_lengths[checkpoint_index] = (int32_t) (out - integrated_gameplay_snapshots[checkpoint_index]);
 	return integrated_gameplay_snapshot_lengths[checkpoint_index] <= INTEGRATED_GAMEPLAY_MAX_FIELDS;
 }
@@ -4006,11 +4053,19 @@ int32_t run_integrated_gameplay_checks(void) {
 	memset(integrated_gameplay_snapshots, 0, sizeof(integrated_gameplay_snapshots));
 	memset(integrated_gameplay_snapshot_lengths, 0, sizeof(integrated_gameplay_snapshot_lengths));
 	memset(integrated_gameplay_checkpoint_headers, 0, sizeof(integrated_gameplay_checkpoint_headers));
+	memset(integrated_gameplay_sound_events, 0, sizeof(integrated_gameplay_sound_events));
+	integrated_gameplay_sound_event_count_value = 0;
+	integrated_gameplay_sound_event_overflow_value = 0;
+	integrated_gameplay_sound_capture_enabled = false;
 	video.func_write = test_video_write;
 	state.d_video = &video;
 	state.func_draw_sidebar = test_sidebar_update;
 	state.func_random = integrated_gameplay_random;
 	state.random_seed = 0;
+	zoo_sound_state_init(&state.sound);
+	state.sound.enabled = false;
+	state.sound.current_priority = -1;
+	state.sound.duration_counter = 1;
 	integrated_schedule_enabled = true;
 	integrated_elapsed_nanos = 0;
 	zoo_world_create(&state);
@@ -4050,6 +4105,7 @@ int32_t run_integrated_gameplay_checks(void) {
 	zoo_input_key_press(&state.input, '6');
 	zoo_input_key_press(&state.input, '6');
 	if (!capture_integrated_gameplay_snapshot(1)) return 4;
+	integrated_gameplay_sound_capture_enabled = true;
 
 	while (cycles < 6 && calls < 2000) {
 		previous_stat = state.current_stat_tick;
@@ -4088,6 +4144,7 @@ int32_t run_integrated_gameplay_checks(void) {
 	force_elapsed_for_tick_check = false;
 	integrated_schedule_enabled = false;
 	if (cycles != 6 || state.game_paused) return 3;
+	integrated_gameplay_sound_capture_enabled = false;
 	/* Match GamePlayLoop's non-gameplay cleanup before taking the snapshot. */
 	zoo_sound_clear_queue(&state.sound);
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].element = ZOO_E_PLAYER;
@@ -4123,6 +4180,22 @@ int32_t integrated_gameplay_output_length(void) {
 
 int32_t integrated_gameplay_snapshot_count(void) {
 	return INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT;
+}
+
+uint32_t integrated_gameplay_sound_events_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_gameplay_sound_events;
+}
+
+int32_t integrated_gameplay_sound_event_count(void) {
+	return integrated_gameplay_sound_event_count_value;
+}
+
+int32_t integrated_gameplay_sound_event_overflow(void) {
+	return integrated_gameplay_sound_event_overflow_value;
+}
+
+int32_t integrated_gameplay_sound_event_stride(void) {
+	return INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE;
 }
 
 uint32_t integrated_gameplay_trace_ptr(void) {
