@@ -1319,9 +1319,10 @@ Invoke-DosboxSession 'EDSTAT' @(
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 
 # Exercise the original nested EditorTransferBoard routine through the real
-# Pascal EditorLoop. The staging copy supplies only its menu/filename choices
-# and error-dialog Escape key; the import, IOResult checks, BoardCreate, and
-# BoardOpen routines remain the reconstructed source implementations.
+# Pascal EditorLoop. The staging copy supplies only menu/filename choices and
+# substitutes the post-Escape state at the error-dialog boundary. The modal
+# acknowledgement interaction is skipped; import, IOResult checks, file reads,
+# BoardCreate/BoardOpen, and editor cleanup remain reconstructed Pascal code.
 $shortPayloadBrd = [byte[]]@(0x04, 0x00, 0x10, 0x20)
 [IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTPAY.BRD'), $shortPayloadBrd)
 $stagedEditor = $editorSourceOriginal
@@ -1346,7 +1347,10 @@ $errorDialogSelectAnchor = 'TextWindowSelect(textWindow, false, false);'
 if (-not $stagedGameBeforeBrdProbe.Contains($errorDialogSelectAnchor)) {
     throw 'Could not locate the DisplayIOError acknowledgement input for the direct board-transfer probe.'
 }
-$stagedGameForBrdProbe = $stagedGameBeforeBrdProbe.Replace($errorDialogSelectAnchor, 'InputKeyPressed := KEY_ESCAPE;')
+$stagedGameForBrdProbe = $stagedGameBeforeBrdProbe.Replace(
+    $errorDialogSelectAnchor,
+    'TextWindowRejected := true; InputKeyPressed := #0;'
+)
 [IO.File]::WriteAllText($stagedGamePath, $stagedGameForBrdProbe, [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BRDXFER.PAS') -Destination (Join-Path $stageRoot 'BRDXFER.PAS')
 Write-Host 'Compiling and running the direct Turbo Pascal short-payload editor import probe: BRDXFER'
