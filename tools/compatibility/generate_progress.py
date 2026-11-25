@@ -19,6 +19,7 @@ def main() -> None:
     run = json.loads(RUN.read_text(encoding="utf-8")) if RUN.exists() else {}
     by_blocker: defaultdict[str, list[dict]] = defaultdict(list)
     acceptance_counts = Counter(item["status"] for item in inv["acceptance_cases"])
+    unclassified_acceptance = [item for item in inv["acceptance_cases"] if not item.get("evidence_class")]
     for item in inv["acceptance_cases"]:
         by_blocker[item["blocker"]].append(item)
     closed_set = set(run.get("closed_blockers", []))
@@ -86,6 +87,7 @@ def main() -> None:
         "## Acceptance case status",
         "",
         f"- Passing/complete: **{acceptance_counts['complete']}**; partial: **{acceptance_counts['partial']}**; pending: **{acceptance_counts['pending']}**; failing: **{run.get('verification', {}).get('failing_acceptance_cases', 'not separately enumerated')}**.",
+        f"- Acceptance cases without an evidence classification: **{len(unclassified_acceptance)}**; IDs: {', '.join(item['id'] for item in unclassified_acceptance) or 'none'}.",
         f"- Unclassified source inventory entries: **{unclassified}**; explicitly excluded adapter/presentation entries: **{explicitly_excluded}**.",
         "- Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P remains unenumerated; I counts only completed full integrated fixtures.",
         "",
