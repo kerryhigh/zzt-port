@@ -96,6 +96,17 @@
       ],
       "per_cycle_checkpoints": true,
       "first_divergence_reporting": true,
+      "diagnostic_negative_control": {
+        "result": "passed",
+        "verification_date": "2026-11-25",
+        "classification": "verification-tooling negative control; not D, S, P, DP, or I compatibility evidence",
+        "mutation": "A disposable copy of INTEGPR.OUT had only C1 field 0 (ammo) incremented; the compiled-Pascal oracle output was not edited.",
+        "report": "First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; context=[ammo:1->0, gems:0->0, health:100->100]",
+        "comparator_child_exit_code": 1,
+        "original_pascal_output_sha256_before_and_after": "e302935a10fbcbabdc7d39ba44c99e2bcc9a6e05bdf7951b26c6833059f10efe",
+        "counted_as_required_fixture": false,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-first-divergence-negative-control.md"
+      },
       "per_cycle_results": [
         {
           "fixture": "INTEGPRB prototype: buffered movement, two boulder pushes, and two interacting #GIVE/#IDLE scripts",

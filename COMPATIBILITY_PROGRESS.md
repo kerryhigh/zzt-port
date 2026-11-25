@@ -81,6 +81,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - Per-cycle checkpoint comparisons: implemented.
 - State-transition checkpoints: implemented.
 - First-divergence reporting: implemented.
+- First-divergence diagnostic negative control: passed; First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; context=[ammo:1->0, gems:0->0, health:100->100]. This instrumentation check receives no replay-fixture or compatibility-case completion credit.
 - INTEGPRB prototype: buffered movement, two boulder pushes, and two interacting #GIVE/#IDLE scripts: 12 checkpoints; 41690 state-field comparisons total; passed; 2 logical sound queue events / 20 event fields and 9 playfield writes / 36 event fields matched; pause-to-play, save, and reload transitions matched; 565 fresh-world stable SAV bytes and 949 loaded-file non-pointer bytes matched (DP evidence).
   - loaded initial state: 3473 fields; matched.
   - game-loop start: 3473 fields; matched.

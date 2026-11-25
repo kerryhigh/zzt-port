@@ -1956,6 +1956,17 @@ try {
         (Join-Path $stageRoot 'INTEGLOD.OUT') `
         (Join-Path $stageRoot 'INTEG2SV.SAV')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
+        'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        (Join-Path $stageRoot 'INTEGPR_DIAG_MUTATION.OUT')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated diagnostic negative control failed with exit code $LASTEXITCODE." }
 }
 finally {
     Pop-Location

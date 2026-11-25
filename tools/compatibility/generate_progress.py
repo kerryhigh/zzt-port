@@ -67,6 +67,7 @@ def main() -> None:
     probes = runner.get("direct_pascal", {})
     differential = runner.get("direct_differential_comparisons", {})
     integrated = runner.get("integrated_replay", {})
+    integrated_diagnostic = integrated.get("diagnostic_negative_control", {})
     integrated_save = integrated.get("generated_save_comparison", {})
     integrated_roundtrip = integrated.get("generated_roundtrip_comparison", {})
     evidence = runner.get("evidence_case_counts", {})
@@ -169,6 +170,7 @@ def main() -> None:
         f"- Per-cycle checkpoint comparisons: {'implemented' if integrated.get('per_cycle_checkpoints') else 'outstanding'}.",
         f"- State-transition checkpoints: {'implemented' if integrated.get('state_transition_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
+        f"- First-divergence diagnostic negative control: {integrated_diagnostic.get('result', 'not recorded')}; {integrated_diagnostic.get('report', 'no controlled mismatch report recorded')}. This instrumentation check receives no replay-fixture or compatibility-case completion credit.",
         *([
             f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints; {item.get('field_comparisons', 'not recorded')} state-field comparisons total; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
             for item in integrated.get("per_cycle_results", [])
