@@ -7,7 +7,11 @@ const cellPath = process.argv[5];
 const savePath = process.argv[6];
 const loadResultPath = process.argv[7];
 const roundtripSavePath = process.argv[8];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV>');
+const scenario = process.argv[9] || 'synthetic';
+const demoWorldPath = process.argv[10];
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal [DEMO.ZZT]]');
+if (!['synthetic', 'demo-traversal'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -343,7 +347,17 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     }
   });
   instance = await WebAssembly.instantiate(module, { env });
-  const result = instance.exports.run_integrated_gameplay_checks();
+  let result;
+  if (scenario === 'synthetic') {
+    result = instance.exports.run_integrated_gameplay_checks();
+  } else {
+    const demoBytes = fs.readFileSync(demoWorldPath);
+    const demoCapacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (demoBytes.length > demoCapacity) throw new Error(`DEMO.ZZT length ${demoBytes.length} exceeds production replay input capacity ${demoCapacity}`);
+    new Uint8Array(instance.exports.memory.buffer,
+      instance.exports.integrated_demo_world_bytes_ptr(), demoBytes.length).set(demoBytes);
+    result = instance.exports.run_integrated_demo_gameplay_checks(demoBytes.length);
+  }
   if (result !== 0) throw new Error(`Production integrated replay returned ${result}`);
 
   const pascalSave = fs.readFileSync(savePath);
@@ -354,7 +368,10 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   if (productionSaveOverflow !== 0) throw new Error('Production integrated save exceeded its fixed output buffer');
   const productionSave = new Uint8Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_save_bytes_ptr(), productionSaveLength);
-  const generatedSaveComparison = compareSerializedSave('Generated fresh-world SAV', pascalSave, productionSave, false);
+  const loadedFromFile = scenario === 'demo-traversal';
+  const generatedSaveComparison = compareSerializedSave(
+    loadedFromFile ? 'Generated DEMO-derived SAV' : 'Generated fresh-world SAV',
+    pascalSave, productionSave, loadedFromFile);
 
   const pascalLoadResult = Number(fs.readFileSync(loadResultPath, 'ascii').trim());
   if (pascalLoadResult !== 1) throw new Error(`Compiled Pascal WorldLoad returned ${pascalLoadResult}; expected true/success`);
@@ -432,8 +449,21 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const schedulerStart = scalarNames.length + finalStatSlots * statFieldCount;
   const paused = final[schedulerStart + 5];
   const exitRequested = final[schedulerStart + 6];
-  if (final[0] !== 1 || final[1] !== 1 || final[11] !== 2 || paused !== 0 || exitRequested !== 1) {
+  if (scenario === 'synthetic'
+      && (final[0] !== 1 || final[1] !== 1 || final[11] !== 2 || paused !== 0 || exitRequested !== 1)) {
     throw new Error(`Integrated gameplay invariant failed: ammo=${final[0]}, gems=${final[1]}, stats=${final[11]}, paused=${paused}, exit=${exitRequested}`);
+  }
+  if (scenario === 'demo-traversal') {
+    const playerStatStart = scalarNames.length;
+    const startX = expectedSnapshots[0].values[playerStatStart];
+    const startY = expectedSnapshots[0].values[playerStatStart + 1];
+    const startBoard = expectedSnapshots[0].values[3];
+    const traversed = checkpointSpecs.some((spec, row) => {
+      if (spec.kind !== 'C') return false;
+      const values = expectedSnapshots[row].values;
+      return values[playerStatStart] !== startX || values[playerStatStart + 1] !== startY || values[3] !== startBoard;
+    });
+    if (!traversed) throw new Error(`DEMO traversal input tape produced no player movement from board ${startBoard} (${startX},${startY})`);
   }
   const expectedSound = parseSoundEvents(soundPath);
   if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');
@@ -522,5 +552,6 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const classifiedDiffSummary = [...generatedSaveComparison.classifiedDifferences.entries()]
     .map(([field, count]) => `${field} (${count} differing byte${count === 1 ? '' : 's'})`)
     .join('; ') || 'none';
-  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields); generated fresh-world SAV matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} uninitialized/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
+  const generatedLabel = loadedFromFile ? 'DEMO-derived SAV' : 'fresh-world SAV';
+  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields); generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

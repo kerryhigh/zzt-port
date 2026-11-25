@@ -1199,6 +1199,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDTIK.PAS') -Destination (Jo
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDCLK.PAS') -Destination (Join-Path $stageRoot 'SOUNDCLK.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'GAMESCHD.PAS') -Destination (Join-Path $stageRoot 'GAMESCHD.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'INTEGPRB.PAS') -Destination (Join-Path $stageRoot 'INTEGPRB.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DEMOINT.PAS') -Destination (Join-Path $stageRoot 'DEMOINT.PAS')
 Write-Host 'Compiling and running direct Turbo Pascal sound-tick probe: SOUNDTIK'
 Invoke-DosboxSession 'SOUNDTIK' @(
     'TPC.EXE /B /EBIN /ISRC /USRC SOUNDTIK.PAS > SOUNDTIK.LOG',
@@ -1239,6 +1240,22 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGLOD.OUT') -PathType
 }
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEG2SV.SAV') -PathType Leaf)) {
     throw "Integrated Pascal gameplay probe did not write INTEG2SV.SAV after reloading INTEGSAV.SAV. See $stageRoot\INTEGPRB.LOG."
+}
+$syntheticReplayRoot = Join-Path $stageRoot 'integrated-synthetic'
+New-Item -ItemType Directory -Force -Path $syntheticReplayRoot | Out-Null
+foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+    Copy-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Destination (Join-Path $syntheticReplayRoot $fixtureOutput)
+}
+Write-Host 'Compiling the direct Pascal DEMO traversal replay: DEMOINT'
+Invoke-DosboxSession 'DEMOINT-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC DEMOINT.PAS > DEMOINT-COMPILE.LOG'
+)
+Write-Host 'Running the heap-sensitive Pascal DEMO traversal replay in a fresh DOSBox-X session'
+Invoke-DosboxSession 'DEMOINT' @('BIN\DEMOINT.EXE')
+foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+        throw "Pascal DEMO traversal replay did not write $fixtureOutput. See $stageRoot\DEMOINT.LOG."
+    }
 }
 
 # Exercise the original nested EditorFloodFill routine directly. The test-only
@@ -1948,16 +1965,16 @@ try {
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_movement.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production Lion tick comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
-        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
-        (Join-Path $stageRoot 'INTEGSND.OUT') `
-        (Join-Path $stageRoot 'INTEGCEL.OUT') `
-        (Join-Path $stageRoot 'INTEGSAV.SAV') `
-        (Join-Path $stageRoot 'INTEGLOD.OUT') `
-        (Join-Path $stageRoot 'INTEG2SV.SAV')
+        (Join-Path $syntheticReplayRoot 'INTEGSND.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEGCEL.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEGSAV.SAV') `
+        (Join-Path $syntheticReplayRoot 'INTEGLOD.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEG2SV.SAV') `
+        'synthetic'
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
-    & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
-        'tools/pascal-compat/compare-integrated-gameplay.js' `
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $stageRoot 'INTEGPR.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
         (Join-Path $stageRoot 'INTEGSND.OUT') `
@@ -1965,6 +1982,18 @@ try {
         (Join-Path $stageRoot 'INTEGSAV.SAV') `
         (Join-Path $stageRoot 'INTEGLOD.OUT') `
         (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'demo-traversal' `
+        (Join-Path $stageRoot 'DEMO.ZZT')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production DEMO traversal comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
+        'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $syntheticReplayRoot 'INTEGSND.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEGCEL.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEGSAV.SAV') `
+        (Join-Path $syntheticReplayRoot 'INTEGLOD.OUT') `
+        (Join-Path $syntheticReplayRoot 'INTEG2SV.SAV') `
         (Join-Path $stageRoot 'INTEGPR_DIAG_MUTATION.OUT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated diagnostic negative control failed with exit code $LASTEXITCODE." }
 }
@@ -1972,6 +2001,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 30 # One direct BRDXFER short-payload session; short-header BoardOpen is excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes, EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 31 # One direct BRDXFER short-payload session and one DEMO traversal replay; short-header BoardOpen is excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes, EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

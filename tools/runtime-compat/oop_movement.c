@@ -82,6 +82,7 @@ static uint8_t integrated_gameplay_roundtrip_save_bytes[INTEGRATED_GAMEPLAY_SAVE
 static int32_t integrated_gameplay_roundtrip_save_length_value;
 static int32_t integrated_gameplay_roundtrip_save_result_value;
 static int32_t integrated_gameplay_roundtrip_save_overflow_value;
+static uint8_t integrated_demo_world_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
 
@@ -4078,21 +4079,7 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index, int16_t ch
 	return 1;
 }
 
-int32_t run_integrated_gameplay_checks(void) {
-	static const char script[] = "#GIVE GEMS 1\r#IDLE\r";
-	static const char script2[] = "#GIVE AMMO 1\r#IDLE\r";
-	int16_t cycles = 0;
-	int16_t calls = 0;
-	int16_t previous_stat;
-	int16_t previous_tick;
-	int16_t stat_id;
-	int16_t tick_result;
-	int16_t last_board;
-	int16_t last_game_state;
-	bool last_paused;
-	int16_t transition_count = 0;
-	zoo_io_handle save_handle;
-
+static void integrated_gameplay_capture_reset(void) {
 	memset(&state, 0, sizeof(state));
 	memset(&video, 0, sizeof(video));
 	memset(integrated_gameplay_snapshots, 0, sizeof(integrated_gameplay_snapshots));
@@ -4117,57 +4104,41 @@ int32_t run_integrated_gameplay_checks(void) {
 	integrated_gameplay_roundtrip_save_length_value = 0;
 	integrated_gameplay_roundtrip_save_result_value = -1;
 	integrated_gameplay_roundtrip_save_overflow_value = 0;
+	memset(integrated_gameplay_trace, 0, sizeof(integrated_gameplay_trace));
+	force_elapsed_for_tick_check = false;
+	integrated_schedule_enabled = true;
+	integrated_elapsed_nanos = 0;
 	video.func_write = test_video_write;
 	state.d_video = &video;
 	state.func_draw_sidebar = test_sidebar_update;
 	state.func_random = integrated_gameplay_random;
 	state.random_seed = 0;
-	/* The direct fixture bypasses zoo_state_init; match Pascal's player glyph. */
+	/* Match the original Pascal player's transient glyph override. */
 	state.player_character = 2;
 	zoo_sound_state_init(&state.sound);
 	state.sound.enabled = false;
 	state.sound.current_priority = -1;
 	state.sound.duration_counter = 1;
-	/* Match the Pascal fixture's E_PLAYER game-state marker before its loaded snapshot. */
-	state.game_state = GS_PLAY;
-	integrated_schedule_enabled = true;
-	integrated_elapsed_nanos = 0;
-	zoo_world_create(&state);
-	zoo_board_create(&state);
-	state.world.info.health = 100;
-	state.world.info.gems = 0;
-	state.world.info.ammo = 0;
-	state.world.info.score = 0;
-	state.board.stats[0].x = 5;
-	state.board.stats[0].y = 5;
-	state.board.stats[0].cycle = 1;
-	state.board.stats[0].under.element = ZOO_E_EMPTY;
-	state.board.stats[0].under.color = 0;
-	state.board.tiles[5][5].element = ZOO_E_PLAYER;
-	state.board.tiles[5][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
-	state.board.tiles[6][5].element = ZOO_E_BOULDER;
-	state.board.tiles[6][5].color = 0x0E;
-	state.board.tiles[7][5].element = ZOO_E_EMPTY;
-	state.board.tiles[7][5].color = 0x70;
-	zoo_stat_add(&state, 20, 5, ZOO_E_OBJECT, 0x0A, 1, &zoo_stat_template_default);
-	stat_id = zoo_stat_get_id(&state, 20, 5);
-	if (stat_id != 1) return 1;
-	state.board.stats[stat_id].data = (char *) script;
-	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script) - 1);
-	state.board.stats[stat_id].data_pos = 0;
-	zoo_stat_add(&state, 25, 5, ZOO_E_OBJECT, 0x0A, 1, &zoo_stat_template_default);
-	stat_id = zoo_stat_get_id(&state, 25, 5);
-	if (stat_id != 2) return 2;
-	state.board.stats[stat_id].data = (char *) script2;
-	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script2) - 1);
-	state.board.stats[stat_id].data_pos = 0;
+}
+
+static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_length) {
+	int16_t cycles = 0;
+	int16_t calls = 0;
+	int16_t previous_stat;
+	int16_t previous_tick;
+	int16_t tick_result;
+	int16_t last_board;
+	int16_t last_game_state;
+	bool last_paused;
+	int16_t transition_count = 0;
+	zoo_io_handle save_handle;
+
 	state.tick_speed = 0;
 	state.game_paused = true;
 	if (!capture_integrated_gameplay_snapshot(0, 'L', 0)) return 4;
 	force_elapsed_for_tick_check = true;
 	zoo_game_start(&state, GS_PLAY);
-	zoo_input_key_press(&state.input, '6');
-	zoo_input_key_press(&state.input, '6');
+	while (input_length-- > 0) zoo_input_key_press(&state.input, (uint8_t) *input_tape++);
 	if (!capture_integrated_gameplay_snapshot(1, 'S', 0)) return 4;
 	last_board = state.world.info.current_board;
 	last_game_state = state.game_state;
@@ -4246,6 +4217,77 @@ int32_t run_integrated_gameplay_checks(void) {
 	if (!capture_integrated_gameplay_snapshot(
 			integrated_gameplay_snapshot_count_value, 'T', 2)) return 4;
 	return cycles == 6 ? 0 : 3;
+}
+
+int32_t run_integrated_gameplay_checks(void) {
+	static const char script[] = "#GIVE GEMS 1\r#IDLE\r";
+	static const char script2[] = "#GIVE AMMO 1\r#IDLE\r";
+	int16_t stat_id;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	/* Match the Pascal fixture's E_PLAYER marker before its loaded snapshot. */
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	zoo_board_create(&state);
+	state.world.info.health = 100;
+	state.world.info.gems = 0;
+	state.world.info.ammo = 0;
+	state.world.info.score = 0;
+	state.board.stats[0].x = 5;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[5][5].element = ZOO_E_PLAYER;
+	state.board.tiles[5][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.tiles[6][5].element = ZOO_E_BOULDER;
+	state.board.tiles[6][5].color = 0x0E;
+	state.board.tiles[7][5].element = ZOO_E_EMPTY;
+	state.board.tiles[7][5].color = 0x70;
+	zoo_stat_add(&state, 20, 5, ZOO_E_OBJECT, 0x0A, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 20, 5);
+	if (stat_id != 1) return 1;
+	state.board.stats[stat_id].data = (char *) script;
+	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script) - 1);
+	state.board.stats[stat_id].data_pos = 0;
+	zoo_stat_add(&state, 25, 5, ZOO_E_OBJECT, 0x0A, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 25, 5);
+	if (stat_id != 2) return 2;
+	state.board.stats[stat_id].data = (char *) script2;
+	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script2) - 1);
+	state.board.stats[stat_id].data_pos = 0;
+	result = integrated_gameplay_run_ticks("66", 2);
+	if (result != 0) return result;
+	return state.world.info.ammo == 1 && state.world.info.gems == 1 ? 0 : 20;
+}
+
+uint32_t integrated_demo_world_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_demo_world_bytes;
+}
+
+int32_t integrated_demo_world_bytes_capacity(void) {
+	return INTEGRATED_GAMEPLAY_SAVE_CAPACITY;
+}
+
+int32_t run_integrated_demo_gameplay_checks(int32_t demo_world_length) {
+	zoo_io_handle demo_handle;
+	int result;
+	if (demo_world_length <= 0 || demo_world_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 30;
+	integrated_gameplay_capture_reset();
+	zoo_world_create(&state);
+	demo_handle = zoo_io_open_file_mem(integrated_demo_world_bytes,
+		(size_t) demo_world_length, MODE_READ);
+	result = zoo_world_load(&state, &demo_handle, false);
+	if (result != 0) return 31;
+	zoo_board_change(&state, state.return_board_id);
+	if (state.error_value != 0) return 32;
+	zoo_board_enter(&state);
+	state.game_state = GS_PLAY;
+	state.game_paused = true;
+	state.game_play_exit_requested = false;
+	result = integrated_gameplay_run_ticks("666666", 6);
+	return result;
 }
 
 uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {
