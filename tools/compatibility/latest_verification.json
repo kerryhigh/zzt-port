@@ -2,7 +2,7 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "a7642fd: test: capture integrated Pascal sound queue events (E2-10 partial)",
+    "root_revision": "d61ec17: test: compare integrated playfield writes (E2-10 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "The last complete full Pascal run passed 84 sessions and 43/43 configured differentials on c7c49c3. The 2026-11-25 attempt compiled and ran INTEGPRB and later editor probes, then timed out in BRDXFER before the runner summary; see latest_attempt. The standalone integrated differential and runtime suite passed after fixture normalization.",

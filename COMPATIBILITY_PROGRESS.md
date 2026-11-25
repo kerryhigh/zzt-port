@@ -109,7 +109,7 @@ Total unclassified source inventory entries: **1465**; explicitly excluded: **10
 - Latest full Pascal-runner attempt: exit code 1; partial attempt; not a complete clean Pascal suite. DOSBox-X did not exit from the BRDXFER session within the runner 30-second timeout. The integrated probe and several following editor probes had completed before the timeout.
 - The latest integrated Pascal differential is reported separately: exit 0; 31260 snapshot fields, 2 logical sound events, and 9 ordered playfield cell writes matched.
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: a7642fd: test: capture integrated Pascal sound queue events (E2-10 partial).
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: d61ec17: test: compare integrated playfield writes (E2-10 partial).
 - Last completed full Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <Turbo Pascal 5.5 directory> -DosboxExecutable <DOSBox-X 2026.10.01 executable>; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
