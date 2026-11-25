@@ -9,8 +9,8 @@ const loadResultPath = process.argv[7];
 const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order [DEMO.ZZT]]');
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
@@ -360,8 +360,10 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_demo_gameplay_checks(demoBytes.length);
     } else if (scenario === 'walls-pushers-duplicators') {
       result = instance.exports.run_integrated_wall_pusher_duplicator_checks();
-    } else {
+    } else if (scenario === 'combat-keys-pickups') {
       result = instance.exports.run_integrated_combat_key_pickup_checks();
+    } else {
+      result = instance.exports.run_integrated_script_stat_order_checks();
     }
   }
   if (result !== 0) throw new Error(`Production integrated replay returned ${result}`);
@@ -375,9 +377,6 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const productionSave = new Uint8Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_save_bytes_ptr(), productionSaveLength);
   const loadedFromFile = scenario === 'demo-traversal';
-  const generatedSaveComparison = compareSerializedSave(
-    loadedFromFile ? 'Generated DEMO-derived SAV' : 'Generated fresh-world SAV',
-    pascalSave, productionSave, loadedFromFile);
 
   const pascalLoadResult = Number(fs.readFileSync(loadResultPath, 'ascii').trim());
   if (pascalLoadResult !== 1) throw new Error(`Compiled Pascal WorldLoad returned ${pascalLoadResult}; expected true/success`);
@@ -401,8 +400,6 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const productionRoundtripLength = instance.exports.integrated_gameplay_roundtrip_save_length();
   const productionRoundtripSave = new Uint8Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_roundtrip_save_bytes_ptr(), productionRoundtripLength);
-  const roundtripSaveComparison = compareSerializedSave(
-    'Loaded-file round-trip SAV', pascalRoundtripSave, productionRoundtripSave, true);
 
   const snapshotCount = instance.exports.integrated_gameplay_snapshot_count();
   if (snapshotCount !== checkpointSpecs.length) {
@@ -525,6 +522,21 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       throw new Error(`F03 coverage assertion failed at tile (10,5) after ammunition pickup: expected player element 4, observed ${tileElementAt(10, 5)}`);
     }
   }
+  if (scenario === 'object-stat-order') {
+    const final = expectedSnapshots.at(-1).values;
+    const firstScriptCycleIndex = checkpointSpecs.findIndex(spec => spec.kind === 'C' && spec.id === 2);
+    if (firstScriptCycleIndex < 0) throw new Error('F04 coverage assertion failed: cycle 2 checkpoint is missing');
+    const firstScriptCycle = expectedSnapshots[firstScriptCycleIndex].values;
+    const statCount = final[11];
+    const statField = (statId, field) => final[scalarNames.length + statId * statFieldCount + field];
+    if (statCount !== 2 || statField(1, 0) !== 20 || statField(1, 1) !== 5
+        || statField(2, 0) !== 10 || statField(2, 1) !== 5) {
+      throw new Error(`F04 coverage assertion failed: expected two non-player stats 1=(20,5), 2=(10,5); Board.StatCount=${statCount}, stat1=(${statField(1, 0)},${statField(1, 1)}), stat2=(${statField(2, 0)},${statField(2, 1)})`);
+    }
+    if (firstScriptCycle[0] !== 1 || firstScriptCycle[1] !== 1 || final[0] !== 1 || final[1] !== 1) {
+      throw new Error(`F04 coverage assertion failed: stat-1 #SET/#GIVE must be visible to stat-2 #IF in its first script cycle and persist; C2 ammo/gems=${firstScriptCycle[0]}/${firstScriptCycle[1]}, final ammo/gems=${final[0]}/${final[1]}`);
+    }
+  }
   const expectedSound = parseSoundEvents(soundPath);
   if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');
   const actualSoundCount = instance.exports.integrated_gameplay_sound_event_count();
@@ -608,6 +620,16 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       cellComparedFields++;
     }
   }
+
+  // Compare final serialized bytes only after the earlier state-transition,
+  // sound, and cell-write checks. This preserves first-divergence ordering:
+  // a final save mismatch must not hide an earlier gameplay mismatch.
+  const generatedSaveComparison = compareSerializedSave(
+    loadedFromFile ? 'Generated DEMO-derived SAV' : 'Generated fresh-world SAV',
+    pascalSave, productionSave, loadedFromFile);
+  const roundtripSaveComparison = compareSerializedSave(
+    'Loaded-file round-trip SAV', pascalRoundtripSave, productionRoundtripSave, true);
+
   const checkpointFieldCounts = expectedSnapshots.map(snapshot => snapshot.fieldCount);
   const classifiedDiffSummary = [...generatedSaveComparison.classifiedDifferences.entries()]
     .map(([field, count]) => `${field} (${count} differing byte${count === 1 ? '' : 's'})`)

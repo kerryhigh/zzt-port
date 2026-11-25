@@ -1203,6 +1203,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'INTEGPRB.PAS') -Destination (Jo
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DEMOINT.PAS') -Destination (Join-Path $stageRoot 'DEMOINT.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MOTIONIN.PAS') -Destination (Join-Path $stageRoot 'MOTIONIN.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'COMBATIN.PAS') -Destination (Join-Path $stageRoot 'COMBATIN.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'STATORD.PAS') -Destination (Join-Path $stageRoot 'STATORD.PAS')
 Write-Host 'Compiling and running direct Turbo Pascal sound-tick probe: SOUNDTIK'
 Invoke-DosboxSession 'SOUNDTIK' @(
     'TPC.EXE /B /EBIN /ISRC /USRC SOUNDTIK.PAS > SOUNDTIK.LOG',
@@ -2112,6 +2113,36 @@ end;
         (Join-Path $stageRoot 'INTEG2SV.SAV') `
         'combat-keys-pickups'
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F03 combat/key/door/pickup replay failed with exit code $LASTEXITCODE." }
+
+    Write-Host 'Compiling and running the F04 stat-order/interacting-script gameplay replay: STATORD'
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'STATORD.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'STATORD.EXE') -Force -ErrorAction SilentlyContinue
+    Invoke-DosboxSession 'STATORD-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC STATORD.PAS > STATORCP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'STATORD.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\STATORD.EXE. See $stageRoot\STATORCP.LOG and $stageRoot\STATORD-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'STATORD' @('BIN\STATORD.EXE')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+            throw "Pascal F04 integrated replay did not write $fixtureOutput. See $stageRoot\STATORD.LOG."
+        }
+    }
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'object-stat-order'
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F04 object-stat-order replay failed with exit code $LASTEXITCODE." }
+
     & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
         'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
@@ -2128,6 +2159,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 33 # Includes BRDXFER's short-payload session and the DEMO/F02/F03 integrated replay fixtures; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 34 # Includes BRDXFER's short-payload session and the DEMO/F02/F03/F04 integrated replay fixtures; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

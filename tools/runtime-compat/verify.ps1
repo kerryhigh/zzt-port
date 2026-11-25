@@ -342,6 +342,7 @@ $integratedGameplayArgs = @(
 	'-Wl,--export=run_integrated_demo_gameplay_checks',
 	'-Wl,--export=run_integrated_wall_pusher_duplicator_checks',
 	'-Wl,--export=run_integrated_combat_key_pickup_checks',
+	'-Wl,--export=run_integrated_script_stat_order_checks',
     '-Wl,--export=integrated_gameplay_output_ptr', '-Wl,--export=integrated_gameplay_trace_ptr',
     '-Wl,--export=integrated_gameplay_snapshots_ptr', '-Wl,--export=integrated_gameplay_checkpoint_headers_ptr',
     '-Wl,--export=integrated_gameplay_snapshot_count', '-Wl,--export=integrated_gameplay_snapshot_lengths_ptr',

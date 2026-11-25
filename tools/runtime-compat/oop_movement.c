@@ -4440,6 +4440,65 @@ int32_t run_integrated_combat_key_pickup_checks(void) {
 	return 0;
 }
 
+int32_t run_integrated_script_stat_order_checks(void) {
+	static char first_script[] = "#SET FIRST\r#GIVE GEMS 1\r#END\r";
+	static char second_script[] = "#IF FIRST #GIVE AMMO 1\r#END\r";
+	char *first_data;
+	char *second_data;
+	uint32_t first_offset;
+	uint32_t second_offset;
+	int16_t first_id;
+	int16_t second_id;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	zoo_board_create(&state);
+	state.world.info.health = 100;
+	state.world.info.gems = 0;
+	state.world.info.ammo = 0;
+	state.world.info.score = 0;
+	state.board.stats[0].x = 5;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[5][5].element = ZOO_E_PLAYER;
+	state.board.tiles[5][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+
+	/* Insert the farther-right object first; execution must retain stat order. */
+	zoo_stat_add(&state, 20, 5, ZOO_E_OBJECT, 0x0A,
+		1, &zoo_stat_template_default);
+	first_id = zoo_stat_get_id(&state, 20, 5);
+	if (first_id != 1) return 40;
+	first_data = zoo_board_data_heap_alloc(&state.board, (uint32_t) (sizeof(first_script) - 1), &first_offset);
+	if (first_data == NULL) return 42;
+	memcpy(first_data, first_script, sizeof(first_script) - 1);
+	state.board.stats[first_id].data = first_data;
+	state.board.stats[first_id].data_len = (int16_t) (sizeof(first_script) - 1);
+	state.board.stats[first_id].data_pos = 0;
+	state.board.stats[first_id].data_in_heap = true;
+	state.board.stats[first_id].data_heap_offset = first_offset;
+
+	zoo_stat_add(&state, 10, 5, ZOO_E_OBJECT, 0x0A,
+		1, &zoo_stat_template_default);
+	second_id = zoo_stat_get_id(&state, 10, 5);
+	if (second_id != 2) return 41;
+	second_data = zoo_board_data_heap_alloc(&state.board, (uint32_t) (sizeof(second_script) - 1), &second_offset);
+	if (second_data == NULL) return 43;
+	memcpy(second_data, second_script, sizeof(second_script) - 1);
+	state.board.stats[second_id].data = second_data;
+	state.board.stats[second_id].data_len = (int16_t) (sizeof(second_script) - 1);
+	state.board.stats[second_id].data_pos = 0;
+	state.board.stats[second_id].data_in_heap = true;
+	state.board.stats[second_id].data_heap_offset = second_offset;
+
+	result = integrated_gameplay_run_ticks("66", 2, NULL, 0);
+	if (result != 0) return result;
+	return 0;
+}
+
 uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {
 	return (uint32_t) (uintptr_t) integrated_gameplay_reload_input_bytes;
 }
