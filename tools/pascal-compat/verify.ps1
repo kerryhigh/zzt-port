@@ -1153,6 +1153,45 @@ Invoke-DosboxSession 'EDSTAT' @(
 )
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 
+# Exercise the original nested EditorTransferBoard routine through the real
+# Pascal EditorLoop. The staging copy supplies only its menu/filename choices
+# and error-dialog Escape key; the import, IOResult checks, BoardCreate, and
+# BoardOpen routines remain the reconstructed source implementations.
+$shortPayloadBrd = [byte[]]@(0x04, 0x00, 0x10, 0x20)
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTPAY.BRD'), $shortPayloadBrd)
+$stagedEditor = $editorSourceOriginal
+$transferChoiceAnchor = "SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);"
+$transferFilenameAnchor = "SidebarPromptString('Import board', '.BRD', SavedBoardFileName, PROMPT_ALPHANUM);"
+if (-not $stagedEditor.Contains($transferChoiceAnchor) -or -not $stagedEditor.Contains($transferFilenameAnchor)) {
+    throw 'Could not locate the EditorTransferBoard prompt inputs for controlled direct execution.'
+}
+$stagedEditor = $stagedEditor.Replace($transferChoiceAnchor, 'i := 0;')
+$stagedEditor = $stagedEditor.Replace($transferFilenameAnchor, 'SavedBoardFileName := World.Info.Name;')
+$editorTransferCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
+if ($editorTransferCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the direct board-transfer probe.' }
+$editorTransferCallEnd = $editorTransferCallIndex + $editorFillCallAnchor.Length
+$stagedEditor = $stagedEditor.Insert(
+    $editorTransferCallEnd,
+    "`r`n`t`tEditorTransferBoard;`r`n`t`tExit;"
+)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+$stagedGamePath = Join-Path $stageSource 'GAME.PAS'
+$stagedGameBeforeBrdProbe = [IO.File]::ReadAllText($stagedGamePath)
+$errorDialogSelectAnchor = 'TextWindowSelect(textWindow, false, false);'
+if (-not $stagedGameBeforeBrdProbe.Contains($errorDialogSelectAnchor)) {
+    throw 'Could not locate the DisplayIOError acknowledgement input for the direct board-transfer probe.'
+}
+$stagedGameForBrdProbe = $stagedGameBeforeBrdProbe.Replace($errorDialogSelectAnchor, 'InputKeyPressed := KEY_ESCAPE;')
+[IO.File]::WriteAllText($stagedGamePath, $stagedGameForBrdProbe, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BRDXFER.PAS') -Destination (Join-Path $stageRoot 'BRDXFER.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal short-payload editor import probe: BRDXFER'
+Invoke-DosboxSession 'BRDXFER' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC BRDXFER.PAS > BRDXFER.LOG',
+    'BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT'
+)
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText($stagedGamePath, $stagedGameBeforeBrdProbe, [Text.UTF8Encoding]::new($false))
+
 $editorWrapExpected = [Collections.Generic.List[string]]::new()
 $editorWrapExpected.Add('queue-wrap filled 792 empty 0')
 for ($y = 1; $y -le 25; $y++) {
@@ -1246,6 +1285,7 @@ $expectedOutputs = [ordered]@{
     'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
     'NEGBRD.OUT' = @('negative-brd 1 -1')
     'BRDIOPRB.OUT' = @('partial-length 100 4610 next-IOResult 0', 'short-payload 0 100 next-IOResult 0 16 32 165 165')
+    'BRDXFER.OUT' = @('board 0 255 0 4 31 30 12 0')
     'PLRTORCH.OUT' = @('0 199 30 12')
     'PLAYERST.OUT' = @(
         'shoot-held-right ammo 1 input 0 0 dir 1 0 stats 1 target 18 15 sound 2 6 bullet 11 10 0 1 0 100 under 0 0 64 1 48 1 32 1',
@@ -1672,6 +1712,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 29 # Standalone editor, sound, allocator, OOP, and integrated gameplay probe sessions run outside the standard probe array.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes, EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, SOUNDTIK, SOUNDCLK, INTEGPRB, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 30 # Standalone editor, sound, allocator, OOP, and integrated gameplay probe sessions run outside the standard probe array.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes, EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

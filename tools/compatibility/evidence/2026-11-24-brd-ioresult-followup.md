@@ -17,7 +17,13 @@ The one-byte length read leaves the prior high byte (`0x12`) intact while replac
 
 ## Source-derived control-flow observation (S)
 
-`DisplayIOError` first calls `IOResult` in its zero check and, after observing a nonzero error, calls `IOResult` again while formatting the error number. The first call consumes the runtime error, so the second call observes zero. `EditorTransferBoard` checks `DisplayIOError` once after the length word and again after its optional payload read. Therefore the short-length and short-payload paths differ in the reconstructed source: the header error can be consumed before the final check, while a payload error reaches that final check. This conclusion is source-derived; the actual `EditorTransferBoard` path has not yet been driven by a compiled-Pascal input-tape probe.
+`DisplayIOError` first calls `IOResult` in its zero check and, after observing a nonzero error, calls `IOResult` again while formatting the error number. The first call consumes the runtime error, so the second call observes zero. `EditorTransferBoard` checks `DisplayIOError` once after the length word and again after its optional payload read. Therefore the short-length and short-payload paths differ in the reconstructed source: the header error can be consumed before the final check, while a payload error reaches that final check. The header-path conclusion is source-derived; its freed-buffer result has not yet been captured by a compiled-Pascal run.
+
+## Direct editor-operation capture (D)
+
+`tools/pascal-compat/BRDXFER.PAS` executes the actual nested `EditorTransferBoard` routine through `EditorLoop`. The staged `EDITOR.PAS` supplies only the import menu choice and filename. The staged `GAME.PAS` supplies Escape at the `TextWindowSelect` boundary so the error acknowledgement is deterministic; `DisplayIOError`'s `IOResult` checks, the file-read path, `BoardCreate`, and editor redraw/cleanup still execute from the reconstructed Pascal source. The fixture has a complete length word declaring four bytes and only two payload bytes.
+
+Observed output: `board 0 255 0 4 31 30 12 0`. This records empty name, max shots 255, zero stats, center Player element/color 4/31, player stat at (30,12), and serialized board length zero. It confirms the short-payload path calls `BoardCreate`; it does not prove the short-header path or compare a shared production import-state API.
 
 ## Production regression evidence (P)
 
@@ -27,8 +33,8 @@ The serializer suite still checks that `zoo_editor_brd_import_record` rejects a 
 
 - Command: `tools/pascal-compat/verify.ps1 -DosboxExecutable <local DOSBox-X executable>`.
 - Exit code: **0**.
-- Direct compiled-Pascal sessions: **83**; configured Pascal-to-production comparisons: **42/42 passed**.
+- Direct compiled-Pascal sessions: **84**; configured Pascal-to-production comparisons: **42/42 passed**.
 - The verifier recreated its staging directory. Reference Pascal gameplay sources remained untouched; only the existing output/input hooks in the verification staging copy were used.
 - The project toolchain hashes and broader clean-run results are recorded in [`2026-11-24-verification.md`](2026-11-24-verification.md).
 
-E2-02 remains open. The next `.BRD` requirement is a focused direct probe of the actual editor import flow with a controlled existing board, file bytes, input tape, and allocation history, followed by a comparable shared-engine state/result capture.
+E2-02 remains open. The short-payload editor reset is directly captured, but no shared engine import/error-state API is compared yet. The remaining `.BRD` requirement is to investigate the short-header branch under controlled allocation history and compare both supported paths against a single shared import/error-state implementation.
