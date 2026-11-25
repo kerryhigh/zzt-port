@@ -62,6 +62,7 @@ def main() -> None:
     discrepancies = runner.get("known_discrepancies", [])
     limitations = runner.get("non_blocking_limitations", [])
     remaining = runner.get("remaining_mandatory_work", [])
+    pascal_boardclose = runner.get("latest_attempt", {}).get("pascal_boardclose_brd", {})
 
     lines = [
         "# Engine 2.0 compatibility progress",
@@ -93,6 +94,7 @@ def main() -> None:
         f"- Direct compiled-Pascal probe sessions in the last completed full suite: **{probes.get('sessions', 'not recorded')}** ({probes.get('standard_programs', 'not recorded')} standard programs; {probes.get('standalone_sessions', 'not recorded')} standalone sessions).",
         f"- Direct Pascal-to-production differential invocations in the last completed full suite: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; last complete result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
         f"- Direct `.HI` Pascal-to-shared-engine byte comparisons: **{high_score.get('passed', 'not recorded')}/{high_score.get('configured', 'not recorded')}** passed ({high_score.get('save_cases', 'not recorded')} save, {high_score.get('load_reset_cases', 'not recorded')} load/reset, {high_score.get('add_cases', 'not recorded')} insertion cases); source-model rows: **{high_score.get('source_derived_model_rows', 'not recorded')}**.",
+        f"- Direct Pascal `.BRD` `BoardClose` record: **{pascal_boardclose.get('record_bytes_matched', 'not recorded')}/{pascal_boardclose.get('record_size_bytes', 'not recorded')}** payload bytes matched through shared LibZoo import/export; external file: {pascal_boardclose.get('fixture_size_bytes', 'not recorded')} bytes; SHA-256 `{pascal_boardclose.get('sha256', 'not recorded')}`.",
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
         f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",

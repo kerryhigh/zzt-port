@@ -99,12 +99,19 @@
       "kind": "acceptance_requirement",
       "requirement": "Create a checked-in fixture manifest with, for each format, at least one real source-produced valid file and generated boundary fixtures for every serialized field/record. Compare full output bytes, not selected fields.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:153",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending"
+      "status": "partial",
+      "evidence_class": "DP",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_editor_brd.c (zoo_editor_brd_import_record, zoo_editor_brd_parse, zoo_editor_brd_serialize)",
+        "tools/serializer-compat/world_roundtrip.c (run_editor_brd_record_roundtrip)"
+      ],
+      "test_fixture": [
+        "tools/pascal-compat/BOARDENC.PAS (source BoardClose output capture)",
+        "tools/pascal-compat/compare-pascal-boardenc.js",
+        "build/pascal-compat-verification/BOARDENC.BRD (generated staging fixture; not committed)"
+      ],
+      "oracle_output": "BOARDENC.BRD (291 bytes including the two-byte length prefix; SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd); compiled Turbo Pascal BoardClose generated a 289-byte record payload.",
+      "verification_result": "Partial DP: compiled Pascal BoardClose produced one valid length-prefixed .BRD; shared LibZoo import/export matched all 289 record bytes. The clean full runner passed 84/84 direct Pascal sessions and 44/44 configured Pascal-to-production comparisons, including this case. A four-format manifest, per-field/boundary matrix, and full malformed/error coverage remain outstanding."
     },
     {
       "id": "E2-02-AC002",
