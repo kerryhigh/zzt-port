@@ -23,7 +23,9 @@ This is the latest clean compatibility run for the current E2-02 editor-transfer
 | Runtime checks invoked by the clean Pascal runner | Exit 0 | Production runtime harness passed; its production-only cases remain incompletely enumerated in the frozen inventory. |
 | Android checks invoked by the clean Pascal runner | Exit 0 | CP437 bytes, colors/blink/monochrome rules, and DOS-key mapping. |
 | `.\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest` with `GRADLE_USER_HOME=build\gradle-home` | Exit 0 | 64 tasks (13 executed, 51 up-to-date); native engine built for `arm64-v8a` and `x86_64`. No live-device claim. |
-| Windows x64 Release / CTest | Not reverified in this run | A CMake/MSBuild attempt remained idle at `Checking File Globs` and was interrupted. The earlier 3/3 CTest pass predates this E2-02 editor-transfer API change and is not counted as current evidence. |
+| Windows x64 Release / CTest | Build exit 0; CTest 3/3 passed | The CMake-generated `zzt_core`, `zzt_windows`, `zzt_windows_smoke`, `zzt_renderer_test`, and `zzt_sound_pcm_test` projects were built directly with MSBuild 17.14.19 (`/p:Configuration=Release /p:Platform=x64 /p:BuildProjectReferences=false`). CTest passed `win32_engine_io_and_80x25`, `sharp_bilinear_integer_and_fractional`, and `win32_pcm_pascal_drum_timing`. The CMake `ZERO_CHECK` wrapper had stalled at `Checking File Globs`, so explicit generated targets were built without that reference check. |
+
+- Windows command: invoke `MSBuild.exe <each generated project.vcxproj> /nologo /m:1 /p:Configuration=Release /p:Platform=x64 /p:BuildProjectReferences=false /v:minimal` for the five targets above (**exit 0**); then `ctest --test-dir build/windows-editor-refactor -C Release --output-on-failure` (**exit 0**).
 
 The subsequent serializer-only rerun also passed the short-header safe-reopen regression: one-byte input returned the shared API's `REOPENED_PREVIOUS` outcome, preserved the seeded board name/max-shots/tile/player-stat fields, and cleared neighbor links. This is P evidence with an S-derived expectation, not D or DP evidence; the unstable freed-buffer Pascal result remains unresolved.
 

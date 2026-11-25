@@ -38,9 +38,9 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 - Direct Pascal-to-production differential comparisons: **43/43** passed; failed: **0**; run result: **all configured comparisons passed in the clean runner; short-header editor-state differential remains pending**.
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **16/16** passed (1 save, 8 load/reset, 7 insertion cases); source-model rows: **256**.
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
-- Production-only regression cases: **not enumerated; production runtime harness passed**; the finite case inventory is still being mapped.
+- Production-only regression cases: **not enumerated; one targeted E2-02 short-header safe-reopen regression passed**; the finite case inventory is still being mapped.
 - Integrated replay fixtures: **0/10** complete. Prototype comparisons: 30789 fields across 9 checkpoints; per-cycle checkpoints: present.
-- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0, including shared .BRD editor transfer harness; runtime=passed after integrated snapshot schema update; tools/runtime-compat/verify.ps1 exit 0; shared LibZoo flood-fill and production Android placement adapter checks pass; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=not reverified after the E2-02 editor-transfer API change; the existing CMake/MSBuild attempt remained idle at Checking File Globs and was interrupted. The earlier 3/3 pass predates this API change..
+- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed; runtime=passed after integrated snapshot schema update; tools/runtime-compat/verify.ps1 exit 0; shared LibZoo flood-fill and production Android placement adapter checks pass; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly.
 
 ## Frozen source inventory
 
@@ -95,7 +95,7 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 ## Latest verification record
 
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 1c4d5ef: fix: share Pascal .BRD editor transfer semantics (E2-02 partial).
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial).
 - Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <Turbo Pascal 5.5 directory> -DosboxExecutable <DOSBox-X 2026.10.01 executable>; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
@@ -112,6 +112,6 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 - Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.
 - Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.
 - Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.
-- E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64.
+- E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity.
 
 Generated by `python tools/compatibility/generate_progress.py`. Do not edit this report manually.

@@ -2,7 +2,7 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-24",
-    "root_revision": "1c4d5ef: fix: share Pascal .BRD editor transfer semantics (E2-02 partial)",
+    "root_revision": "3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "passed; corrected short-header direct attempt remains unresolved and is excluded from passing counts",
@@ -52,7 +52,8 @@
       "pascal": "Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository)",
       "dosbox_x": "DOSBox-X 2026.10.01; SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed",
       "node": "v22.19.0",
-      "python": "3.13.7"
+      "python": "3.13.7",
+      "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
       "sessions": 84,
@@ -68,7 +69,7 @@
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
-      "production_only_regressions": "not enumerated; production runtime harness passed"
+      "production_only_regressions": "not enumerated; one targeted E2-02 short-header safe-reopen regression passed"
     },
     "integrated_replay": {
       "required_fixtures": 10,
@@ -111,12 +112,12 @@
       ]
     },
     "other_suites": {
-      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0, including shared .BRD editor transfer harness",
+      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
       "runtime": "passed after integrated snapshot schema update; tools/runtime-compat/verify.ps1 exit 0; shared LibZoo flood-fill and production Android placement adapter checks pass",
       "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
       "android_build": "passed fresh offline on 2026-11-24: .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64",
-      "windows_ctest": "not reverified after the E2-02 editor-transfer API change; the existing CMake/MSBuild attempt remained idle at Checking File Globs and was interrupted. The earlier 3/3 pass predates this API change."
+      "windows_ctest": "passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly"
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
@@ -149,7 +150,7 @@
       "Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.",
       "Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.",
       "Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.",
-      "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64."
+      "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -165,8 +166,15 @@
       "result": "all direct Pascal byte comparisons passed; 256 source-model rows and five Android adapter assertions are reported separately"
     },
     "unresolved_compatibility_questions": [
-      "Does the short-header freed-buffer BoardOpen produce a repeatable final state under a controlled DOS allocator history? The corrected direct probe stalls or faults; no stable output exists.",
-      "The Windows x64 CMake/CTest suite has not been rerun after adding the shared editor-transfer API."
-    ]
+      "Does the short-header freed-buffer BoardOpen produce a repeatable final state under a controlled DOS allocator history? The corrected direct probe stalls or faults; no stable output exists."
+    ],
+    "production_only_regression_results": {
+      "configured_targeted_cases": 1,
+      "passed": 1,
+      "failed": 0,
+      "case": "zoo_editor_brd_transfer one-byte header from a seeded BEFORE board; outcome 1, selected prior-board state preserved, neighbors cleared",
+      "classification": "P with S-derived expected behavior; not a direct Pascal differential",
+      "source_revision": "3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial)"
+    }
   }
 }
