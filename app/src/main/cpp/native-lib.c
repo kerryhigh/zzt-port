@@ -687,45 +687,22 @@ Java_com_kerry_zzt_ZztNative_editorImportBoard(JNIEnv *env, jclass clazz, jbyteA
     (void) clazz;
     if (!ready || !editor_active || source == NULL) return ZOO_ERROR_INVAL;
     jsize source_length = (*env)->GetArrayLength(env, source);
-    if (source_length < 2) return ZOO_ERROR_INVAL;
-    uint8_t length_bytes[2];
-    (*env)->GetByteArrayRegion(env, source, 0, 2, (jbyte *) length_bytes);
-    if ((*env)->ExceptionCheck(env)) return ZOO_ERROR_INVAL;
-    uint16_t board_length = (uint16_t) (length_bytes[0] | ((uint16_t) length_bytes[1] << 8));
-    if ((size_t) board_length > (size_t) source_length - 2) return ZOO_ERROR_INVAL;
-    jsize record_length = (jsize) ((size_t) board_length + 2);
-    uint8_t *bytes = (uint8_t *) malloc((size_t) record_length);
-    if (bytes == NULL) return ZOO_ERROR_NOMEM;
-    (*env)->GetByteArrayRegion(env, source, 0, record_length, (jbyte *) bytes);
-    if ((*env)->ExceptionCheck(env)) {
-        free(bytes);
-        return ZOO_ERROR_INVAL;
+    uint8_t *bytes = NULL;
+    if (source_length > 0) {
+        bytes = (uint8_t *) malloc((size_t) source_length);
+        if (bytes == NULL) return ZOO_ERROR_NOMEM;
+        (*env)->GetByteArrayRegion(env, source, 0, source_length, (jbyte *) bytes);
+        if ((*env)->ExceptionCheck(env)) {
+            free(bytes);
+            return ZOO_ERROR_INVAL;
+        }
     }
-
-    zoo_board *replacement = (zoo_board *) calloc(1, sizeof(zoo_board));
-    if (replacement == NULL) {
-        free(bytes);
-        return ZOO_ERROR_NOMEM;
-    }
-    int result = zoo_editor_brd_import_record(bytes, (size_t) record_length, replacement);
+    zoo_editor_brd_transfer_outcome outcome = ZOO_EDITOR_BRD_TRANSFER_IMPORTED;
+    int result = zoo_editor_brd_transfer(&game, bytes, (size_t) source_length, &outcome);
     free(bytes);
-    if (result != 0) {
-        zoo_editor_brd_free(replacement);
-        free(replacement);
-        return result;
-    }
-    result = zoo_board_close(&game);
-    if (result != 0) {
-        zoo_editor_brd_free(replacement);
-        free(replacement);
-        return result;
-    }
-    memset(replacement->info.neighbor_boards, 0, sizeof(replacement->info.neighbor_boards));
-    memcpy(&game.board, replacement, sizeof(game.board));
-    free(replacement);
-    game.error_value = 0;
+    if (result != 0) return result;
     zoo_board_draw_ordered(&game);
-    return 0;
+    return (jint) outcome;
 }
 
 JNIEXPORT jbyteArray JNICALL

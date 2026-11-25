@@ -179,6 +179,69 @@ int zoo_editor_brd_import_record(const uint8_t *bytes, size_t length, zoo_board 
     return zoo_editor_brd_parse(bytes + 2, board_length, board);
 }
 
+int zoo_editor_brd_transfer(zoo_state *state, const uint8_t *bytes, size_t length,
+        zoo_editor_brd_transfer_outcome *outcome) {
+    if (state == NULL || outcome == NULL || (length > 0 && bytes == NULL))
+        return ZOO_ERROR_INVAL;
+
+    int16_t board_id = state->world.info.current_board;
+    int result = zoo_board_close(state);
+    if (result != 0) return result;
+
+    /*
+     * Source order in EditorTransferBoard implies that the consumed short-
+     * header IOResult lets the final check fall through to BoardOpen after the
+     * current BoardData has been freed. A direct DOSBox-X probe of that path
+     * does not produce a stable final state (the freed-buffer read stalls or
+     * faults with runtime error 203). Model the inferred reopen using the
+     * freshly closed bytes, without reading freed host memory. This is a
+     * source-derived deterministic mapping, not direct differential evidence
+     * for short headers or a claim about arbitrary DOS heap contents.
+     */
+    if (length < 2) {
+        if (state->world.board_data[board_id] == NULL
+                || state->world.board_len[board_id] <= 0) return ZOO_ERROR_INVAL;
+        result = zoo_board_open(state, board_id);
+        if (result != 0) return result;
+        memset(state->board.info.neighbor_boards, 0,
+                sizeof(state->board.info.neighbor_boards));
+        state->error_value = 0;
+        *outcome = ZOO_EDITOR_BRD_TRANSFER_REOPENED_PREVIOUS;
+        return 0;
+    }
+
+    uint16_t board_length = editor_brd_u16(bytes);
+    if ((size_t) board_length > length - 2) {
+        /* Pascal reports the read error, sets BoardLen to zero, and calls
+         * BoardCreate after a short payload. The unread allocation tail is
+         * intentionally not assigned a host-specific value. */
+        zoo_board_create(state);
+        state->world.board_len[board_id] = 0;
+        state->error_value = 0;
+        *outcome = ZOO_EDITOR_BRD_TRANSFER_RESET_AFTER_SHORT_PAYLOAD;
+        return 0;
+    }
+
+    zoo_board *replacement = (zoo_board *) malloc(sizeof(zoo_board));
+    if (replacement == NULL) return ZOO_ERROR_NOMEM;
+    memset(replacement, 0, sizeof(*replacement));
+    result = zoo_editor_brd_import_record(bytes, length, replacement);
+    if (result != 0) {
+        zoo_editor_brd_free(replacement);
+        free(replacement);
+        return result;
+    }
+
+    zoo_editor_brd_free(&state->board);
+    memcpy(&state->board, replacement, sizeof(state->board));
+    free(replacement);
+    memset(state->board.info.neighbor_boards, 0,
+            sizeof(state->board.info.neighbor_boards));
+    state->error_value = 0;
+    *outcome = ZOO_EDITOR_BRD_TRANSFER_IMPORTED;
+    return 0;
+}
+
 static bool editor_write_pascal_string(editor_brd_writer *writer, const char *value,
         size_t max_length, bool raw_valid, uint8_t raw_length, const uint8_t *raw_data) {
     size_t current_length = editor_visible_string_length(value, max_length);

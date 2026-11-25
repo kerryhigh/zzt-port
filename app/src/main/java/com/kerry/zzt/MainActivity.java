@@ -2531,54 +2531,50 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
             Toast.makeText(this, "Choose a .BRD board file.", Toast.LENGTH_LONG).show();
             return;
         }
-        byte[] boardRecord;
-        boolean blockReadStarted = false;
+        ByteArrayOutputStream boardBytes = new ByteArrayOutputStream();
+        boolean inputOpened = false;
+        boolean invalidRecordLength = false;
+        String readError = null;
         InputStream input = null;
         try {
             input = getContentResolver().openInputStream(uri);
             if (input == null) throw new IOException("Could not read the selected board file.");
-            // Pascal BoardTransfer closes and frees the current board before BlockRead.
-            // A short read then sets the board length to zero and calls BoardCreate.
-            blockReadStarted = true;
+            inputOpened = true;
             int lengthLow = input.read();
-            int lengthHigh = input.read();
-            if (lengthLow < 0 || lengthHigh < 0) throw new IOException("The .BRD length header is incomplete.");
-            int boardLength = lengthLow | (lengthHigh << 8);
-            if (boardLength > MAX_BRD_RECORD_LENGTH) {
-                throw new IOException("The .BRD record length is invalid.");
-            }
-            boardRecord = new byte[boardLength + 2];
-            boardRecord[0] = (byte) lengthLow;
-            boardRecord[1] = (byte) lengthHigh;
-            int offset = 0;
-            while (offset < boardLength) {
-                int count = input.read(boardRecord, offset + 2, boardLength - offset);
-                if (count < 0) throw new IOException("The .BRD record is truncated.");
-                if (count == 0) {
-                    int value = input.read();
-                    if (value < 0) throw new IOException("The .BRD record is truncated.");
-                    boardRecord[offset++ + 2] = (byte) value;
-                } else {
-                    offset += count;
+            if (lengthLow >= 0) {
+                boardBytes.write(lengthLow);
+                int lengthHigh = input.read();
+                if (lengthHigh >= 0) {
+                    boardBytes.write(lengthHigh);
+                    int boardLength = lengthLow | (lengthHigh << 8);
+                    if (boardLength > MAX_BRD_RECORD_LENGTH) {
+                        invalidRecordLength = true;
+                        readError = "The .BRD record length is invalid.";
+                    } else {
+                        byte[] chunk = new byte[Math.min(4096, Math.max(1, boardLength))];
+                        int remaining = boardLength;
+                        while (remaining > 0) {
+                            int count = input.read(chunk, 0, Math.min(chunk.length, remaining));
+                            if (count < 0) break;
+                            if (count == 0) {
+                                int value = input.read();
+                                if (value < 0) break;
+                                boardBytes.write(value);
+                                remaining--;
+                            } else {
+                                boardBytes.write(chunk, 0, count);
+                                remaining -= count;
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
-            if (blockReadStarted) {
-                int clearResult = ZztNative.editorClearBoard();
-                if (clearResult != 0) {
-                    toastError("Clear board after failed import", clearResult);
-                } else {
-                    // BoardCreate and its editor refresh do not set wasModified.
-                    editorFloodFillMode = false;
-                    editorFloodFillUsesClipboard = false;
-                    editorCopyMode = false;
-                    editorPasteMode = false;
-                    updateDisplay(System.nanoTime() / 1_000_000L);
-                    refreshStatus();
-                }
+            if (!inputOpened) {
+                Toast.makeText(this, "Board import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                return;
             }
-            Toast.makeText(this, "Board import failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            return;
+            readError = e.getMessage();
         } finally {
             if (input != null) {
                 try {
@@ -2588,14 +2584,37 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
                 }
             }
         }
-        int result = ZztNative.editorImportBoard(boardRecord);
-        if (result != 0) {
+        if (invalidRecordLength) {
+            Toast.makeText(this, "Board import failed: " + readError, Toast.LENGTH_LONG).show();
+            return;
+        }
+        int result = ZztNative.editorImportBoard(boardBytes.toByteArray());
+        if (result < 0) {
             toastError("Import board", result);
             return;
         }
-        // EditorTransferBoard imports a record without setting wasModified.
+        if (result != ZztNative.EDITOR_BRD_IMPORTED) {
+            // The shared engine applies Pascal's error-path state transition.
+            // These editor modes refer to the board before that transition.
+            editorFloodFillMode = false;
+            editorFloodFillUsesClipboard = false;
+            editorCopyMode = false;
+            editorPasteMode = false;
+        }
         updateDisplay(System.nanoTime() / 1_000_000L);
-        Toast.makeText(this, "Board imported. Neighbor links were cleared.", Toast.LENGTH_SHORT).show();
+        refreshStatus();
+        if (result == ZztNative.EDITOR_BRD_REOPENED_PREVIOUS) {
+            String suffix = readError == null ? "" : ": " + readError;
+            Toast.makeText(this, "Board import failed: incomplete header; previous board reopened" + suffix,
+                    Toast.LENGTH_LONG).show();
+        } else if (result == ZztNative.EDITOR_BRD_RESET_AFTER_SHORT_PAYLOAD) {
+            String suffix = readError == null ? "" : ": " + readError;
+            Toast.makeText(this, "Board import failed: incomplete payload; board reset" + suffix,
+                    Toast.LENGTH_LONG).show();
+        } else {
+            // EditorTransferBoard imports a record without setting wasModified.
+            Toast.makeText(this, "Board imported. Neighbor links were cleared.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void exportEditorBoard() {

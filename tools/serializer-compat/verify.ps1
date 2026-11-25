@@ -44,7 +44,7 @@ $clangArgs = @(
     '-Wl,--export=run_zero_count_rle', '-Wl,--export=run_final_rle_overrun', '-Wl,--export=run_board_rle_count',
     '-Wl,--export=run_board_rle_writer_boundary',
     '-Wl,--export=run_editor_brd_roundtrip', '-Wl,--export=run_editor_brd_record_roundtrip',
-    '-Wl,--export=run_editor_brd_zero_count_rle', '-Wl,--export=run_editor_brd_reject_truncated',
+    '-Wl,--export=run_editor_brd_zero_count_rle', '-Wl,--export=run_editor_brd_reject_truncated', '-Wl,--export=run_editor_brd_transfer',
     '-Wl,--export=run_shared_stat_data_alias',
     '-Wl,--export-memory', '-Wl,--gc-sections', '-Wl,--initial-memory=16777216',
     '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576', $source, '-o', $wasm

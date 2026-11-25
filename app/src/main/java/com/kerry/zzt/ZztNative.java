@@ -5,6 +5,10 @@ import java.nio.charset.Charset;
 final class ZztNative {
     private static final Charset CP437 = Charset.forName("IBM437");
 
+    static final int EDITOR_BRD_IMPORTED = 0;
+    static final int EDITOR_BRD_REOPENED_PREVIOUS = 1;
+    static final int EDITOR_BRD_RESET_AFTER_SHORT_PAYLOAD = 2;
+
     static {
         System.loadLibrary("zztengine");
     }

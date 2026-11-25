@@ -16,7 +16,7 @@ static zoo_world world;
 static zoo_state state;
 static zoo_board test_board;
 const zoo_element_def zoo_element_defs[ZOO_MAX_ELEMENT + 1] = {
-    [ZOO_E_PLAYER] = { .color = 0x0E }
+    [ZOO_E_PLAYER] = { .color = 0x1F }
 };
 void *memcpy(void *dest, const void *src, size_t count) { unsigned char *d = dest; const unsigned char *s = src; size_t i; for (i = 0; i < count; ++i) d[i] = s[i]; return dest; }
 void *memset(void *dest, int value, size_t count) { unsigned char *d = dest; size_t i; for (i = 0; i < count; ++i) d[i] = (unsigned char)value; return dest; }
@@ -504,6 +504,43 @@ int run_editor_brd_reject_truncated(void) {
     memset(&test_board, 0, sizeof(test_board));
     result = zoo_editor_brd_import_record(short_payload, sizeof(short_payload), &test_board);
     if (result != ZOO_ERROR_INVAL) return 2;
+    return 0;
+}
+
+int run_editor_brd_transfer(uint32_t input_len) {
+    int result;
+    size_t board_length = 0;
+    zoo_editor_brd_transfer_outcome outcome = ZOO_EDITOR_BRD_TRANSFER_IMPORTED;
+    if (input_len > FIXTURE_CAP) return -90;
+
+    heap_used = 0;
+    output_size = 0;
+    memset(&state, 0, sizeof(state));
+    memset(output_data, 0, sizeof(output_data));
+    zoo_world_create(&state);
+    state.world.board_count = 1;
+    state.world.info.current_board = 0;
+    zoo_io_pstring_assign_pascal(state.board.name, sizeof(state.board.name) - 1,
+            state.board.io_name_data, &state.board.io_name_length,
+            &state.board.io_name_valid, "BEFORE", 6);
+    state.board.info.max_shots = 41;
+    state.board.info.neighbor_boards[0] = 1;
+    state.board.info.neighbor_boards[1] = 2;
+    state.board.info.neighbor_boards[2] = 3;
+    state.board.info.neighbor_boards[3] = 4;
+    state.board.tiles[30][12].element = ZOO_E_SOLID;
+    state.board.tiles[30][12].color = 0x2F;
+    result = zoo_board_close(&state);
+    if (result != 0) return result;
+
+    result = zoo_editor_brd_transfer(&state, input_len == 0 ? NULL : input_data,
+            input_len, &outcome);
+    if (result != 0) return result;
+    output_data[0] = (uint8_t) outcome;
+    result = zoo_editor_brd_serialize(&state.board, output_data + 1,
+            FIXTURE_CAP - 1, &board_length);
+    if (result != 0) return result;
+    output_size = board_length + 1;
     return 0;
 }
 
