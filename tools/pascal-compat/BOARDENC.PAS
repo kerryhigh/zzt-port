@@ -32,6 +32,7 @@ begin
 	BlockWrite(brdFile, boardLength, SizeOf(word));
 	BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
 	Close(brdFile);
+	WorldSave('BOARDENC', '.ZZT');
 
 	Write(output, 'runs');
 	for i := 0 to 5 do

@@ -52,6 +52,41 @@ int run_roundtrip(uint32_t input_len) {
     return 0;
 }
 
+int run_pascal_boardclose_worldsave(uint32_t input_len) {
+    zoo_io_handle in_handle;
+    zoo_io_handle out_handle;
+    int ret;
+    int x, y;
+    int16_t board_id;
+    if (input_len > FIXTURE_CAP) return -90;
+    heap_used = 0; output_size = 0;
+    memset(&state, 0, sizeof(state));
+    memset(output_data, 0, sizeof(output_data));
+
+    in_handle = zoo_io_open_file_mem(input_data, input_len, MODE_READ);
+    ret = zoo_io_world_read(&in_handle, &state.world, false);
+    if (ret != 0) return ret;
+    board_id = state.world.info.current_board;
+    ret = zoo_board_open(&state, board_id);
+    if (ret != 0) return ret;
+
+    /* Match BOARDENC.PAS: overwrite the active board's one-based playfield. */
+    for (x = 1; x <= ZOO_BOARD_WIDTH; ++x) {
+        for (y = 1; y <= ZOO_BOARD_HEIGHT; ++y) {
+            state.board.tiles[x][y].element = ZOO_E_EMPTY;
+            state.board.tiles[x][y].color = 0x70;
+        }
+    }
+
+    ret = zoo_board_close(&state);
+    if (ret != 0) return ret;
+    out_handle = zoo_io_open_file_mem(output_data, FIXTURE_CAP, MODE_WRITE);
+    ret = zoo_io_world_write(&out_handle, &state.world);
+    if (ret != 0) return ret;
+    output_size = (size_t) out_handle.func_tell(&out_handle);
+    return 0;
+}
+
 int run_game_save_roundtrip(uint32_t input_len) {
     int ret;
     zoo_io_handle in_handle, out_handle;
