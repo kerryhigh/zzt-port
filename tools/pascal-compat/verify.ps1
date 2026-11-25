@@ -394,18 +394,40 @@ $probeWriter = @'
 procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 	var
 		output: text;
-		ix, iy, statId, scriptByteIndex: integer;
+		ix, iy, statId, aliasId, scriptByteIndex, liveStatCount, totalScriptBytes: integer;
+		checkpointFieldCount: integer;
+		scriptSegment, scriptOffset: word;
+		scriptPointer: pointer;
 		scriptByte: byte;
+		scriptIsFirst: boolean;
 	begin
+		liveStatCount := Board.StatCount + 1;
+		totalScriptBytes := 0;
+		for statId := 0 to Board.StatCount do begin
+			scriptIsFirst := (Board.Stats[statId].Data <> nil) and
+				(Board.Stats[statId].DataLen > 0);
+			if scriptIsFirst then begin
+				for aliasId := 0 to statId - 1 do
+					if (Board.Stats[aliasId].Data = Board.Stats[statId].Data) and
+						(Board.Stats[aliasId].DataLen > 0) then
+						scriptIsFirst := false;
+				if scriptIsFirst then
+					totalScriptBytes := totalScriptBytes +
+						Board.Stats[statId].DataLen;
+			end;
+		end;
+		checkpointFieldCount := 12 + (14 * liveStatCount) + 11 +
+			((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 +
+			(liveStatCount * liveStatCount) + totalScriptBytes;
 		Assign(output, 'INTEGPR.OUT');
 		Append(output);
-		Write(output, checkpointKind, ' ', checkpointId, ' ', 51 + ((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 + 4 + 19, ' ',
+		Write(output, checkpointKind, ' ', checkpointId, ' ', checkpointFieldCount, ' ',
 			World.Info.Ammo, ' ', World.Info.Gems, ' ', World.Info.Health,
 			' ', World.Info.CurrentBoard, ' ', World.Info.Torches, ' ', World.Info.TorchTicks,
 			' ', World.Info.EnergizerTicks, ' ', World.Info.Score,
 			' ', World.Info.BoardTimeSec, ' ', World.Info.BoardTimeHsec,
 			' ', Ord(World.Info.IsSave), ' ', Board.StatCount, ' ');
-		for statId := 0 to 1 do begin
+		for statId := 0 to Board.StatCount do begin
 			with Board.Stats[statId] do begin
 				Write(output, X, ' ', Y, ' ', StepX, ' ', StepY, ' ', Cycle,
 					' ', P1, ' ', P2, ' ', P3, ' ', Follower, ' ', Leader,
@@ -420,14 +442,27 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 			for iy := 0 to BOARD_HEIGHT + 1 do
 				Write(output, Board.Tiles[ix][iy].Element, ' ', Board.Tiles[ix][iy].Color, ' ');
 		Write(output, (RandSeed and $FFFF), ' ', ((RandSeed shr 16) and $FFFF), ' ');
-		for statId := 0 to 1 do
-			for scriptByteIndex := 0 to 1 do
-				Write(output, Ord(Board.Stats[statId].Data = Board.Stats[scriptByteIndex].Data), ' ');
-		for scriptByteIndex := 0 to 18 do begin
-			scriptByte := 0;
-			if (Board.Stats[1].Data <> nil) and (scriptByteIndex < Board.Stats[1].DataLen) then
-				Move(Ptr(Seg(Board.Stats[1].Data^), Ofs(Board.Stats[1].Data^) + scriptByteIndex)^, scriptByte, 1);
-			Write(output, scriptByte, ' ');
+		for statId := 0 to Board.StatCount do
+			for aliasId := 0 to Board.StatCount do
+				Write(output, Ord(Board.Stats[statId].Data = Board.Stats[aliasId].Data), ' ');
+		for statId := 0 to Board.StatCount do begin
+			scriptIsFirst := (Board.Stats[statId].Data <> nil) and
+				(Board.Stats[statId].DataLen > 0);
+			if scriptIsFirst then begin
+				for aliasId := 0 to statId - 1 do
+					if (Board.Stats[aliasId].Data = Board.Stats[statId].Data) and
+						(Board.Stats[aliasId].DataLen > 0) then
+						scriptIsFirst := false;
+			end;
+			if scriptIsFirst then begin
+				scriptSegment := Seg(Board.Stats[statId].Data^);
+				scriptOffset := Ofs(Board.Stats[statId].Data^);
+				for scriptByteIndex := 0 to Board.Stats[statId].DataLen - 1 do begin
+					scriptPointer := Ptr(scriptSegment, scriptOffset + scriptByteIndex);
+					Move(scriptPointer^, scriptByte, 1);
+					Write(output, scriptByte, ' ');
+				end;
+			end;
 		end;
 		WriteLn(output);
 		Close(output);
@@ -467,6 +502,11 @@ $stagedGame = $stagedGame.Substring(0, $gamePlayLoopStart) + $gamePlayLoop + $st
 
 Write-Host 'Compiling the reconstructed Pascal engine...'
 Invoke-DosboxSession 'ENGINE' @('TPC.EXE /B /EBIN /GD /ISRC /USRC SRC\ZZT.PAS > ENGINE.LOG')
+$engineLogPath = Join-Path $stageRoot 'ENGINE.LOG'
+$engineLogText = [IO.File]::ReadAllText($engineLogPath)
+if ($engineLogText -match 'Error\s+\d+:') {
+    throw "Turbo Pascal engine compilation reported an error. See $engineLogPath."
+}
 Write-Host 'Compiling and running the direct Turbo Pascal shared-#BIND-alias probe...'
 # Compile against the freshly built engine units without /B. A forced unit rebuild produces
 # Turbo Pascal 5.5 Error 70 (unit version mismatch) in this allocator-sensitive probe.

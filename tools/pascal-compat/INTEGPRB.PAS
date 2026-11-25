@@ -10,7 +10,7 @@ end;
 var
 	output: text;
 	ix, iy, statId: integer;
-	script: string[32];
+	script, script2: string[32];
 
 begin
 	VideoWriteText := QuietWrite;
@@ -50,6 +50,12 @@ begin
 	Move(script[1], Board.Stats[1].Data^, Length(script));
 	Board.Stats[1].DataLen := Length(script);
 	Board.Stats[1].DataPos := 0;
+	AddStat(25, 5, E_OBJECT, $0A, 1, StatTemplateDefault);
+	script2 := '#GIVE AMMO 1' + #13 + '#IDLE' + #13;
+	GetMem(Board.Stats[2].Data, Length(script2));
+	Move(script2[1], Board.Stats[2].Data^, Length(script2));
+	Board.Stats[2].DataLen := Length(script2);
+	Board.Stats[2].DataPos := 0;
 
 	GameStateElement := E_PLAYER;
 	GamePaused := true;

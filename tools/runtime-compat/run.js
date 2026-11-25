@@ -638,12 +638,15 @@ function pascalSoundParse(input) {
       integratedInstance.exports.integrated_gameplay_trace_ptr(), 24 * 9);
     throw new Error(`Integrated gameplay replay returned ${integratedResult}; trace=${Array.from(trace).join(' ')}`);
   }
-  const integratedFieldCount = 51 + (62 * 27 * 2) + 2 + (2 * 2) + 19;
+  const integratedFieldCount = integratedInstance.exports.integrated_gameplay_output_length();
   const integratedOutput = new Int32Array(integratedInstance.exports.memory.buffer,
     integratedInstance.exports.integrated_gameplay_output_ptr(), integratedFieldCount);
-  if (integratedOutput[1] !== 1 || integratedOutput[11] !== 1
-      || integratedOutput[45] !== 0 || integratedOutput[46] !== 1) {
-    throw new Error(`Integrated gameplay invariant failed: gems=${integratedOutput[1]}, stats=${integratedOutput[11]}, paused=${integratedOutput[45]}, exit=${integratedOutput[46]}`);
+  const integratedSchedulerStart = 12 + (integratedOutput[11] + 1) * 14;
+  const integratedPaused = integratedOutput[integratedSchedulerStart + 5];
+  const integratedExitRequested = integratedOutput[integratedSchedulerStart + 6];
+  if (integratedOutput[0] !== 1 || integratedOutput[1] !== 1 || integratedOutput[11] !== 2
+      || integratedPaused !== 0 || integratedExitRequested !== 1) {
+    throw new Error(`Integrated gameplay invariant failed: ammo=${integratedOutput[0]}, gems=${integratedOutput[1]}, stats=${integratedOutput[11]}, paused=${integratedPaused}, exit=${integratedExitRequested}`);
   }
   console.log('Integrated gameplay replay: paused start, queued movement, boulder push, live #GIVE/#IDLE object, and six deterministic cycles produce a complete production-state snapshot');
 })().catch(error => { console.error(error); process.exitCode = 99; });

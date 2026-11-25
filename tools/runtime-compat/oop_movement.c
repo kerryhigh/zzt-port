@@ -49,12 +49,11 @@ static uint8_t message_row_colors[60];
 static bool capture_scroll_touch_lines;
 static int scroll_touch_line_count;
 static char scroll_touch_lines[2][51];
-#define INTEGRATED_GAMEPLAY_SCRIPT_BYTES 19
-#define INTEGRATED_GAMEPLAY_ALIAS_GRAPH_FIELDS (2 * 2)
-#define INTEGRATED_GAMEPLAY_FIELD_COUNT (51 + (62 * 27 * 2) + 2 + INTEGRATED_GAMEPLAY_ALIAS_GRAPH_FIELDS + INTEGRATED_GAMEPLAY_SCRIPT_BYTES)
 #define INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT 9
+#define INTEGRATED_GAMEPLAY_MAX_FIELDS 65536
 static int32_t integrated_gameplay_snapshots[
-	INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT][INTEGRATED_GAMEPLAY_FIELD_COUNT];
+	INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT][INTEGRATED_GAMEPLAY_MAX_FIELDS];
+static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT];
 static int16_t integrated_gameplay_checkpoint_headers[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT * 2];
 static int16_t integrated_gameplay_trace[24 * 9];
 static bool integrated_schedule_enabled;
@@ -3895,9 +3894,28 @@ int32_t run_oop_production_movement_checks(void) {
 static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	int32_t *out = integrated_gameplay_snapshots[checkpoint_index];
 	int16_t stat_id, alias_id, ix, iy;
+	int32_t stat_slots;
+	int32_t script_bytes = 0;
 	int script_index;
 	static const int16_t kinds[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 'L', 'S', 'C', 'C', 'C', 'C', 'C', 'C', 'F' };
 	static const int16_t ids[INTEGRATED_GAMEPLAY_CHECKPOINT_COUNT] = { 0, 0, 1, 2, 3, 4, 5, 6, 0 };
+	if (state.board.stat_count < 0 || state.board.stat_count > ZOO_MAX_STAT) return 0;
+	stat_slots = (int32_t) state.board.stat_count + 1;
+	for (stat_id = 0; stat_id <= state.board.stat_count; stat_id++) {
+		zoo_stat *stat = &state.board.stats[stat_id];
+		bool earlier_owner = false;
+		if (stat->data != NULL && stat->data_len > 0) {
+			for (alias_id = 0; alias_id < stat_id; alias_id++) {
+				if (state.board.stats[alias_id].data == stat->data
+						&& state.board.stats[alias_id].data_len > 0) earlier_owner = true;
+			}
+			if (!earlier_owner) script_bytes += stat->data_len;
+		}
+	}
+	if (12 + (14 * stat_slots) + 11 + (62 * 27 * 2) + 2
+			+ (stat_slots * stat_slots) + script_bytes > INTEGRATED_GAMEPLAY_MAX_FIELDS) {
+		return 0;
+	}
 
 	integrated_gameplay_checkpoint_headers[checkpoint_index * 2] = kinds[checkpoint_index];
 	integrated_gameplay_checkpoint_headers[checkpoint_index * 2 + 1] = ids[checkpoint_index];
@@ -3913,7 +3931,7 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	*out++ = state.world.info.board_time_hsec;
 	*out++ = state.world.info.is_save ? 1 : 0;
 	*out++ = state.board.stat_count;
-	for (stat_id = 0; stat_id <= 1; stat_id++) {
+	for (stat_id = 0; stat_id <= state.board.stat_count; stat_id++) {
 		zoo_stat *stat = &state.board.stats[stat_id];
 		*out++ = stat->x;
 		*out++ = stat->y;
@@ -3949,22 +3967,33 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index) {
 	}
 	*out++ = state.random_seed & 0xFFFFu;
 	*out++ = state.random_seed >> 16;
-	for (stat_id = 0; stat_id <= 1; stat_id++) {
-		for (alias_id = 0; alias_id <= 1; alias_id++) {
+	for (stat_id = 0; stat_id <= state.board.stat_count; stat_id++) {
+		for (alias_id = 0; alias_id <= state.board.stat_count; alias_id++) {
 			*out++ = state.board.stats[stat_id].data == state.board.stats[alias_id].data ? 1 : 0;
 		}
 	}
-	for (script_index = 0; script_index < INTEGRATED_GAMEPLAY_SCRIPT_BYTES; script_index++) {
-		*out++ = state.board.stats[1].data != NULL
-			&& script_index < state.board.stats[1].data_len
-			? (uint8_t) state.board.stats[1].data[script_index]
-			: 0;
+	for (stat_id = 0; stat_id <= state.board.stat_count; stat_id++) {
+		zoo_stat *stat = &state.board.stats[stat_id];
+		bool earlier_owner = false;
+		if (stat->data != NULL && stat->data_len > 0) {
+			for (alias_id = 0; alias_id < stat_id; alias_id++) {
+				if (state.board.stats[alias_id].data == stat->data
+						&& state.board.stats[alias_id].data_len > 0) earlier_owner = true;
+			}
+			if (!earlier_owner) {
+				for (script_index = 0; script_index < stat->data_len; script_index++) {
+					*out++ = (uint8_t) stat->data[script_index];
+				}
+			}
+		}
 	}
-	return (out - integrated_gameplay_snapshots[checkpoint_index]) == INTEGRATED_GAMEPLAY_FIELD_COUNT;
+	integrated_gameplay_snapshot_lengths[checkpoint_index] = (int32_t) (out - integrated_gameplay_snapshots[checkpoint_index]);
+	return integrated_gameplay_snapshot_lengths[checkpoint_index] <= INTEGRATED_GAMEPLAY_MAX_FIELDS;
 }
 
 int32_t run_integrated_gameplay_checks(void) {
 	static const char script[] = "#GIVE GEMS 1\r#IDLE\r";
+	static const char script2[] = "#GIVE AMMO 1\r#IDLE\r";
 	int16_t cycles = 0;
 	int16_t calls = 0;
 	int16_t previous_stat;
@@ -3975,6 +4004,7 @@ int32_t run_integrated_gameplay_checks(void) {
 	memset(&state, 0, sizeof(state));
 	memset(&video, 0, sizeof(video));
 	memset(integrated_gameplay_snapshots, 0, sizeof(integrated_gameplay_snapshots));
+	memset(integrated_gameplay_snapshot_lengths, 0, sizeof(integrated_gameplay_snapshot_lengths));
 	memset(integrated_gameplay_checkpoint_headers, 0, sizeof(integrated_gameplay_checkpoint_headers));
 	video.func_write = test_video_write;
 	state.d_video = &video;
@@ -4005,6 +4035,12 @@ int32_t run_integrated_gameplay_checks(void) {
 	if (stat_id != 1) return 1;
 	state.board.stats[stat_id].data = (char *) script;
 	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script) - 1);
+	state.board.stats[stat_id].data_pos = 0;
+	zoo_stat_add(&state, 25, 5, ZOO_E_OBJECT, 0x0A, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 25, 5);
+	if (stat_id != 2) return 2;
+	state.board.stats[stat_id].data = (char *) script2;
+	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script2) - 1);
 	state.board.stats[stat_id].data_pos = 0;
 	state.tick_speed = 0;
 	state.game_paused = true;
@@ -4071,6 +4107,18 @@ uint32_t integrated_gameplay_snapshots_ptr(void) {
 
 uint32_t integrated_gameplay_checkpoint_headers_ptr(void) {
 	return (uint32_t) (uintptr_t) integrated_gameplay_checkpoint_headers;
+}
+
+uint32_t integrated_gameplay_snapshot_lengths_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_gameplay_snapshot_lengths;
+}
+
+int32_t integrated_gameplay_snapshot_stride(void) {
+	return INTEGRATED_GAMEPLAY_MAX_FIELDS;
+}
+
+int32_t integrated_gameplay_output_length(void) {
+	return integrated_gameplay_snapshot_lengths[8];
 }
 
 int32_t integrated_gameplay_snapshot_count(void) {
