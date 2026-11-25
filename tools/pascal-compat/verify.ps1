@@ -1159,6 +1159,8 @@ Invoke-DosboxSession 'EDSTAT' @(
 # BoardOpen routines remain the reconstructed source implementations.
 $shortPayloadBrd = [byte[]]@(0x04, 0x00, 0x10, 0x20)
 [IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTPAY.BRD'), $shortPayloadBrd)
+$shortHeaderBrd = [byte[]]@(0x04)
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTHEAD.BRD'), $shortHeaderBrd)
 $stagedEditor = $editorSourceOriginal
 $transferChoiceAnchor = "SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);"
 $transferFilenameAnchor = "SidebarPromptString('Import board', '.BRD', SavedBoardFileName, PROMPT_ALPHANUM);"
@@ -1187,10 +1189,16 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BRDXFER.PAS') -Destination (Joi
 Write-Host 'Compiling and running the direct Turbo Pascal short-payload editor import probe: BRDXFER'
 Invoke-DosboxSession 'BRDXFER' @(
     'TPC.EXE /B /EBIN /ISRC /USRC BRDXFER.PAS > BRDXFER.LOG',
-    'BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT'
+    'BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT',
+    'BIN\BRDXFER.EXE SHORTHEAD BRDHEAD.OUT'
 )
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText($stagedGamePath, $stagedGameBeforeBrdProbe, [Text.UTF8Encoding]::new($false))
+
+# Repeat the allocator-sensitive short-header path in fresh DOSBox processes.
+# The program's initial board and allocation trace are seeded identically.
+Invoke-DosboxSession 'BRDHDR2' @('BIN\BRDXFER.EXE SHORTHEAD BRDHDR2.OUT')
+Invoke-DosboxSession 'BRDHDR3' @('BIN\BRDXFER.EXE SHORTHEAD BRDHDR3.OUT')
 
 $editorWrapExpected = [Collections.Generic.List[string]]::new()
 $editorWrapExpected.Add('queue-wrap filled 792 empty 0')
@@ -1286,6 +1294,9 @@ $expectedOutputs = [ordered]@{
     'NEGBRD.OUT' = @('negative-brd 1 -1')
     'BRDIOPRB.OUT' = @('partial-length 100 4610 next-IOResult 0', 'short-payload 0 100 next-IOResult 0 16 32 165 165')
     'BRDXFER.OUT' = @('board 0 255 0 4 31 30 12 0')
+    'BRDHEAD.OUT' = @('board 6 41 0 21 47 30 12 319')
+    'BRDHDR2.OUT' = @('board 6 41 0 21 47 30 12 319')
+    'BRDHDR3.OUT' = @('board 6 41 0 21 47 30 12 319')
     'PLRTORCH.OUT' = @('0 199 30 12')
     'PLAYERST.OUT' = @(
         'shoot-held-right ammo 1 input 0 0 dir 1 0 stats 1 target 18 15 sound 2 6 bullet 11 10 0 1 0 100 under 0 0 64 1 48 1 32 1',
@@ -1712,6 +1723,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 30 # Standalone editor, sound, allocator, OOP, and integrated gameplay probe sessions run outside the standard probe array.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes, EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 32 # Includes two fresh-process repeats of the short-header editor import history.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes, EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, BRDHDR2, BRDHDR3, SOUNDTIK, SOUNDCLK, INTEGPRB, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
