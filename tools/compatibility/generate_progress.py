@@ -145,7 +145,7 @@ def main() -> None:
         f"- Acceptance cases missing or invalid required evidence classes: **{len(unmapped_required_classes)}**; IDs: {', '.join(unmapped_required_classes) or 'none'}.",
         f"- Acceptance cases without an evidence classification: **{len(unclassified_acceptance)}**; IDs: {', '.join(item['id'] for item in unclassified_acceptance) or 'none'}.",
         f"- Unclassified source inventory entries: **{unclassified}**; explicitly excluded adapter/presentation entries: **{explicitly_excluded}**.",
-        "- Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P remains unenumerated; I counts only completed full integrated fixtures.",
+        "- Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P counts recorded production-only regressions; I counts only completed full integrated fixtures.",
         "",
         "## Evidence inventory",
         "",
@@ -160,7 +160,7 @@ def main() -> None:
             for item in serialization_formats
         ] if serialization_formats else ["  - No source-produced serialization samples are recorded in a manifest."]),
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
-        f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
+        f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; these remain separate from direct Pascal probes and differentials.",
         f"- Integrated replay fixtures: **{len(completed_integrated_fixtures)}/{required_fixture_count}** complete from [`integrated_replay_fixture_manifest.json`](tools/compatibility/integrated_replay_fixture_manifest.json). Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
         f"- Integrated generated save: **{integrated_save.get('deterministic_bytes_matched', 'not recorded')}/{integrated_save.get('deterministic_bytes_total', 'not recorded')}** deterministic byte positions match; {integrated_save.get('classified_nondeterministic_positions', 'not recorded')} positions are classified as uninitialized Pascal padding or process-specific pointers; differing classified values: {integrated_save.get('classified_byte_differences', 'not recorded')}; production result: {integrated_save.get('production_result', 'not recorded')}.",
         f"- Integrated save reload: compiled Pascal WorldLoad={integrated_roundtrip.get('pascal_world_load_result', 'not recorded')}; production zoo_world_load={integrated_roundtrip.get('production_world_load_result', 'not recorded')}; round-trip save preserved {integrated_roundtrip.get('preserved_bytes_matched', 'not recorded')}/{integrated_roundtrip.get('preserved_bytes_total', 'not recorded')} bytes; {integrated_roundtrip.get('classified_process_pointer_positions', 'not recorded')} process-pointer positions classified.",

@@ -226,7 +226,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-    "verification_result": "Partial: a clean direct BRDXFER session ran the short-payload EditorTransferBoard path with a documented staged post-Escape modal-boundary substitution; its outcome and seven selected initialized board/player fields match shared LibZoo. A compiled-Pascal BoardClose/WorldSave case also matches all 25,928 output bytes against shared LibZoo. No stable direct Pascal final state exists for short-header BoardOpen, and untouched-buffer suffix behavior remains pending.",
+      "verification_result": "Partial: a clean direct BRDXFER session ran the short-payload EditorTransferBoard path with a documented staged post-Escape modal-boundary substitution; its outcome and seven selected initialized board/player fields match shared LibZoo. A compiled-Pascal BoardClose/WorldSave case also matches all 25,928 output bytes against shared LibZoo. No stable direct Pascal final state exists for short-header BoardOpen, and untouched-buffer suffix behavior remains pending.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -251,7 +251,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-    "verification_result": "Partial: the latest clean run passed 44 configured Pascal-to-production comparison invocations and 16 direct .HI byte comparisons with zero unexplained mismatches in those cases. One full Pascal BoardClose/WorldSave output matched shared LibZoo for all 25,928 bytes. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
+      "verification_result": "Partial: the latest clean run passed 44 configured Pascal-to-production comparison invocations and 16 direct .HI byte comparisons with zero unexplained mismatches in those cases. One full Pascal BoardClose/WorldSave output matched shared LibZoo for all 25,928 bytes. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -926,9 +926,9 @@
       "id": "E2-10-AC001",
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
-      "requirement": "One deterministic Pascal/production replay runs the original paused `GamePlayLoop`, buffered right-key handling, two boulder pushes, and two interacting objects whose `#GIVE GEMS 1` / `#IDLE` and `#GIVE AMMO 1` / `#IDLE` scripts run over six zero-speed cycles. Nine loaded/loop-start/per-cycle/final snapshots compare dynamically sized world, stat, scheduler, tile/sentinel, RNG, script alias/byte, and sound-queue state. The latest capture matched 31,260 fields (3,472 at loaded/start/final and 3,474 at each cycle), plus two logical sound-queue events / 20 event fields and nine ordered playfield writes / 36 fields. This is integration-infrastructure evidence; the prototype does not meet the 10-fixture corpus or capture distinct state transitions or generated file output below.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:216",
-      "status": "partial",
+      "requirement": "One deterministic Pascal/production replay runs the original paused GamePlayLoop, buffered right-key handling, two boulder pushes, and two interacting objects whose #GIVE GEMS 1 / #IDLE and #GIVE AMMO 1 / #IDLE scripts run over six zero-speed cycles. Twelve loaded/loop-start/per-cycle/state-transition/final snapshots compare dynamic world, stat, scheduler, tile/sentinel, RNG, script alias/byte, and sound-queue state. The latest capture matched 41,690 fields (3,473 at L0/S0/T2/T3/F0 and 3,475 at T1/C1-C6), two logical sound events / 20 fields, and nine ordered playfield writes / 36 fields. The 961-byte fresh-world save matched all 565 stable positions; 396 undefined/pointer positions are classified (327 differ). The loaded-file round trip matched 949 preserved bytes with 12 process-pointer positions classified. This prototype verifies replay infrastructure and does not count as one of the ten scenario fixtures.",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:222",
+      "status": "complete",
       "evidence_class": "DP",
       "production_implementation": [
         "third_party/libzoo/src/libzoo/zoo_game.c::zoo_world_create",
@@ -948,7 +948,7 @@
         "tools/runtime-compat/oop_movement.c"
       ],
       "oracle_output": "INTEGPR.OUT (88,305 bytes; SHA-256 e302935a10fbcbabdc7d39ba44c99e2bcc9a6e05bdf7951b26c6833059f10efe), INTEGSND.OUT (53 bytes; SHA-256 238fc22ca3707890778e1303541f118a99110fdd9f1ba84f1d3ee7fedb07b0be), INTEGCEL.OUT (103 bytes; SHA-256 6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa), INTEGSAV.SAV (961 bytes; SHA-256 378a6aaae4ef3f8f040f720c006a8896c6a52d4b672b599d0367fb3ace704700), INTEGLOD.OUT (3 bytes; SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04), INTEG2SV.SAV (961 bytes; SHA-256 8b4d70ab16e3c730f592197a508b409d0bf0e6e244491bd979b738e75466b0e3); generated by the 2026-11-25 clean direct compiled-Pascal run; build outputs are not committed.",
-      "verification_result": "Partial DP: 12 variable-size L0/S0/T1/C1-C6/T2/T3/F0 checkpoints matched 41,690 state fields; two logical SoundQueue events / 20 fields and nine ordered playfield writes / 36 fields matched. The fresh-world 961-byte SAV comparison matches 565 stable positions and classifies 396 undefined/pointer positions (327 differ, 69 happen to match). Both implementations then load the same Pascal-generated SAV (WorldLoad=true; zoo_world_load=0), and the second save matches all 949 preserved non-pointer bytes with 12 process-pointer positions classified. The clean full run passed 84 direct Pascal sessions and 43/43 configured differentials. This remains one prototype outside the ten required fixtures (0/10); Pascal save failure-path behavior and wider scenario coverage remain open. See tools/compatibility/evidence/2026-11-25-e2-10-save-load-roundtrip.md.",
+      "verification_result": "Passed 2026-11-25: original GamePlayLoop and production zoo_tick matched all 12 replay checkpoints, state fields, sound events, ordered cell writes, and stable save/load bytes under deterministic inputs. State-transition checkpoints, generated save and reload outputs, and first-divergence reporting are implemented and verified. This infrastructure prototype receives no required-fixture corpus credit.",
       "required_evidence_classes": [
         "DP"
       ]
@@ -958,13 +958,25 @@
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
       "requirement": "Create a finite, versioned set of at least **10** replay fixtures using original or purpose-built worlds and fixed normalized input/time/RNG tapes. Required scenario coverage: (1) DEMO start and ordinary traversal; (2) walls, pushers, duplicators, and collision ordering; (3) combat, bullets, keys/doors, and pickups; (4) object stat order plus multiple interacting OOP scripts; (5) board edges, neighbor transitions, and passages; (6) dark room, torch, Energizer, timers, and death; (7) pause, zero/positive-speed scheduling, and delayed input; (8) save, restore, world reload, and board change; (9) editor mutation, `.BRD` round-trip, and play of the edited board; (10) malformed-file recovery and high-score insertion path.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:217",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:223",
+      "status": "partial",
+      "evidence_class": "I",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_elements.c::player,projectile,key,door,pickup,and scenario callbacks",
+        "tools/runtime-compat/oop_movement.c::integrated replay fixtures"
+      ],
+      "test_fixture": [
+        "tools/compatibility/integrated_replay_fixture_manifest.json (frozen E2-10-F01 through F10 corpus)",
+        "tools/pascal-compat/DEMOINT.PAS",
+        "tools/pascal-compat/MOTIONIN.PAS",
+        "tools/pascal-compat/COMBATIN.PAS",
+        "tools/pascal-compat/compare-integrated-gameplay.js",
+        "tools/runtime-compat/oop_movement.c"
+      ],
+      "oracle_output": "F01-F03 oracle checkpoints and captures are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-{demo-traversal,walls-pushers-duplicators,combat-keys-pickups}.md. F03 outputs: INTEGPR.OUT 86,664 bytes SHA-256 42c5650df7c79f44a5c77e8b78f8497da0b29e4755a9f73994836edf3273860f; INTEGSND.OUT 468 bytes SHA-256 360c102739a77de238ef1855f75d08e3b163e0d8a459c8fcee4b2dd59e30b61c; INTEGCEL.OUT 8,829 bytes SHA-256 90ffd422fa7cd22299920fb2579ee81f9e9b3c757596f07d43ad7ecf9d841543; INTEGSAV.SAV and INTEG2SV.SAV 884 bytes SHA-256 3185f2f7fa6e742512fe403fc1347ba9f4d912596a1ff0c54573ccfed8b97b27; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04. Build outputs are not committed.",
+      "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision ae4b50128dcffe9d414ce49570491915a1106f4c (87/87 direct Pascal sessions; 47/47 configured comparisons). F01-F03 each matched 12 checkpoints with zero state/event differences and zero unexplained stable-save differences. Three of the fixed ten scenarios are complete; F04-F10 remain pending, so this acceptance case and E2-10 are not complete.",
       "required_evidence_classes": [
         "D",
         "DP",
@@ -976,13 +988,25 @@
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
       "requirement": "For each fixture, run the source-derived DOS program compiled with Turbo Pascal 5.5 and the platform-neutral production engine from the same initial files/state. Record named checkpoint snapshots at initial load, every logical game cycle, each board/state transition, and final save/exit. Hook only nondeterministic environment sources (clock, keyboard tape, filesystem location, video capture, and seeded allocator setup); do not replace gameplay routines in the oracle.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:218",
-      "status": "pending",
-      "evidence_class": "S",
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:224",
+      "status": "partial",
+      "evidence_class": "DP",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_elements.c::player,projectile,key,door,pickup,and scenario callbacks",
+        "tools/runtime-compat/oop_movement.c::integrated replay fixtures"
+      ],
+      "test_fixture": [
+        "tools/compatibility/integrated_replay_fixture_manifest.json (frozen E2-10-F01 through F10 corpus)",
+        "tools/pascal-compat/DEMOINT.PAS",
+        "tools/pascal-compat/MOTIONIN.PAS",
+        "tools/pascal-compat/COMBATIN.PAS",
+        "tools/pascal-compat/compare-integrated-gameplay.js",
+        "tools/runtime-compat/oop_movement.c"
+      ],
+      "oracle_output": "F01-F03 oracle checkpoints and captures are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-{demo-traversal,walls-pushers-duplicators,combat-keys-pickups}.md. F03 outputs: INTEGPR.OUT 86,664 bytes SHA-256 42c5650df7c79f44a5c77e8b78f8497da0b29e4755a9f73994836edf3273860f; INTEGSND.OUT 468 bytes SHA-256 360c102739a77de238ef1855f75d08e3b163e0d8a459c8fcee4b2dd59e30b61c; INTEGCEL.OUT 8,829 bytes SHA-256 90ffd422fa7cd22299920fb2579ee81f9e9b3c757596f07d43ad7ecf9d841543; INTEGSAV.SAV and INTEG2SV.SAV 884 bytes SHA-256 3185f2f7fa6e742512fe403fc1347ba9f4d912596a1ff0c54573ccfed8b97b27; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04. Build outputs are not committed.",
+      "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision ae4b50128dcffe9d414ce49570491915a1106f4c (87/87 direct Pascal sessions; 47/47 configured comparisons). F01-F03 each matched 12 checkpoints with zero state/event differences and zero unexplained stable-save differences. Three of the fixed ten scenarios are complete; F04-F10 remain pending, so this acceptance case and E2-10 are not complete.",
       "required_evidence_classes": [
         "D",
         "DP",
@@ -994,24 +1018,25 @@
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
       "requirement": "Compare world and board fields, all 60×25 playable cells plus every source-defined border/sentinel cell, stats and order, script bytes/cursors/aliases, flags/counters/timers/RNG state, emitted logical cell writes, sound event queue, return/error result, and generated file bytes. Apply only the explicit nondeterminism rules above.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:219",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:225",
       "status": "partial",
       "evidence_class": "DP",
       "production_implementation": [
         "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick",
-        "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_player_tick",
-        "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_execute",
-        "third_party/libzoo/src/libzoo/zoo_sound.c::zoo_sound_queue",
-        "tools/runtime-compat/oop_movement.c::capture_integrated_gameplay_snapshot"
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_elements.c::player,projectile,key,door,pickup,and scenario callbacks",
+        "tools/runtime-compat/oop_movement.c::integrated replay fixtures"
       ],
       "test_fixture": [
-        "tools/pascal-compat/INTEGPRB.PAS",
+        "tools/compatibility/integrated_replay_fixture_manifest.json (frozen E2-10-F01 through F10 corpus)",
+        "tools/pascal-compat/DEMOINT.PAS",
+        "tools/pascal-compat/MOTIONIN.PAS",
+        "tools/pascal-compat/COMBATIN.PAS",
         "tools/pascal-compat/compare-integrated-gameplay.js",
-        "tools/pascal-compat/verify.ps1 staged state/sound/cell-write capture",
         "tools/runtime-compat/oop_movement.c"
       ],
-      "oracle_output": "INTEGPR.OUT (88,305 bytes; SHA-256 e302935a10fbcbabdc7d39ba44c99e2bcc9a6e05bdf7951b26c6833059f10efe), INTEGSND.OUT (53 bytes; SHA-256 238fc22ca3707890778e1303541f118a99110fdd9f1ba84f1d3ee7fedb07b0be), INTEGCEL.OUT (103 bytes; SHA-256 6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa), INTEGSAV.SAV (961 bytes; SHA-256 378a6aaae4ef3f8f040f720c006a8896c6a52d4b672b599d0367fb3ace704700), INTEGLOD.OUT (3 bytes; SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04), INTEG2SV.SAV (961 bytes; SHA-256 8b4d70ab16e3c730f592197a508b409d0bf0e6e244491bd979b738e75466b0e3); generated by the 2026-11-25 clean direct compiled-Pascal run; build outputs are not committed.",
-      "verification_result": "Partial DP: the fresh-world generated SAV compares all 565 stable bytes exactly; 396 positions are classified as fresh-world undefined Pascal string/padding or process-pointer values. Both sides then load the identical Pascal-generated SAV; Pascal WorldLoad=true matches production zoo_world_load=0. The following round-trip save preserves all 949 non-pointer file bytes exactly; only 12 stat data-pointer positions are classified. Thus loaded string tails, unknown padding, coordinates, reserved bytes, defined world/board/stat fields, and file layout are directly checked for this one fixture. Pascal WorldSave has no return value, and failure paths, varied save/restore/load scenarios, broader state/event fields, and all ten required fixtures remain outstanding. See tools/compatibility/evidence/2026-11-25-e2-10-save-load-roundtrip.md.",
+      "oracle_output": "F01-F03 oracle checkpoints and captures are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-{demo-traversal,walls-pushers-duplicators,combat-keys-pickups}.md. F03 outputs: INTEGPR.OUT 86,664 bytes SHA-256 42c5650df7c79f44a5c77e8b78f8497da0b29e4755a9f73994836edf3273860f; INTEGSND.OUT 468 bytes SHA-256 360c102739a77de238ef1855f75d08e3b163e0d8a459c8fcee4b2dd59e30b61c; INTEGCEL.OUT 8,829 bytes SHA-256 90ffd422fa7cd22299920fb2579ee81f9e9b3c757596f07d43ad7ecf9d841543; INTEGSAV.SAV and INTEG2SV.SAV 884 bytes SHA-256 3185f2f7fa6e742512fe403fc1347ba9f4d912596a1ff0c54573ccfed8b97b27; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04. Build outputs are not committed.",
+      "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision ae4b50128dcffe9d414ce49570491915a1106f4c (87/87 direct Pascal sessions; 47/47 configured comparisons). F01-F03 each matched 12 checkpoints with zero state/event differences and zero unexplained stable-save differences. Three of the fixed ten scenarios are complete; F04-F10 remain pending, so this acceptance case and E2-10 are not complete.",
       "required_evidence_classes": [
         "DP"
       ]
@@ -1021,13 +1046,25 @@
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
       "requirement": "all 10 fixtures finish deterministically under their tapes with zero unexplained per-checkpoint differences. Any mismatch is triaged as a compatibility defect or an explicitly justified environment-dependent case; it cannot be waived as “visual only” when engine state/events differ.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:220",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:226",
+      "status": "partial",
+      "evidence_class": "I",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_elements.c::player,projectile,key,door,pickup,and scenario callbacks",
+        "tools/runtime-compat/oop_movement.c::integrated replay fixtures"
+      ],
+      "test_fixture": [
+        "tools/compatibility/integrated_replay_fixture_manifest.json (frozen E2-10-F01 through F10 corpus)",
+        "tools/pascal-compat/DEMOINT.PAS",
+        "tools/pascal-compat/MOTIONIN.PAS",
+        "tools/pascal-compat/COMBATIN.PAS",
+        "tools/pascal-compat/compare-integrated-gameplay.js",
+        "tools/runtime-compat/oop_movement.c"
+      ],
+      "oracle_output": "F01-F03 oracle checkpoints and captures are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-{demo-traversal,walls-pushers-duplicators,combat-keys-pickups}.md. F03 outputs: INTEGPR.OUT 86,664 bytes SHA-256 42c5650df7c79f44a5c77e8b78f8497da0b29e4755a9f73994836edf3273860f; INTEGSND.OUT 468 bytes SHA-256 360c102739a77de238ef1855f75d08e3b163e0d8a459c8fcee4b2dd59e30b61c; INTEGCEL.OUT 8,829 bytes SHA-256 90ffd422fa7cd22299920fb2579ee81f9e9b3c757596f07d43ad7ecf9d841543; INTEGSAV.SAV and INTEG2SV.SAV 884 bytes SHA-256 3185f2f7fa6e742512fe403fc1347ba9f4d912596a1ff0c54573ccfed8b97b27; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04. Build outputs are not committed.",
+      "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision ae4b50128dcffe9d414ce49570491915a1106f4c (87/87 direct Pascal sessions; 47/47 configured comparisons). F01-F03 each matched 12 checkpoints with zero state/event differences and zero unexplained stable-save differences. Three of the fixed ten scenarios are complete; F04-F10 remain pending, so this acceptance case and E2-10 are not complete.",
       "required_evidence_classes": [
         "DP",
         "I"
@@ -1233,18 +1270,18 @@
           "third_party/reconstruction-of-zzt/SRC/GAME.PAS:40",
           "third_party/reconstruction-of-zzt/SRC/GAME.PAS:152"
         ],
-    "production_implementation": [
-      "third_party/libzoo/src/libzoo/zoo_game_io.c (zoo_board_close, zoo_io_world_write)"
-    ],
-    "test_fixture": [
-      "tools/pascal-compat/BOARDENC.PAS",
-      "tools/pascal-compat/compare-pascal-boardenc.js",
-      "build/pascal-compat-verification/BOARDENC.ZZT (generated staging output; not committed)"
-    ],
-    "oracle_output": "A compiled-Pascal BoardClose followed by WorldSave produced a 25,928-byte .ZZT; shared LibZoo BoardClose/world-write output matched all bytes (SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa).",
-    "evidence_class": "DP",
-    "verification_result": "partial: one deterministic DEMO-board mutation/save case matches byte-for-byte; this does not verify every BoardClose branch, allocator context, or serialized-field boundary.",
-    "scope_status": "shared_engine_mapping_verified_for_captured_path"
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game_io.c (zoo_board_close, zoo_io_world_write)"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/BOARDENC.PAS",
+          "tools/pascal-compat/compare-pascal-boardenc.js",
+          "build/pascal-compat-verification/BOARDENC.ZZT (generated staging output; not committed)"
+        ],
+        "oracle_output": "A compiled-Pascal BoardClose followed by WorldSave produced a 25,928-byte .ZZT; shared LibZoo BoardClose/world-write output matched all bytes (SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa).",
+        "evidence_class": "DP",
+        "verification_result": "partial: one deterministic DEMO-board mutation/save case matches byte-for-byte; this does not verify every BoardClose branch, allocator context, or serialized-field boundary.",
+        "scope_status": "shared_engine_mapping_verified_for_captured_path"
       },
       {
         "id": "E2-03-ROUTINE-GAME-BOARDCREATE",
