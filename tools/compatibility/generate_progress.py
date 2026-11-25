@@ -88,8 +88,8 @@ def main() -> None:
         "",
         "## Evidence inventory",
         "",
-        f"- Direct compiled-Pascal probe sessions: **{probes.get('sessions', 'not recorded')}** ({probes.get('standard_programs', 'not recorded')} standard programs; {probes.get('standalone_sessions', 'not recorded')} standalone sessions).",
-        f"- Direct Pascal-to-production differential comparisons: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; run result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
+        f"- Direct compiled-Pascal probe sessions in the last completed full suite: **{probes.get('sessions', 'not recorded')}** ({probes.get('standard_programs', 'not recorded')} standard programs; {probes.get('standalone_sessions', 'not recorded')} standalone sessions).",
+        f"- Direct Pascal-to-production differential invocations in the last completed full suite: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; last complete result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
         f"- Direct `.HI` Pascal-to-shared-engine byte comparisons: **{high_score.get('passed', 'not recorded')}/{high_score.get('configured', 'not recorded')}** passed ({high_score.get('save_cases', 'not recorded')} save, {high_score.get('load_reset_cases', 'not recorded')} load/reset, {high_score.get('add_cases', 'not recorded')} insertion cases); source-model rows: **{high_score.get('source_derived_model_rows', 'not recorded')}**.",
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
@@ -123,12 +123,13 @@ def main() -> None:
         "",
         f"- Required fixtures: {integrated.get('required_fixtures', 10)}.",
         f"- Completed fixtures: {integrated.get('completed_fixtures', 0)}.",
-        f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_field_comparisons', 'not recorded')} total field comparisons across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints ({integrated.get('prototype_fields_compared', 'not recorded')} fields each); this is not counted as a complete E2-10 fixture.",
+        f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_field_comparisons', 'not recorded')} total field comparisons across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-checkpoint counts: {integrated.get('prototype_fields_compared', 'not recorded')}; this is not counted as a complete E2-10 fixture.",
+        f"- Logical sound-queue events in the prototype: {integrated.get('sound_events_compared', 'not recorded')} events / {integrated.get('sound_event_fields_compared', 'not recorded')} event fields; checkpoint sound state: {'compared' if integrated.get('sound_checkpoint_state_compared') else 'outstanding'}; overflow: {integrated.get('sound_event_overflow', 'not recorded')}.",
         f"- Per-cycle checkpoint comparisons: {'implemented' if integrated.get('per_cycle_checkpoints') else 'outstanding'}.",
         f"- State-transition checkpoints: {'implemented' if integrated.get('state_transition_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
         *([
-            f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints × {item.get('fields_per_checkpoint', 'not recorded')} fields = {item.get('field_comparisons', 'not recorded')} comparisons; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
+            f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints; {item.get('field_comparisons', 'not recorded')} state-field comparisons total; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
             for item in integrated.get("per_cycle_results", [])
         ] if integrated.get("per_cycle_results") else ["- Current per-cycle results: none recorded."]),
         *([
@@ -166,9 +167,11 @@ def main() -> None:
         "",
         "## Latest verification record",
         "",
+        f"- Latest full Pascal-runner attempt: exit code {runner.get('latest_attempt', {}).get('full_pascal_runner_exit_code', 'not recorded')}; {runner.get('latest_attempt', {}).get('status', 'not recorded')}. {runner.get('latest_attempt', {}).get('failure', '')}",
+        f"- The latest integrated Pascal differential is reported separately: exit {runner.get('latest_attempt', {}).get('integrated_differential_exit_code', 'not recorded')}; {integrated.get('prototype_field_comparisons', 'not recorded')} snapshot fields and {integrated.get('sound_events_compared', 'not recorded')} logical sound events matched.",
         f"- Toolchain: {runner.get('toolchain', {}).get('pascal', 'not recorded')}; {runner.get('toolchain', {}).get('dosbox_x', 'DOSBox-X version not recorded')}.",
         f"- Source revision: LibZoo baseline `{inv['baseline']['libzoo_commit']}`; local LibZoo overlay `{runner.get('libzoo_local_commit', 'not recorded')}`; Pascal source hashes in the manifest; root Git revision: {runner.get('root_revision', 'not yet recorded')}.",
-        f"- Pascal suite exit code: {runner.get('pascal_exit_code', 'not recorded')}; command recorded: `{runner.get('command', 'not recorded')}`.",
+        f"- Last completed full Pascal suite exit code: {runner.get('pascal_exit_code', 'not recorded')}; command recorded: `{runner.get('command', 'not recorded')}`.",
         f"- Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).",
         "",
         "## Recent progress",
