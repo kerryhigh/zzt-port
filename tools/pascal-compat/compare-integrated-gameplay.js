@@ -9,8 +9,8 @@ const loadResultPath = process.argv[7];
 const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups [DEMO.ZZT]]');
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
@@ -358,8 +358,10 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       new Uint8Array(instance.exports.memory.buffer,
         instance.exports.integrated_demo_world_bytes_ptr(), demoBytes.length).set(demoBytes);
       result = instance.exports.run_integrated_demo_gameplay_checks(demoBytes.length);
-    } else {
+    } else if (scenario === 'walls-pushers-duplicators') {
       result = instance.exports.run_integrated_wall_pusher_duplicator_checks();
+    } else {
+      result = instance.exports.run_integrated_combat_key_pickup_checks();
     }
   }
   if (result !== 0) throw new Error(`Production integrated replay returned ${result}`);
@@ -495,6 +497,33 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       throw new Error(`F02 coverage assertion failed: expected pusher chain and appended duplicator stat order; stats=${JSON.stringify([2, 3, 4, 5].map(id => final.slice(scalarNames.length + id * statFieldCount, scalarNames.length + (id + 1) * statFieldCount)))}`);
     }
     if (final[1] < 2) throw new Error(`F02 coverage assertion failed: expected source and same-cycle cloned object scripts to execute, observed gems=${final[1]}`);
+  }
+  if (scenario === 'combat-keys-pickups') {
+    const final = expectedSnapshots.at(-1).values;
+    const statCount = final[11];
+    const playerStatStart = scalarNames.length;
+    const tileStart = scalarNames.length + (statCount + 1) * statFieldCount + schedulerFieldCount;
+    const tileElementAt = (x, y) => final[tileStart + ((x * 27 + y) * 2)];
+    if (statCount !== 1) throw new Error(`F03 coverage assertion failed: expected the player as the only remaining stat, observed Board.StatCount=${statCount}`);
+    if (final[0] !== 5 || final[1] !== 1 || final[2] !== 101 || final[7] !== 10) {
+      throw new Error(`F03 coverage assertion failed: ammo=${final[0]}, gems=${final[1]}, health=${final[2]}, score=${final[7]}; expected 5, 1, 101, 10`);
+    }
+    if (final[playerStatStart] !== 10 || final[playerStatStart + 1] !== 5) {
+      throw new Error(`F03 coverage assertion failed: expected player at (10,5), observed (${final[playerStatStart]},${final[playerStatStart + 1]})`);
+    }
+    for (const [x, y, behavior] of [
+      [6, 5, 'colored key pickup'],
+      [7, 5, 'lion destroyed by the player bullet'],
+      [8, 5, 'gem pickup after combat'],
+      [9, 5, 'matching colored door opened'],
+    ]) {
+      if (tileElementAt(x, y) !== 0) {
+        throw new Error(`F03 coverage assertion failed at tile (${x},${y}) for ${behavior}: expected empty, observed element ${tileElementAt(x, y)}`);
+      }
+    }
+    if (tileElementAt(10, 5) !== 4) {
+      throw new Error(`F03 coverage assertion failed at tile (10,5) after ammunition pickup: expected player element 4, observed ${tileElementAt(10, 5)}`);
+    }
   }
   const expectedSound = parseSoundEvents(soundPath);
   if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');

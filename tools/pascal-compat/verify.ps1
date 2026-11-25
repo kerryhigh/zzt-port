@@ -153,6 +153,7 @@ procedure InputReadWaitKey;
 	end;
 '@
 $stagedInput = ([regex]::new($waitKeyPattern)).Replace($stagedInput, $waitKeyReplacement, 1)
+$stagedInputWithoutNormalizedTape = $stagedInput
 [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
 
 $stagedOopPath = Join-Path $stageSource 'OOP.PAS'
@@ -1201,6 +1202,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'GAMESCHD.PAS') -Destination (Jo
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'INTEGPRB.PAS') -Destination (Join-Path $stageRoot 'INTEGPRB.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DEMOINT.PAS') -Destination (Join-Path $stageRoot 'DEMOINT.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MOTIONIN.PAS') -Destination (Join-Path $stageRoot 'MOTIONIN.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'COMBATIN.PAS') -Destination (Join-Path $stageRoot 'COMBATIN.PAS')
 Write-Host 'Compiling and running direct Turbo Pascal sound-tick probe: SOUNDTIK'
 Invoke-DosboxSession 'SOUNDTIK' @(
     'TPC.EXE /B /EBIN /ISRC /USRC SOUNDTIK.PAS > SOUNDTIK.LOG',
@@ -2014,6 +2016,102 @@ try {
         (Join-Path $stageRoot 'INTEG2SV.SAV') `
         'walls-pushers-duplicators'
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F02 walls/pushers/duplicators replay failed with exit code $LASTEXITCODE." }
+    # The normalized tape is needed only by F03. Inject it for this fixture's
+    # compilation alone: adding its static string to INPUT changes the Pascal
+    # heap boundary and perturbs unrelated allocator-sensitive oracle probes.
+    $stagedInput = $stagedInputWithoutNormalizedTape
+    $normalizedInterfaceAnchor = 'function InputProbeGetKeyBuffer: string;'
+    $normalizedInterfaceIndex = $stagedInput.IndexOf($normalizedInterfaceAnchor, [StringComparison]::Ordinal)
+    if ($normalizedInterfaceIndex -lt 0) {
+        throw 'Could not locate the staged Input unit interface for F03 normalized input tape injection.'
+    }
+    $stagedInput = $stagedInput.Insert(
+        $normalizedInterfaceIndex + $normalizedInterfaceAnchor.Length,
+        "`r`n`t`tprocedure InputProbeSetNormalizedTape(tape: string);`r`n`t`tfunction InputProbeGetNormalizedTape: string;"
+    )
+    $normalizedStateAnchor = "`tInputProbeReadKeys: string[50];"
+    if (-not $stagedInput.Contains($normalizedStateAnchor)) {
+        throw 'Could not locate the staged Input unit state for F03 normalized input tape injection.'
+    }
+    $stagedInput = $stagedInput.Replace(
+        $normalizedStateAnchor,
+        $normalizedStateAnchor + "`r`n`tInputProbeNormalizedTape: string[50];"
+    )
+    $normalizedProbeHelper = @'
+procedure InputProbeSetNormalizedTape(tape: string);
+begin
+	InputProbeNormalizedTape := tape;
+end;
+
+function InputProbeGetNormalizedTape: string;
+begin
+	InputProbeGetNormalizedTape := InputProbeNormalizedTape;
+end;
+
+'@
+    $stagedInput = $stagedInput.Replace($implementationAnchor, $normalizedProbeHelper + $implementationAnchor)
+    $inputUpdateEndBoundary = $stagedInput.LastIndexOf('procedure InputProbeSetKeyBuffer(buffer: string);', [StringComparison]::Ordinal)
+    $inputUpdateStart = if ($inputUpdateEndBoundary -ge 0) {
+        $stagedInput.LastIndexOf('procedure InputUpdate;', $inputUpdateEndBoundary, [StringComparison]::Ordinal)
+    } else { -1 }
+    if ($inputUpdateStart -lt 0 -or $inputUpdateEndBoundary -lt 0) {
+        throw 'Could not locate InputUpdate for deterministic F03 normalized input tape injection.'
+    }
+    $inputUpdateEnd = $stagedInput.LastIndexOf('end;', $inputUpdateEndBoundary, $inputUpdateEndBoundary - $inputUpdateStart, [StringComparison]::Ordinal)
+    if ($inputUpdateEnd -lt $inputUpdateStart) { throw 'Could not locate the end of InputUpdate for F03 normalized input tape injection.' }
+    $normalizedInputProbe = @'
+	if Length(InputProbeNormalizedTape) <> 0 then begin
+		InputDeltaX := 0;
+		InputDeltaY := 0;
+		InputShiftPressed := false;
+		case UpCase(InputProbeNormalizedTape[1]) of
+			'U': InputDeltaY := -1;
+			'D': InputDeltaY := 1;
+			'L': InputDeltaX := -1;
+			'R': InputDeltaX := 1;
+			'F': begin
+				InputDeltaX := 1;
+				InputShiftPressed := true;
+			end;
+			'S': InputShiftPressed := true;
+		end;
+		if Length(InputProbeNormalizedTape) = 1 then
+			InputProbeNormalizedTape := ''
+		else
+			InputProbeNormalizedTape := Copy(InputProbeNormalizedTape, 2, Length(InputProbeNormalizedTape) - 1);
+	end;
+'@
+    $stagedInput = $stagedInput.Insert($inputUpdateEnd, $normalizedInputProbe)
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
+    Write-Host 'Compiling and running the F03 combat/key/door/pickup gameplay replay: COMBATIN'
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'COMBATIN.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'COMBATIN.EXE') -Force -ErrorAction SilentlyContinue
+    Invoke-DosboxSession 'COMBAT-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC COMBATIN.PAS > COMBCOMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'COMBATIN.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\COMBATIN.EXE. See $stageRoot\COMBCOMP.LOG and $stageRoot\COMBAT-COMPILE.LOG."
+    }
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInputWithoutNormalizedTape, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'COMBATIN' @('BIN\COMBATIN.EXE')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+            throw "Pascal F03 integrated replay did not write $fixtureOutput. See $stageRoot\COMBATIN.LOG."
+        }
+    }
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'combat-keys-pickups'
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F03 combat/key/door/pickup replay failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
         'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
@@ -2030,6 +2128,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 32 # Includes BRDXFER's short-payload session and the DEMO/F02 integrated replay fixtures; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 33 # Includes BRDXFER's short-payload session and the DEMO/F02/F03 integrated replay fixtures; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
