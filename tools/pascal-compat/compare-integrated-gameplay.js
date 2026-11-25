@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
 const soundPath = process.argv[4];
-if (!pascalPath || !wasmPath || !soundPath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT>');
+const cellPath = process.argv[5];
+if (!pascalPath || !wasmPath || !soundPath || !cellPath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT>');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -96,7 +97,10 @@ function describeField(index, statCount, values) {
   const soundStart = aliasGraphStart + aliasGraphFields + scriptBytes;
   const soundField = index - soundStart;
   if (soundField >= 0 && soundField < soundNames.length) return `sound ${soundNames[soundField]}`;
-  if (soundField >= soundNames.length) return `sound queue byte ${soundField - soundNames.length}`;
+  const soundBufferLength = values[soundStart + 2] || 0;
+  if (soundField < soundNames.length + soundBufferLength) return `sound queue byte ${soundField - soundNames.length}`;
+  if (soundField === soundNames.length + soundBufferLength) return 'captured playfield cell-write count';
+  if (soundField === soundNames.length + soundBufferLength + 1) return 'playfield cell-write overflow';
   return `script byte ${scriptByteIndex} (unclassified)`;
 }
 
@@ -133,6 +137,32 @@ function parseSoundEvents(path) {
     events.push({ priority, requestLength, requestBytes, resultPriority, resultPosition, resultLength, resultPlaying, resultBytes });
   }
   if (cursor !== tokens.length) throw new Error(`Pascal sound-event output has ${tokens.length - cursor} unclassified trailing token(s)`);
+  return { count, overflow, events };
+}
+
+function parseCellWrites(path) {
+  const raw = fs.readFileSync(path, 'ascii').trim();
+  if (!raw) throw new Error('Pascal integrated cell-write output is empty');
+  const tokens = raw.split(/\s+/).map(Number);
+  if (tokens.some(value => !Number.isInteger(value))) throw new Error('Pascal integrated cell-write output contains a non-integer token');
+  const count = tokens[0];
+  const overflow = tokens[1];
+  if (!Number.isInteger(count) || count < 0 || ![0, 1].includes(overflow)) {
+    throw new Error('Pascal integrated cell-write header is malformed');
+  }
+  if (tokens.length !== 2 + (count * 4)) {
+    throw new Error(`Pascal integrated cell-write output has ${tokens.length - 2} data fields; expected ${count * 4}`);
+  }
+  const events = [];
+  for (let eventIndex = 0; eventIndex < count; eventIndex++) {
+    const base = 2 + (eventIndex * 4);
+    const event = { x: tokens[base], y: tokens[base + 1], color: tokens[base + 2], character: tokens[base + 3] };
+    if (event.x < 0 || event.x >= 60 || event.y < 0 || event.y >= 25
+        || event.color < 0 || event.color > 255 || event.character < 0 || event.character > 255) {
+      throw new Error(`Pascal cell-write event ${eventIndex} is outside the captured playfield/byte range: ${JSON.stringify(event)}`);
+    }
+    events.push(event);
+  }
   return { count, overflow, events };
 }
 
@@ -277,6 +307,40 @@ function parseSoundEvents(path) {
       }
     }
   }
+  const expectedCells = parseCellWrites(cellPath);
+  if (expectedCells.overflow !== 0) throw new Error('Pascal integrated cell-write capture overflowed its fixed 8192-event buffer');
+  const actualCellCount = instance.exports.integrated_gameplay_cell_event_count();
+  const actualCellOverflow = instance.exports.integrated_gameplay_cell_event_overflow();
+  const actualCellStride = instance.exports.integrated_gameplay_cell_event_stride();
+  if (actualCellOverflow !== 0) throw new Error('Production integrated cell-write capture overflowed its fixed buffer');
+  if (actualCellStride !== 4) throw new Error(`Production cell-write stride ${actualCellStride}; expected 4`);
+  if (actualCellCount !== expectedCells.count) {
+    throw new Error(`First cell-write divergence at event count: Pascal=${expectedCells.count}, production=${actualCellCount}; Pascal tail=${JSON.stringify(expectedCells.events.slice(-3))}`);
+  }
+  const actualCellBase = instance.exports.integrated_gameplay_cell_events_ptr();
+  const actualCells = new Int32Array(instance.exports.memory.buffer,
+    actualCellBase, actualCellCount * actualCellStride);
+  const cellFieldNames = ['x', 'y', 'attribute', 'CP437 byte'];
+  let cellComparedFields = 0;
+  for (let eventIndex = 0; eventIndex < expectedCells.count; eventIndex++) {
+    const expected = expectedCells.events[eventIndex];
+    const expectedFields = [expected.x, expected.y, expected.color, expected.character];
+    const base = eventIndex * actualCellStride;
+    for (let fieldIndex = 0; fieldIndex < expectedFields.length; fieldIndex++) {
+      const observed = actualCells[base + fieldIndex];
+      if (observed !== expectedFields[fieldIndex]) {
+        const from = Math.max(0, eventIndex - 2);
+        const to = Math.min(expectedCells.count - 1, eventIndex + 2);
+        const actualContext = [];
+        for (let at = from; at <= to; at++) {
+          const pos = at * actualCellStride;
+          actualContext.push({ x: actualCells[pos], y: actualCells[pos + 1], color: actualCells[pos + 2], character: actualCells[pos + 3] });
+        }
+        throw new Error(`First cell-write divergence at event ${eventIndex}, ${cellFieldNames[fieldIndex]}: Pascal=${expectedFields[fieldIndex]}, production=${observed}; surrounding Pascal=${JSON.stringify(expectedCells.events.slice(from, to + 1))}; production=${JSON.stringify(actualContext)}`);
+      }
+      cellComparedFields++;
+    }
+  }
   const checkpointFieldCounts = expectedSnapshots.map(snapshot => snapshot.fieldCount);
-  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); first-divergence reports identify checkpoint/event, field, tile, and surrounding values`);
+  console.log(`Integrated gameplay replay: ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields); first-divergence reports identify checkpoint/event, field, tile, cell, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

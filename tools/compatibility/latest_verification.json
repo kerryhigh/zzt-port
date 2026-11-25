@@ -1,11 +1,11 @@
 {
   "closed_blockers": [],
   "verification": {
-    "date": "2026-11-24",
+    "date": "2026-11-25",
     "root_revision": "a7642fd: test: capture integrated Pascal sound queue events (E2-10 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "The last complete full Pascal run passed 84 sessions and 43/43 configured differentials on c7c49c3. A later run compiled and executed the updated INTEGPRB, but stopped at BRDXFER timeout before the runner summary; see latest_attempt.",
+    "pascal_suite_result": "The last complete full Pascal run passed 84 sessions and 43/43 configured differentials on c7c49c3. The 2026-11-25 attempt compiled and ran INTEGPRB and later editor probes, then timed out in BRDXFER before the runner summary; see latest_attempt. The standalone integrated differential and runtime suite passed after fixture normalization.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <Turbo Pascal 5.5 directory> -DosboxExecutable <DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -75,10 +75,10 @@
       "required_fixtures": 10,
       "completed_fixtures": 0,
       "prototype_name": "INTEGPRB: six zero-speed cycles with loaded, loop-start, per-cycle, and final snapshots; two interacting objects; not one of the ten fixtures",
-      "prototype_fields_compared": "variable: 3,470 loaded/start/final; 3,472 at each cycle",
-      "prototype_field_comparisons": 31242,
-      "oracle_output_size_bytes": 66175,
-      "oracle_output_sha256": "70f50cd664b5b439458b2aef243f9b8376f9f8808cd3ed8afffef7f33881c35e",
+      "prototype_fields_compared": "variable: 3,472 loaded/start/final; 3,474 at each cycle",
+      "prototype_field_comparisons": 31260,
+      "oracle_output_size_bytes": 66211,
+      "oracle_output_sha256": "38dd3d676a26620c0068c62a8be9a43250aa94f6977da3a20943bd951fb8683a",
       "prototype_checkpoint_count": 9,
       "checkpoint_names": [
         "loaded initial state",
@@ -98,60 +98,60 @@
           "fixture": "INTEGPRB prototype: buffered movement, two boulder pushes, and two interacting #GIVE/#IDLE scripts",
           "evidence_class": "DP",
           "checkpoints": 9,
-          "fields_per_checkpoint": "variable: 3,470 loaded/start/final; 3,472 at each cycle",
-          "field_comparisons": 31242,
-          "result": "passed; 2 logical sound queue events and 20 event fields matched",
+          "fields_per_checkpoint": "variable: 3,472 loaded/start/final; 3,474 at each cycle",
+          "field_comparisons": 31260,
+          "result": "passed; 2 logical sound queue events / 20 event fields and 9 playfield cell writes / 36 event fields matched",
           "checkpoint_results": [
             {
               "checkpoint": "loaded initial state",
-              "fields_compared": 3470,
+              "fields_compared": 3472,
               "result": "matched"
             },
             {
               "checkpoint": "game-loop start",
-              "fields_compared": 3470,
+              "fields_compared": 3472,
               "result": "matched"
             },
             {
               "checkpoint": "cycle 1",
-              "fields_compared": 3472,
+              "fields_compared": 3474,
               "result": "matched"
             },
             {
               "checkpoint": "cycle 2",
-              "fields_compared": 3472,
+              "fields_compared": 3474,
               "result": "matched"
             },
             {
               "checkpoint": "cycle 3",
-              "fields_compared": 3472,
+              "fields_compared": 3474,
               "result": "matched"
             },
             {
               "checkpoint": "cycle 4",
-              "fields_compared": 3472,
+              "fields_compared": 3474,
               "result": "matched"
             },
             {
               "checkpoint": "cycle 5",
-              "fields_compared": 3472,
+              "fields_compared": 3474,
               "result": "matched"
             },
             {
               "checkpoint": "cycle 6",
-              "fields_compared": 3472,
+              "fields_compared": 3474,
               "result": "matched"
             },
             {
               "checkpoint": "final state",
-              "fields_compared": 3470,
+              "fields_compared": 3472,
               "result": "matched"
             }
           ],
-          "limitations": "This prototype is not one of the ten required fixtures. It compares variable-size state snapshots and the two sound queue events for this fixture only. It does not capture logical cell-write streams, distinct state-transition checkpoints, generated file bytes, or all sound producers/timing boundaries."
+          "limitations": "This prototype is not one of the ten required fixtures. It compares variable-size state snapshots, two sound queue events, and the ordered playfield cell-write stream for this fixture only. It does not capture distinct state-transition checkpoints, generated file bytes, or all sound producers/timing boundaries."
         }
       ],
-      "schema_revision": "e2-10-prototype-r5",
+      "schema_revision": "e2-10-prototype-r6",
       "state_transition_checkpoints": false,
       "captured_categories": [
         "World, stat, scheduler, input, playable tile, and source-border/sentinel fields",
@@ -159,7 +159,8 @@
         "Complete script data-pointer equality matrix for all live stats in the fixture",
         "All bytes across unique live script buffers in the fixture",
         "Sound queue priority, 1-based position, length, playing/enabled/blocking state, duration fields, and queued bytes at each snapshot",
-        "Logical SoundQueue request priority/pattern bytes and post-call queue state for the two calls in this fixture"
+        "Logical SoundQueue request priority/pattern bytes and post-call queue state for the two calls in this fixture",
+        "Ordered playfield cell-write coordinates, color attributes, and CP437 bytes; cumulative counts at each cycle checkpoint"
       ],
       "sound_oracle_output_size_bytes": 53,
       "sound_oracle_output_sha256": "238fc22ca3707890778e1303541f118a99110fdd9f1ba84f1d3ee7fedb07b0be",
@@ -167,12 +168,17 @@
       "sound_event_fields_compared": 20,
       "sound_event_overflow": false,
       "sound_checkpoint_state_compared": true,
-      "logical_cell_write_capture": false
+      "logical_cell_write_capture": true,
+      "cell_writes_compared": 9,
+      "cell_write_fields_compared": 36,
+      "cell_event_overflow": false,
+      "cell_oracle_output_size_bytes": 103,
+      "cell_oracle_output_sha256": "6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa"
     },
     "other_suites": {
       "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
-      "runtime": "passed after integrated sound-state/event harness update; tools/runtime-compat/verify.ps1 exit 0",
+      "runtime": "passed after integrated cell-write capture and normalized player-glyph fixture state; tools/runtime-compat/verify.ps1 exit 0",
       "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
       "android_build": "passed fresh offline on 2026-11-24: .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64",
       "windows_ctest": "passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly"
@@ -182,15 +188,15 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The integrated prototype now dynamically captures 3,470/3,472 fields per checkpoint, the complete script alias graph, unique script bytes, sound queue checkpoint state, and two logical SoundQueue calls (20 event fields), all matching in the current standalone differential. It still lacks logical cell-write streams, distinct state-transition checkpoints, generated file bytes, and the ten required fixtures.",
-      "The latest full Pascal runner attempt compiled and ran INTEGPRB but timed out in the subsequent BRDXFER DOSBox-X session (30 seconds); a separate 60-second retry also timed out. This is an unresolved verification-run interruption, not a reported production/oracle differential."
+      "The integrated prototype now matches 31,260 variable-size state fields, two logical SoundQueue events (20 event fields), and nine ordered playfield writes (36 fields). It still lacks distinct state-transition checkpoints, generated file bytes, and the ten required fixtures.",
+      "The 2026-11-25 full Pascal runner attempt compiled and ran INTEGPRB and subsequent editor probes, then timed out in the BRDXFER DOSBox-X session (30 seconds). This is an unresolved verification-run interruption, not a reported production/oracle differential."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
-      "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, logical cell-write, and broader sound producer/timer acceptance cases.",
+      "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.",
-      "E2-10: complete cell-write, state-transition, and generated-byte captures; create and pass the ten frozen integrated replay fixtures with zero unexplained differences.",
+      "E2-10: extend logical cell-write capture across the frozen replay corpus; add distinct state-transition and generated-byte captures; create and pass the ten required integrated fixtures with zero unexplained differences.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
     "non_blocking_limitations": [
@@ -210,7 +216,8 @@
       "Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.",
       "Generalized integrated replay snapshots to live stat counts and unique script owners; the clean Pascal suite passed 84 direct sessions and 43/43 configured differentials. The two-script, three-stat prototype matched 31,158 fields across nine checkpoints. E2-10 remains open at 0/10 fixtures.",
       "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity.",
-      "Extended the integrated Pascal/production prototype to compare sound queue state at each snapshot and capture SoundQueue request/result events. A direct integrated comparison matched 31,242 variable-size snapshot fields and two sound events (20 fields); runtime verification passed. The encompassing full Pascal runner currently stops at a BRDXFER DOSBox-X timeout, so this is partial evidence, not a new full-suite pass."
+      "Extended the integrated Pascal/production prototype to compare sound queue state at each snapshot and capture SoundQueue request/result events. A direct integrated comparison matched 31,242 variable-size snapshot fields and two sound events (20 fields); runtime verification passed. The encompassing full Pascal runner currently stops at a BRDXFER DOSBox-X timeout, so this is partial evidence, not a new full-suite pass.",
+      "Extended the integrated replay with ordered playfield cell writes. The Pascal and production traces matched across 9 events / 36 fields and 31,260 state fields; runtime verification passed. The full Pascal runner still times out in BRDXFER, so the suite remains incomplete."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -237,12 +244,12 @@
       "source_revision": "3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial)"
     },
     "latest_attempt": {
-      "date": "2026-11-24",
+      "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable C:/Users/Kerry/Downloads/MallVR_v0.13.2_Loader/MallVR_v0.13.2_Loader/engine/dosbox-x.exe",
       "full_pascal_runner_exit_code": 1,
-      "failure": "DOSBox-X did not exit from the BRDXFER session within the runner 30-second timeout. Retrying the same session separately with a 60-second timeout also timed out.",
-      "integrated_pascal_probe": "compiled and ran; generated INTEGPR.OUT and INTEGSND.OUT",
-      "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT",
+      "failure": "DOSBox-X did not exit from the BRDXFER session within the runner 30-second timeout. The integrated probe and several following editor probes had completed before the timeout.",
+      "integrated_pascal_probe": "compiled and ran; generated INTEGPR.OUT, INTEGSND.OUT, and INTEGCEL.OUT",
+      "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT build/pascal-compat-verification/INTEGCEL.OUT",
       "integrated_differential_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
       "status": "partial attempt; not a complete clean Pascal suite"

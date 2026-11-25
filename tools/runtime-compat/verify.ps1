@@ -344,6 +344,8 @@ $integratedGameplayArgs = @(
     '-Wl,--export=integrated_gameplay_snapshot_stride', '-Wl,--export=integrated_gameplay_output_length',
     '-Wl,--export=integrated_gameplay_sound_events_ptr', '-Wl,--export=integrated_gameplay_sound_event_count',
     '-Wl,--export=integrated_gameplay_sound_event_overflow', '-Wl,--export=integrated_gameplay_sound_event_stride',
+	'-Wl,--export=integrated_gameplay_cell_events_ptr', '-Wl,--export=integrated_gameplay_cell_event_count',
+	'-Wl,--export=integrated_gameplay_cell_event_overflow', '-Wl,--export=integrated_gameplay_cell_event_stride',
     '-Wl,--export-memory', '-Wl,--gc-sections', '-Wl,--allow-undefined',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
     $oopMovementSource, '-o', $integratedGameplayWasm

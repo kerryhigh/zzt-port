@@ -2,10 +2,44 @@ program IntegratedGameplayProbe;
 uses Crt, Video, GameVars, Elements, Sounds, Game, Input;
 
 {$F+}
-procedure QuietWrite(x, y, color: byte; text: TVideoLine);
+procedure CaptureCellWrite(x, y, color: byte; text: TVideoLine);
+var
+	charIndex, cellX: integer;
+	eventIndex: longint;
 begin
+	if not GameLoopProbeCellCaptureEnabled then Exit;
+	for charIndex := 1 to Length(text) do begin
+		cellX := x + charIndex - 1;
+		if (cellX >= 0) and (cellX < 60) and (y < 25) then begin
+			if (GameLoopProbeCellWriteEvents <> nil) and
+				(GameLoopProbeCellWriteCount < GameLoopProbeCellWriteCapacity) then begin
+				eventIndex := GameLoopProbeCellWriteCount + 1;
+				GameLoopProbeCellWriteEvents^[eventIndex].X := cellX;
+				GameLoopProbeCellWriteEvents^[eventIndex].Y := y;
+				GameLoopProbeCellWriteEvents^[eventIndex].Color := color;
+				GameLoopProbeCellWriteEvents^[eventIndex].Character := Ord(text[charIndex]);
+				GameLoopProbeCellWriteCount := eventIndex;
+			end else
+				GameLoopProbeCellWriteOverflow := true;
+		end;
+	end;
 end;
 {$F-}
+
+procedure WriteCellWriteEvents(filename: string);
+var
+	cellOutput: text;
+	eventIndex: longint;
+begin
+	Assign(cellOutput, filename);
+	Rewrite(cellOutput);
+	WriteLn(cellOutput, GameLoopProbeCellWriteCount, ' ', Ord(GameLoopProbeCellWriteOverflow));
+	for eventIndex := 1 to GameLoopProbeCellWriteCount do begin
+		with GameLoopProbeCellWriteEvents^[eventIndex] do
+			WriteLn(cellOutput, X, ' ', Y, ' ', Color, ' ', Character);
+	end;
+	Close(cellOutput);
+end;
 
 var
 	output: text;
@@ -13,7 +47,7 @@ var
 	script, script2: string[32];
 
 begin
-	VideoWriteText := QuietWrite;
+	VideoWriteText := CaptureCellWrite;
 	New(IoTmpBuf);
 	RandSeed := 0;
 	WorldCreate;
@@ -82,6 +116,10 @@ begin
 	TickTimeDuration := 0;
 	TickTimeCounter := 0;
 	GamePlayExitRequested := false;
+	GameLoopProbeCellCaptureEnabled := false;
+	GameLoopProbeCellWriteCount := 0;
+	GameLoopProbeCellWriteOverflow := false;
+	GetMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 	Assign(output, 'INTEGPR.OUT');
 	Rewrite(output);
 	Close(output);
@@ -94,10 +132,14 @@ begin
 	SoundProbeQueueCapture(false);
 	SoundProbeQueueCapture(true);
 	GamePlayLoop(false);
+	GameLoopProbeCellCaptureEnabled := false;
 	GameLoopProbeEnabled := false;
 	SoundProbeQueueCapture(false);
 	SoundProbeWriteQueueEvents('INTEGSND.OUT');
 	GameLoopProbeCapture('F', 0);
+	WriteCellWriteEvents('INTEGCEL.OUT');
+	FreeMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
+	GameLoopProbeCellWriteEvents := nil;
 	WorldUnload;
 	Dispose(IoTmpBuf);
 end.

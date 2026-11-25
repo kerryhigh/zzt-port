@@ -384,7 +384,24 @@ $stagedGame = [IO.File]::ReadAllText($stagedGamePath)
 $gameImplementationAnchor = 'implementation'
 $gameImplementationIndex = $stagedGame.IndexOf($gameImplementationAnchor, [StringComparison]::Ordinal)
 if ($gameImplementationIndex -lt 0) { throw 'Could not locate the Game unit implementation for zero-speed loop instrumentation.' }
-$gameProbeDeclarations = "var`r`n`tGameLoopProbeStopAfter, GameLoopProbeCycles, GameLoopProbeStartTick: integer;`r`n`tGameLoopProbeEnabled: boolean;`r`n`tprocedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);`r`n`r`n"
+$gameProbeDeclarations = @"
+const
+	GameLoopProbeCellWriteCapacity = 8192;
+type
+	TGameLoopProbeCellWriteEvent = packed record
+		X, Y, Color, Character: byte;
+	end;
+	TGameLoopProbeCellWriteEventArray = array[1..GameLoopProbeCellWriteCapacity] of TGameLoopProbeCellWriteEvent;
+	PGameLoopProbeCellWriteEventArray = ^TGameLoopProbeCellWriteEventArray;
+var
+	GameLoopProbeStopAfter, GameLoopProbeCycles, GameLoopProbeStartTick: integer;
+	GameLoopProbeEnabled: boolean;
+	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
+	GameLoopProbeCellWriteCount: longint;
+	GameLoopProbeCellWriteEvents: PGameLoopProbeCellWriteEventArray;
+	procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
+
+"@
 $stagedGame = $stagedGame.Insert($gameImplementationIndex, $gameProbeDeclarations)
 $probeUsesAnchor = 'uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;'
 $probeUsesIndex = $stagedGame.IndexOf($probeUsesAnchor, [StringComparison]::Ordinal)
@@ -418,7 +435,7 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 		end;
 		checkpointFieldCount := 12 + (14 * liveStatCount) + 11 +
 			((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 +
-			(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer);
+			(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer) + 2;
 		Assign(output, 'INTEGPR.OUT');
 		Append(output);
 		Write(output, checkpointKind, ' ', checkpointId, ' ', checkpointFieldCount, ' ',
@@ -469,6 +486,7 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 			' ', SoundDurationCounter, ' ', SoundDurationMultiplier, ' ');
 		for scriptByteIndex := 1 to Length(SoundBuffer) do
 			Write(output, Ord(SoundBuffer[scriptByteIndex]), ' ');
+		Write(output, GameLoopProbeCellWriteCount, ' ', Ord(GameLoopProbeCellWriteOverflow), ' ');
 		WriteLn(output);
 		Close(output);
 	end;
@@ -486,7 +504,7 @@ $startStatAnchor = 'CurrentStatTicked := Board.StatCount + 1;'
 $startStatIndex = $gamePlayLoop.IndexOf($startStatAnchor, $startTickIndex + $startTickAnchor.Length, [StringComparison]::Ordinal)
 if ($startStatIndex -lt 0) { throw 'Could not locate GamePlayLoop stat initialization for the integrated snapshot.' }
 $startStatEnd = $startStatIndex + $startStatAnchor.Length
-$gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tif GameLoopProbeEnabled then GameLoopProbeCapture('S', 0);" + $gamePlayLoop.Substring($startStatEnd)
+$gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tif GameLoopProbeEnabled then begin`r`n`t`t`tGameLoopProbeCapture('S', 0);`r`n`t`t`tGameLoopProbeCellCaptureEnabled := true;`r`n`t`tend;" + $gamePlayLoop.Substring($startStatEnd)
 $cycleAdvancePattern = '(?s)(CurrentStatTicked := 0;\s*InputUpdate;)'
 if ([regex]::Matches($gamePlayLoop, $cycleAdvancePattern).Count -ne 1) {
     throw 'Could not uniquely locate the completed GamePlayLoop cycle for zero-speed instrumentation.'
@@ -1159,6 +1177,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGPR.OUT') -PathType 
 }
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSND.OUT') -PathType Leaf)) {
     throw "Integrated Pascal gameplay probe did not write INTEGSND.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGCEL.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGCEL.OUT. See $stageRoot\INTEGPRB.LOG."
 }
 
 # Exercise the original nested EditorFloodFill routine directly. The test-only
@@ -1854,7 +1875,8 @@ try {
     & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $stageRoot 'INTEGPR.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
-        (Join-Path $stageRoot 'INTEGSND.OUT')
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
 }
 finally {
