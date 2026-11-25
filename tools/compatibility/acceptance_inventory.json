@@ -185,7 +185,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-      "verification_result": "Partial: the short-payload editor transfer is compared against shared LibZoo for its outcome and seven selected initialized board/player fields. Parser error-class regressions also pass. The short-header direct editor trace has no stable oracle output, so its shared-engine model and untouched-buffer suffix behavior remain pending."
+      "verification_result": "Partial: the short-payload editor transfer is compared against shared LibZoo for its outcome and seven selected initialized board/player fields. A production-only short-header regression verifies the source-derived safe-reopen model and neighbor clearing, but no stable direct Pascal state exists for a DP comparison; untouched-buffer suffix behavior remains pending."
     },
     {
       "id": "E2-02-AC005",

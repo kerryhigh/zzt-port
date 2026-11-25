@@ -26,6 +26,7 @@ function readPascalSummary(name) {
 function parseProductionBoard(bytes) {
   if (bytes.length < 51 + 86 + 2) throw new Error(`production board body is too short (${bytes.length} bytes)`);
   const nameLength = Math.min(bytes[0], 50);
+  const name = Buffer.from(bytes.subarray(1, 1 + nameLength));
   let position = 51;
   let cells = 0;
   let centerElement = -1;
@@ -52,7 +53,9 @@ function parseProductionBoard(bytes) {
   if (position + 33 > bytes.length) throw new Error('player stat record is truncated');
   return {
     nameLength,
+    name,
     maxShots: bytes[infoOffset],
+    neighbors: Array.from(bytes.subarray(infoOffset + 2, infoOffset + 6)),
     statCount,
     centerElement,
     centerColor,
@@ -64,7 +67,7 @@ function parseProductionBoard(bytes) {
 function compare(label, expected, actual, fields) {
   for (const field of fields) {
     if (expected[field] !== actual[field]) {
-      throw new Error(`${label}: ${field} differs; Pascal=${expected[field]}, production=${actual[field]}`);
+      throw new Error(`${label}: ${field} differs; expected=${expected[field]}, production=${actual[field]}`);
     }
   }
 }
@@ -75,26 +78,54 @@ function compare(label, expected, actual, fields) {
   const { memory, input_ptr, output_ptr, output_len, run_editor_brd_transfer } = instance.exports;
   if (typeof run_editor_brd_transfer !== 'function') throw new Error('Production serializer harness lacks run_editor_brd_transfer.');
 
-  const test = {
-    id: 'short-payload',
-    input: Buffer.from([0x04, 0x00, 0x10, 0x20]),
-    expectedOutcome: 2,
-    pascal: 'BRDXFER.OUT',
-  };
-  const expected = readPascalSummary(test.pascal);
-  new Uint8Array(memory.buffer, input_ptr(), test.input.length).set(test.input);
-  const result = run_editor_brd_transfer(test.input.length);
-  if (result !== 0) throw new Error(`${test.id}: shared transfer returned ${result}`);
-  const output = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
-  if (output.length < 2) throw new Error(`${test.id}: missing outcome or production board state`);
-  if (output[0] !== test.expectedOutcome) {
-    throw new Error(`${test.id}: expected production outcome ${test.expectedOutcome}, got ${output[0]}`);
+  const cases = [
+    {
+      id: 'short-payload',
+      input: Buffer.from([0x04, 0x00, 0x10, 0x20]),
+      expectedOutcome: 2,
+      expected: readPascalSummary('BRDXFER.OUT'),
+      evidence: 'DP',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY'],
+    },
+    {
+      id: 'short-header-safe-reopen',
+      input: Buffer.from([0x04]),
+      expectedOutcome: 1,
+      expected: {
+        nameLength: 6,
+        name: Buffer.from('BEFORE', 'latin1'),
+        maxShots: 41,
+        statCount: 0,
+        centerElement: 21,
+        centerColor: 47,
+        playerX: 30,
+        playerY: 12,
+        neighbors: [0, 0, 0, 0],
+      },
+      evidence: 'P/S model',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY'],
+    },
+  ];
+
+  for (const test of cases) {
+    new Uint8Array(memory.buffer, input_ptr(), test.input.length).set(test.input);
+    const result = run_editor_brd_transfer(test.input.length);
+    if (result !== 0) throw new Error(`${test.id}: shared transfer returned ${result}`);
+    const output = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
+    if (output.length < 2) throw new Error(`${test.id}: missing outcome or production board state`);
+    if (output[0] !== test.expectedOutcome) {
+      throw new Error(`${test.id}: expected production outcome ${test.expectedOutcome}, got ${output[0]}`);
+    }
+    const actual = parseProductionBoard(output.subarray(1));
+    compare(`BRDXFER ${test.id}`, test.expected, actual, test.fields);
+    if (test.expected.name && !test.expected.name.equals(actual.name)) {
+      throw new Error(`${test.id}: board name differs; expected ${test.expected.name.toString('latin1')}, production=${actual.name.toString('latin1')}`);
+    }
+    if (test.expected.neighbors && test.expected.neighbors.some((value, index) => value !== actual.neighbors[index])) {
+      throw new Error(`${test.id}: neighbors differ; expected ${test.expected.neighbors}, production=${actual.neighbors}`);
+    }
+    console.log(`BRDXFER ${test.id}: outcome ${test.expectedOutcome}; ${test.fields.length} selected state fields match (${test.evidence}).`);
   }
-  const actual = parseProductionBoard(output.subarray(1));
-  compare(`BRDXFER ${test.id}`, expected, actual, [
-    'nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY',
-  ]);
-  console.log(`BRDXFER ${test.id}: outcome ${test.expectedOutcome}; seven selected board/player fields match direct compiled Pascal.`);
 })().catch((error) => {
   console.error(error.message);
   process.exitCode = 1;

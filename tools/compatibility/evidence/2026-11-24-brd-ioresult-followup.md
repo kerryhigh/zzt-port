@@ -33,7 +33,7 @@ The older one-byte-header fixture was named `SHORTHEAD` (nine characters), so Tu
 
 `tools/pascal-compat/compare-editor-brd-transfer.js` pairs the short-payload trace with the shared `zoo_editor_brd_transfer` API. It compares the transfer outcome and seven initialized fields: board name length, max shots, stat count, center tile element/color, and player stat X/Y. All seven matched the direct Pascal output. The Pascal output also records `World.BoardLen[0]`; the serializer harness emits an external board body, so that internal length is not counted as a compared field.
 
-`tools/serializer-compat/verify.ps1` separately checks parser error classes for a one-byte length header and a payload shorter than its declared length. Those are production regressions, not end-to-end editor-state differentials. The short-header editor-state comparison remains pending.
+`tools/serializer-compat/verify.ps1` separately checks parser error classes for a one-byte length header and a payload shorter than its declared length. The shared harness also exercises a one-byte header through `zoo_editor_brd_transfer` from a seeded `BEFORE` board. Its deterministic safe-reopen result preserves the seeded name, max shots, tile and player stat, clears neighbors, and returns outcome 1; this production-only regression passes. Its expected state follows the source-derived `BoardOpen` control flow. It does not establish direct Pascal parity because the corrected DOS oracle attempt has no stable final state.
 
 ## Verification
 

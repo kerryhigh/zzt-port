@@ -5,7 +5,7 @@ This is the latest clean compatibility run for the current E2-02 editor-transfer
 ## Direct Pascal and differential run
 
 - Command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <Turbo Pascal 5.5 directory> -DosboxExecutable <DOSBox-X 2026.10.01 executable>`.
-- Working source checkpoint: local root Git revision `1c4d5ef` (`fix: share Pascal .BRD editor transfer semantics (E2-02 partial)`); reconstructed Pascal gameplay sources were unchanged.
+- Direct Pascal and differential source checkpoint: local root Git revision `1c4d5ef` (`fix: share Pascal .BRD editor transfer semantics (E2-02 partial)`); reconstructed Pascal gameplay sources were unchanged. A production-only short-header harness case was added afterward and is recorded separately below.
 - The runner recreated `build/pascal-compat-verification` from the reconstructed source and controlled fixtures.
 - Exit code: **0**. **84 direct Turbo Pascal 5.5 sessions passed**: 54 standard programs and 30 standalone sessions.
 - **43/43 configured Pascal-to-production comparisons passed**, including the short-payload editor transfer outcome and seven selected board/player fields.
@@ -18,12 +18,14 @@ This is the latest clean compatibility run for the current E2-02 editor-transfer
 
 | Command | Result | Notes |
 |---|---|---|
-| `tools/serializer-compat/verify.ps1` | Exit 0 | Shared `.BRD` codec, world/save round trips, RLE, truncation behavior, and editor short-payload state harness. |
+| `tools/serializer-compat/verify.ps1` | Exit 0 | Shared `.BRD` codec, world/save round trips, RLE, truncation behavior, direct short-payload editor comparison, and a source-derived production-only short-header safe-reopen regression. |
 | High-score checks invoked by the clean Pascal runner | Exit 0 | 16 direct Pascal byte comparisons, 256 source-model rows, and five Android CP437 adapter assertions. |
 | Runtime checks invoked by the clean Pascal runner | Exit 0 | Production runtime harness passed; its production-only cases remain incompletely enumerated in the frozen inventory. |
 | Android checks invoked by the clean Pascal runner | Exit 0 | CP437 bytes, colors/blink/monochrome rules, and DOS-key mapping. |
 | `.\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest` with `GRADLE_USER_HOME=build\gradle-home` | Exit 0 | 64 tasks (13 executed, 51 up-to-date); native engine built for `arm64-v8a` and `x86_64`. No live-device claim. |
 | Windows x64 Release / CTest | Not reverified in this run | A CMake/MSBuild attempt remained idle at `Checking File Globs` and was interrupted. The earlier 3/3 CTest pass predates this E2-02 editor-transfer API change and is not counted as current evidence. |
+
+The subsequent serializer-only rerun also passed the short-header safe-reopen regression: one-byte input returned the shared API's `REOPENED_PREVIOUS` outcome, preserved the seeded board name/max-shots/tile/player-stat fields, and cleared neighbor links. This is P evidence with an S-derived expectation, not D or DP evidence; the unstable freed-buffer Pascal result remains unresolved.
 
 ## Toolchain identity
 
