@@ -709,7 +709,7 @@
     {
       "id": "E2-10-F05",
       "scenario": "board edges, neighbor transitions, and passages",
-      "status": "pending",
+      "status": "complete",
       "evidence_classes": [
         "D",
         "DP",
@@ -720,15 +720,210 @@
         "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:passage callback"
       ],
       "production_implementation": [
-        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_change,zoo_board_enter,zoo_tick,zoo_board_passage_teleport"
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_change,zoo_board_enter,zoo_tick,zoo_board_passage_teleport",
+        "tools/runtime-compat/oop_movement.c:run_integrated_board_neighbor_passage_checks"
       ],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "test_fixture": "tools/pascal-compat/BOARDPASSIN.PAS (purpose-built three-board replay)",
+      "oracle_probe": "tools/pascal-compat/BOARDPASSIN.PAS",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
       "verification": {
-        "result": "pending",
-        "fixture_completion_credit": 0
-      }
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "af5929bf67fc32c1600d90582a98792db4452bcf",
+        "clean_runner_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 119,
+        "pascal_to_production_differential_invocations_in_clean_run": "49/49",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "T1",
+          "C1",
+          "T2",
+          "C2",
+          "T3",
+          "T4",
+          "C3",
+          "C4",
+          "C5",
+          "C6",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 15,
+        "fields_compared_by_checkpoint": [
+          {
+            "checkpoint": "L0",
+            "fields_compared": 3397,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "S0",
+            "fields_compared": 3397,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T1",
+            "fields_compared": 3397,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C1",
+            "fields_compared": 3397,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2 (neighbor entry)",
+            "fields_compared": 3414,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C2",
+            "fields_compared": 3414,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3 (passage)",
+            "fields_compared": 3463,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T4",
+            "fields_compared": 3463,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C3",
+            "fields_compared": 3463,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C4",
+            "fields_compared": 3463,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C5",
+            "fields_compared": 3463,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C6",
+            "fields_compared": 3463,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2 (post-save)",
+            "fields_compared": 3433,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3 (post-load)",
+            "fields_compared": 3433,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "F0",
+            "fields_compared": 3433,
+            "result": "matched"
+          }
+        ],
+        "state_field_comparisons": 51493,
+        "state_field_differences": 0,
+        "board_transition_assertions": {
+          "west_neighbor_entered_board": 1,
+          "west_neighbor_player_position": [
+            60,
+            5
+          ],
+          "passage_entered_board": 2,
+          "last_matching_passage_position": [
+            22,
+            17
+          ],
+          "earlier_matching_passage_retained_at": [
+            20,
+            15
+          ],
+          "player_position_after_resume": [
+            23,
+            17
+          ]
+        },
+        "logical_sound_events": 1,
+        "logical_sound_event_fields": 66,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 6006,
+        "ordered_playfield_cell_write_fields": 24024,
+        "cell_write_differences": 0,
+        "effective_cell_changes": 6006,
+        "effective_cell_change_differences": 0,
+        "identical_value_redraws": {
+          "pascal": 834,
+          "production": 835,
+          "difference": 1,
+          "classification": "Environment-dependent redundant output write under the documented PIT/poll/render cadence contract; identical character and attribute leave the cell unchanged. Reported separately, not counted as an effective cell or engine-state difference."
+        },
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 1580,
+          "generated_save_sha256": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de",
+          "stable_serialized_bytes_compared": 896,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 684,
+          "classified_pointer_positions_differing": 0,
+          "round_trip_save_size_bytes": 1580,
+          "round_trip_save_sha256": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de",
+          "round_trip_stable_serialized_bytes_compared": 1556,
+          "round_trip_stable_serialized_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 24
+        },
+        "unexplained_differences": 0,
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 108638,
+            "sha256": "ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 171,
+            "sha256": "54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 75014,
+            "sha256": "f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 1580,
+            "sha256": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 1580,
+            "sha256": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de"
+          }
+        ],
+        "fixture_completion_credit": 1,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
+      },
+      "runner": "tools/pascal-compat/verify.ps1",
+      "staging_interventions": [
+        "Set RandSeed to zero and call GenerateTransitionTable before WorldCreate, matching ZZT startup order.",
+        "Set World.Info.unk1 to zero because WorldCreate leaves it undefined and the production replay uses initialized storage.",
+        "Set TickSpeed to zero and use the fixed PIT-equivalent SoundProbeSetTime(0,0,0,30) clock; queue normalized LLLR input.",
+        "Seed the otherwise undefined GamePlayLoop pauseBlink local through the existing staged probe hook.",
+        "Compile BOARDPASSIN and execute it in separate fresh DOSBox-X sessions to control compiler-inherited allocation history.",
+        "Capture VideoWriteText and SoundQueue outputs without replacing gameplay routines. Compare ordered effective cell changes and count repeated identical-value redraws separately."
+      ]
     },
     {
       "id": "E2-10-F06",

@@ -2,10 +2,10 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "ca271c7be437f6b7adf205b2c4a984055ef1814c",
+    "root_revision": "af5929bf67fc32c1600d90582a98792db4452bcf",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 88/88 direct Turbo Pascal 5.5 sessions and 48/48 configured Pascal-to-production comparisons. Required integrated fixtures F01-F04 passed; F04 matched 41,904 state fields across 12 checkpoints, five ordered cell writes, and all 598 stable bytes in its generated save. The runtime verifier also passed; six required fixtures remain open, with no unexplained differences in configured cases.",
+    "pascal_suite_result": "Clean full Pascal runner passed on 2026-11-25: 119/119 direct Turbo Pascal 5.5 sessions and 49/49 configured Pascal-to-production comparisons. Required integrated fixtures F01-F05 passed. F05 matched 51,493 state fields, one logical sound event, 6,006 effective cell changes, and all stable save/load bytes; its 834/835 identical-value redraw count is separately classified under the documented clock/poll cadence contract. The runtime verifier passed; five required fixtures remain open and there are no unexplained differences in configured cases.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -56,16 +56,16 @@
       "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
-      "sessions": 88,
+      "sessions": 119,
       "standard_programs": 54,
-      "standalone_sessions": 34,
-      "session_result": "88/88 configured direct Pascal sessions passed in the latest clean runner, including DEMOINT, MOTIONIN, COMBATIN, and STATORD; BOARDENC emits complete binary .BRD and WorldSave outputs."
+      "standalone_sessions": 65,
+      "session_result": "119/119 configured direct Pascal sessions passed in the latest clean runner, including integrated fixtures DEMOINT, MOTIONIN, COMBATIN, STATORD, and BOARDPASSIN."
     },
     "direct_differential_comparisons": {
-      "configured": 48,
-      "passed": 48,
+      "configured": 49,
+      "passed": 49,
       "failed": 0,
-      "result": "48/48 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01-F04; zero unexplained mismatches in configured cases; short-header editor-state comparison remains pending."
+      "result": "49/49 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01-F05; zero unexplained state, effective-cell, sound, or stable-serialization mismatches. F05 reported the one-count same-value redraw cadence difference separately."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -73,7 +73,7 @@
     },
     "integrated_replay": {
       "required_fixtures": 10,
-      "completed_fixtures": 4,
+      "completed_fixtures": 5,
       "prototype_name": "INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures",
       "prototype_fields_compared": "variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle",
       "prototype_field_comparisons": 41690,
@@ -468,6 +468,116 @@
           "stat_1_sets_flag_seen_by_stat_2_same_cycle": true,
           "fixture_completion_credit": 1,
           "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-object-stat-order.md"
+        },
+        {
+          "fixture_id": "E2-10-F05",
+          "fixture": "board edges, neighbor transitions, and passages",
+          "checkpoints": 15,
+          "field_comparisons": 51493,
+          "result": "passed",
+          "evidence_class": "D+DP+I",
+          "checkpoint_results": [
+            {
+              "checkpoint": "L0",
+              "fields_compared": 3397,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "S0",
+              "fields_compared": 3397,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T1",
+              "fields_compared": 3397,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C1",
+              "fields_compared": 3397,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T2 (neighbor entry)",
+              "fields_compared": 3414,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C2",
+              "fields_compared": 3414,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T3 (passage)",
+              "fields_compared": 3463,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T4",
+              "fields_compared": 3463,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C3",
+              "fields_compared": 3463,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C4",
+              "fields_compared": 3463,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C5",
+              "fields_compared": 3463,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C6",
+              "fields_compared": 3463,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T2 (post-save)",
+              "fields_compared": 3433,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T3 (post-load)",
+              "fields_compared": 3433,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "F0",
+              "fields_compared": 3433,
+              "result": "matched"
+            }
+          ],
+          "state_field_differences": 0,
+          "logical_sound_events": 1,
+          "logical_sound_event_fields": 66,
+          "logical_sound_event_differences": 0,
+          "ordered_cell_writes": 6006,
+          "ordered_cell_write_fields": 24024,
+          "cell_write_differences": 0,
+          "identical_value_redraws": {
+            "pascal": 834,
+            "production": 835,
+            "classification": "counted separately as redundant output writes under the documented cadence rule"
+          },
+          "generated_save_size_bytes": 1580,
+          "stable_save_bytes_matched": 896,
+          "stable_save_byte_differences": 0,
+          "classified_process_pointer_positions": 684,
+          "classified_pointer_differences": 0,
+          "round_trip_stable_bytes_matched": 1556,
+          "round_trip_stable_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 24,
+          "pascal_world_load_result": true,
+          "production_world_load_result": 0,
+          "board_transitions": "west-neighbor board 1 at (60,5); matching passage to board 2 at last match (22,17); resume to (23,17)",
+          "fixture_completion_credit": 1,
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
         }
       ],
       "schema_revision": "e2-10-replay-r10-demo-world",
@@ -568,14 +678,14 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The synthetic integrated prototype and required fixtures F01-F04 pass their recorded 12-checkpoint state, sound, cell-write, and save/load comparisons. Required fixtures F05-F10 and Pascal WorldSave failure-path outcomes remain open; environment-dependent undefined/pointer positions are classified under the checklist contract."
+      "The synthetic integrated prototype and required fixtures F01-F05 pass their recorded state, sound, effective-cell, and save/load comparisons. F05 counted 834 Pascal and 835 production identical-value redraws; all effective cell changes and engine fields matched. This one redundant write is classified under the existing environment-dependent poll/render cadence rule. Required fixtures F06-F10 and Pascal WorldSave failure-path outcomes remain open; undefined/pointer positions follow the checklist contract."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
       "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.",
-      "E2-10: complete the six remaining frozen integrated replay fixtures F05-F10; extend return/error and all required state/event/save comparisons across those scenarios; require zero unexplained differences.",
+      "E2-10: complete the five remaining frozen integrated replay fixtures F06-F10; extend return/error and all required state/event/save comparisons across those scenarios; require zero unexplained differences.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
     "non_blocking_limitations": [
@@ -597,7 +707,8 @@
       "Added the frozen E2-10-F03 combat/key/door/pickup replay through the original compiled-Pascal GamePlayLoop and shared production zoo_tick; the normalized input hook is limited to its staged INPUT.PAS compile.",
       "Clean Pascal verification on ae4b501 passed 87 direct sessions and 47/47 configured differentials; F01-F03 now pass 12-checkpoint integrated comparisons with no unexplained differences.",
       "F03 matched 41,122 state fields, seven sound events / 186 fields, 664 cell writes / 2,656 fields, 558 stable fresh-save bytes, and 876 stable round-trip bytes; runtime verification passed after harness cleanup.",
-      "F04 completed in the clean 2026-11-25 run at ca271c7: 88 direct Pascal sessions and 48/48 configured differentials passed; the stat-order fixture matched 41,904 fields across 12 checkpoints, five cell writes, 598 stable save bytes, and 962 round-trip bytes. F01-F04 are now 4/10; F05-F10 remain open."
+      "F04 completed in the clean 2026-11-25 run at ca271c7: 88 direct Pascal sessions and 48/48 configured differentials passed; the stat-order fixture matched 41,904 fields across 12 checkpoints, five cell writes, 598 stable save bytes, and 962 round-trip bytes. F01-F04 are now 4/10; F05-F10 remain open.",
+      "E2-10-F05 completed in the clean 2026-11-25 run at af5929bf67fc32c1600d90582a98792db4452bcf: 119 direct Pascal sessions and 49/49 configured differentials passed; the neighbor/passage replay matched 51,493 fields across 15 checkpoints, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,556 round-trip bytes. The 834/835 same-value redraw count is separately classified under the existing clock/poll cadence contract. The frozen corpus is 5/10; F06-F10 remain open."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -626,35 +737,35 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "ca271c7be437f6b7adf205b2c4a984055ef1814c",
+      "source_revision": "af5929bf67fc32c1600d90582a98792db4452bcf",
       "full_pascal_runner_exit_code": 0,
-      "direct_pascal_sessions_passed": 88,
-      "configured_differentials_passed": 48,
+      "direct_pascal_sessions_passed": 119,
+      "configured_differentials_passed": 49,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "For BRDXFER only, staged GAME.PAS replaces TextWindowSelect at the DisplayIOError acknowledgement boundary with TextWindowRejected := true; InputKeyPressed := #0. This skips the blocking modal interaction; the short-payload file reads, IOResult checks, DisplayIOError return, BoardCreate, and editor cleanup run in reconstructed Pascal.",
-      "integrated_pascal_probe": "Compiled INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, and STATORD in separate DOSBox-X compile/run sessions; required fixtures F01-F04 generated full checkpoint, sound, cell-write, save/load-result, and round-trip captures.",
-      "integrated_differential_command": "Run compare-integrated-gameplay.js for the synthetic INTEGPRB output and required fixtures DEMOINT, MOTIONIN, COMBATIN, and STATORD against their production replays.",
+      "integrated_pascal_probe": "Compiled INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, and BOARDPASSIN in the clean Pascal runner; required fixtures F01-F05 generated named checkpoint, sound, effective-cell, save/load-result, and round-trip captures.",
+      "integrated_differential_command": "Run compare-integrated-gameplay.js for INTEGPRB and required fixtures DEMOINT, MOTIONIN, COMBATIN, STATORD, and BOARDPASSIN against production replays.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Complete clean runner; 88 direct sessions and 48/48 configured comparisons passed; F01-F04 integrated replays matched with zero unexplained differences; E2-10 remains partial with 4/10 required fixtures",
+      "status": "Complete clean runner; 119/119 direct sessions and 49/49 configured comparisons passed; F01-F05 integrated replays matched with zero unexplained state, effective-cell, sound, or stable-save differences; one same-value redraw count difference is classified under the cadence rule; E2-10 remains partial at 5/10 fixtures",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits the user-specific absolute path; identify the executable by version and SHA-256 in toolchain.",
-      "integrated_checkpoint_count": 12,
-      "integrated_state_fields_compared": 41904,
-      "integrated_sound_event_fields_compared": 0,
-      "integrated_cell_write_fields_compared": 20,
-      "integrated_save_deterministic_bytes_matched": 598,
-      "integrated_save_classified_positions": 376,
-      "integrated_save_classified_differences": 6,
+      "integrated_checkpoint_count": 15,
+      "integrated_state_fields_compared": 51493,
+      "integrated_sound_event_fields_compared": 66,
+      "integrated_cell_write_fields_compared": 24024,
+      "integrated_save_deterministic_bytes_matched": 896,
+      "integrated_save_classified_positions": 684,
+      "integrated_save_classified_differences": 0,
       "integrated_save_differential_exit_code": 0,
-      "integrated_transition_count": 3,
-      "integrated_generated_save_stable_bytes_matched": 598,
-      "integrated_loaded_roundtrip_preserved_bytes_matched": 962,
-      "integrated_loaded_roundtrip_pointer_positions_classified": 12,
+      "integrated_transition_count": 4,
+      "integrated_generated_save_stable_bytes_matched": 896,
+      "integrated_loaded_roundtrip_preserved_bytes_matched": 1556,
+      "integrated_loaded_roundtrip_pointer_positions_classified": 24,
       "pascal_world_load_result": true,
       "production_world_load_result": 0,
-      "compile_run_environment_intervention": "Compile INTEGPRB in one DOSBox-X session and execute it in a fresh DOSBox-X session. The same-session path terminated after cycle capture before sidecars; separating sessions controls the compiler-inherited DOS allocation history without modifying gameplay semantics.",
+      "compile_run_environment_intervention": "Compile BOARDPASSIN in one DOSBox-X session and execute it in a fresh session. Use RandSeed=0, GenerateTransitionTable before WorldCreate, World.Info.unk1=0, zero TickSpeed, fixed PIT-equivalent SoundProbeSetTime(0,0,0,30), normalized LLLR input, and the seeded pauseBlink test hook. Capture VideoWriteText and SoundQueue without replacing gameplay. Effective cell changes are compared in order; repeated identical-value output writes are counted separately under the documented cadence contract.",
       "pascal_boardclose_brd": {
         "evidence_class": "DP",
         "probe": "tools/pascal-compat/BOARDENC.PAS",
@@ -715,15 +826,20 @@
         "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-walls-pushers-duplicators.md"
       },
       "integrated_replay_summary": {
-        "fixture_id": "E2-10-F04",
-        "state_fields_compared": 41904,
-        "sound_events": 0,
-        "cell_writes": 5,
-        "generated_save_stable_bytes_matched": 598,
-        "generated_save_stable_bytes_total": 598,
-        "roundtrip_stable_bytes_matched": 962,
-        "roundtrip_stable_bytes_total": 962,
-        "unexplained_differences": 0
+        "fixture_id": "E2-10-F05",
+        "state_fields_compared": 51493,
+        "sound_events": 1,
+        "sound_event_fields": 66,
+        "cell_writes": 6006,
+        "cell_write_fields": 24024,
+        "identical_value_redraws_pascal": 834,
+        "identical_value_redraws_production": 835,
+        "generated_save_stable_bytes_matched": 896,
+        "generated_save_stable_bytes_total": 896,
+        "roundtrip_stable_bytes_matched": 1556,
+        "roundtrip_stable_bytes_total": 1556,
+        "unexplained_differences": 0,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
       },
       "integrated_pascal_probe_note": "STATORD has no sound events; its generated-save pointer differences are classified process-specific Pascal data pointers, not stable-field mismatches.",
       "integrated_f04_fixture": {
@@ -743,6 +859,38 @@
         "generated_save_sha256": "16e9ab5cf42ddf0c72d68ecbd05f25fd034155199c55a5a8c6f7294e053fb3b1",
         "roundtrip_save_sha256": "8bb39b5208775a2efe2426ad74a2a3d8590adff3e8d41dd5f632de51fb599140",
         "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-object-stat-order.md"
+      },
+      "integrated_f05_fixture": {
+        "fixture_id": "E2-10-F05",
+        "result": "passed",
+        "checkpoint_count": 15,
+        "state_fields_compared": 51493,
+        "state_field_differences": 0,
+        "sound_events": 1,
+        "sound_event_fields": 66,
+        "effective_cell_changes": 6006,
+        "effective_cell_change_fields": 24024,
+        "effective_cell_change_differences": 0,
+        "pascal_identical_value_redraws": 834,
+        "production_identical_value_redraws": 835,
+        "generated_save_size_bytes": 1580,
+        "stable_generated_save_bytes_matched": 896,
+        "classified_generated_save_positions": 684,
+        "classified_generated_save_differences": 0,
+        "roundtrip_save_size_bytes": 1580,
+        "stable_roundtrip_bytes_matched": 1556,
+        "classified_roundtrip_pointer_positions": 24,
+        "world_load_result_pascal": true,
+        "world_load_result_production": 0,
+        "oracle_output_hashes": {
+          "INTEGPR.OUT": "ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4",
+          "INTEGSND.OUT": "54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20",
+          "INTEGCEL.OUT": "f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070",
+          "INTEGSAV.SAV": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de",
+          "INTEGLOD.OUT": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+          "INTEG2SV.SAV": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de"
+        },
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
       }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain."
