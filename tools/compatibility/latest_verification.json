@@ -2,10 +2,10 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "238eac23fe2a8eede39d31eed4e5cd36fc217a8d: test: compare integrated gameplay save bytes (E2-10 partial)",
+    "root_revision": "c9206f379a488415ebfc32ea0355406efbb7ade4: test: compare Pascal save reload replay (E2-10 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 84/84 direct Turbo Pascal 5.5 sessions and 43/43 configured Pascal-to-production differentials. The integrated prototype matched ten checkpoints and 34,744 state fields, two sound events / 20 fields, nine cell writes / 36 fields, and 565 deterministic bytes in a generated 961-byte SAV. The remaining 396 save positions are classified as undefined Pascal bytes or process-specific pointers. Runtime compatibility passed. The short-header BoardOpen attempt remains excluded because it has no stable oracle result; the BRDXFER modal-boundary intervention is documented separately.",
+    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 84/84 direct Turbo Pascal 5.5 sessions and 43/43 configured Pascal-to-production differentials. Runtime compatibility passed. The integrated prototype matched 12 checkpoints and 41,690 state fields, two sound events / 20 fields, nine cell writes / 36 fields, and 565 deterministic bytes in a generated 961-byte fresh-world SAV. Both engines then loaded the exact Pascal-generated SAV (WorldLoad=true; zoo_world_load=0) and generated a round-trip SAV with all 949 preserved non-pointer bytes matching; only 12 process-specific stat pointer positions were classified. The integrated probe is compiled and run in separate DOSBox-X sessions to control inherited allocator history. The short-header BoardOpen attempt remains excluded because it has no stable oracle result; the BRDXFER modal-boundary intervention is documented separately.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -74,12 +74,12 @@
     "integrated_replay": {
       "required_fixtures": 10,
       "completed_fixtures": 0,
-      "prototype_name": "INTEGPRB: six zero-speed cycles with loaded, loop-start, pause-to-play transition, per-cycle, and final snapshots; two interacting objects; not one of the ten fixtures",
-      "prototype_fields_compared": "variable: 3,473 loaded/start/final; 3,475 at transition and each cycle",
-      "prototype_field_comparisons": 34744,
-      "oracle_output_size_bytes": 73589,
-      "oracle_output_sha256": "1cf35bd4fa803f17799c1589461cf63aa238a5c65dfa6fc33b5af734284c3b29",
-      "prototype_checkpoint_count": 10,
+      "prototype_name": "INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures",
+      "prototype_fields_compared": "variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle",
+      "prototype_field_comparisons": 41690,
+      "oracle_output_size_bytes": 88305,
+      "oracle_output_sha256": "e302935a10fbcbabdc7d39ba44c99e2bcc9a6e05bdf7951b26c6833059f10efe",
+      "prototype_checkpoint_count": 12,
       "checkpoint_names": [
         "loaded initial state",
         "game-loop start",
@@ -90,7 +90,9 @@
         "cycle 4",
         "cycle 5",
         "cycle 6",
-        "final state"
+        "state transition 2 (after first save)",
+        "state transition 3 (after loading the shared Pascal SAV)",
+        "final state after round-trip save"
       ],
       "per_cycle_checkpoints": true,
       "first_divergence_reporting": true,
@@ -98,10 +100,10 @@
         {
           "fixture": "INTEGPRB prototype: buffered movement, two boulder pushes, and two interacting #GIVE/#IDLE scripts",
           "evidence_class": "DP",
-          "checkpoints": 10,
-          "fields_per_checkpoint": "3,473 at loaded/start/final; 3,475 at the pause-to-play transition and each of six cycles",
-          "field_comparisons": 34744,
-          "result": "passed; 2 logical sound queue events / 20 event fields and 9 playfield cell writes / 36 event fields matched; one pause-to-play state transition matched; generated 961-byte SAV compared with 565 stable positions matching and 396 classified uninitialized/pointer positions (327 differed, 69 matched)",
+          "checkpoints": 12,
+          "fields_per_checkpoint": "3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each of six cycles",
+          "field_comparisons": 41690,
+          "result": "passed; 2 logical sound queue events / 20 event fields and 9 playfield writes / 36 event fields matched; pause-to-play, save, and reload transitions matched; 565 fresh-world stable SAV bytes and 949 loaded-file non-pointer bytes matched",
           "checkpoint_results": [
             {
               "checkpoint": "loaded initial state",
@@ -149,15 +151,25 @@
               "result": "matched"
             },
             {
-              "checkpoint": "final state",
+              "checkpoint": "state transition 2 (after first save)",
+              "fields_compared": 3473,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "state transition 3 (after loading the shared Pascal SAV)",
+              "fields_compared": 3473,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "final state after round-trip save",
               "fields_compared": 3473,
               "result": "matched"
             }
           ],
-          "limitations": "This prototype is not one of the ten required fixtures. It captures one observed pause-to-play transition, variable-size state snapshots, two sound queue events, the ordered playfield cell-write stream, and one generated SAV for this fixture only. The SAV comparison masks only proven fresh-world uninitialized padding/string tails and process-specific pointer bytes; loaded-file raw-byte preservation, Pascal save error outcomes, broader scenario coverage, and the 10-fixture corpus remain outstanding."
+          "limitations": "This is one synthetic prototype, not one of the ten required fixtures. It captures one pause-to-play transition, a first save, load of the exact same Pascal-generated SAV bytes by both sides, a second save, and six gameplay cycles. It does not cover all board changes, malformed-file/error paths, save/restore scenarios across varied worlds, every sound producer/timer boundary, or the remaining required scenario coverage. Pascal WorldSave is a procedure with no return value. The ten-fixture corpus remains 0/10."
         }
       ],
-      "schema_revision": "e2-10-prototype-r8",
+      "schema_revision": "e2-10-prototype-r9-save-load",
       "state_transition_checkpoints": true,
       "captured_categories": [
         "World, stat, scheduler, input, playable tile, and source-border/sentinel fields",
@@ -168,7 +180,10 @@
         "Logical SoundQueue request priority/pattern bytes and post-call queue state for the two calls in this fixture",
         "Ordered playfield cell-write coordinates, color attributes, and CP437 bytes; cumulative counts at each cycle checkpoint",
         "Normalized player/monitor game-state role in each state snapshot",
-        "Named board/game-role/pause transition detection; this prototype exercises one pause-to-play transition"
+        "Named board/game-role/pause transition detection; this prototype exercises one pause-to-play transition",
+        "Named transition checkpoints after first save and after loading the exact Pascal-generated SAV bytes",
+        "Pascal WorldLoad Boolean outcome compared with production zoo_world_load result",
+        "Second serializer output after both implementations load the same Pascal SAV; all non-pointer raw file bytes compared exactly"
       ],
       "sound_oracle_output_size_bytes": 53,
       "sound_oracle_output_sha256": "238fc22ca3707890778e1303541f118a99110fdd9f1ba84f1d3ee7fedb07b0be",
@@ -183,12 +198,12 @@
       "cell_oracle_output_size_bytes": 103,
       "cell_oracle_output_sha256": "6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa",
       "generated_save_comparison": {
-        "fixture": "INTEGPRB prototype; generated after the six-cycle gameplay replay",
+        "fixture": "INTEGPRB prototype; fresh-world save after six gameplay cycles",
         "evidence_class": "DP",
         "format": ".SAV",
         "oracle_output": "build/pascal-compat-verification/INTEGSAV.SAV",
         "size_bytes": 961,
-        "sha256": "4e781a728d4673d732fe1e34724f979236b603e79451a9edc8644b89f1c02aee",
+        "sha256": "378a6aaae4ef3f8f040f720c006a8896c6a52d4b672b599d0367fb3ace704700",
         "production_api": "zoo_world_save",
         "production_result": 0,
         "deterministic_bytes_total": 565,
@@ -206,16 +221,42 @@
           "Pascal stat data pointer bytes",
           "Unused stat pointer/reserved bytes"
         ],
-        "pascal_test_intervention": "The fixture explicitly sets TWorldInfo.unk1 to zero because WorldCreate leaves it undefined while the production fixture starts from zeroed storage. Broad and targeted FillChar normalizations were removed after the direct Pascal probe stalled; no reference gameplay or serialization semantics were changed.",
+        "pascal_test_intervention": "Set TWorldInfo.unk1 to zero because WorldCreate leaves it undefined while the production fixture starts from zeroed storage.",
         "pascal_error_outcome_compared": false,
-        "pascal_error_outcome_note": "WorldSave is a procedure without a return value; Pascal output-file existence was verified, but a direct Pascal IOResult/error outcome comparison is not captured.",
+        "pascal_error_outcome_note": "WorldSave is a procedure without a return value; output-file existence and exact bytes were verified, but save failure-path handling is not covered.",
+        "fixture_corpus_completion_credit": 0
+      },
+      "generated_roundtrip_comparison": {
+        "fixture": "INTEGPRB prototype; both implementations load the same Pascal-generated file",
+        "evidence_class": "DP",
+        "input_format": ".SAV",
+        "input_path": "build/pascal-compat-verification/INTEGSAV.SAV",
+        "input_size_bytes": 961,
+        "input_sha256": "378a6aaae4ef3f8f040f720c006a8896c6a52d4b672b599d0367fb3ace704700",
+        "same_input_bytes_loaded": true,
+        "pascal_load_result_path": "build/pascal-compat-verification/INTEGLOD.OUT",
+        "pascal_world_load_result": true,
+        "production_world_load_api": "zoo_world_load",
+        "production_world_load_result": 0,
+        "roundtrip_save_path": "build/pascal-compat-verification/INTEG2SV.SAV",
+        "roundtrip_size_bytes": 961,
+        "roundtrip_sha256": "8b4d70ab16e3c730f592197a508b409d0bf0e6e244491bd979b738e75466b0e3",
+        "preserved_bytes_total": 949,
+        "preserved_bytes_matched": 949,
+        "stable_byte_differences": 0,
+        "classified_process_pointer_positions": 12,
+        "classified_ranges": [
+          "Stat data-pointer fields; allocation-dependent pointer bytes only"
+        ],
+        "pascal_error_outcome_compared": false,
+        "pascal_error_outcome_note": "WorldSave has no return value; the successful output was verified by its size and bytes.",
         "fixture_corpus_completion_credit": 0
       }
     },
     "other_suites": {
       "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
-      "runtime": "passed in the 2026-11-25 clean full Pascal/production compatibility run; tools/runtime-compat/verify.ps1 exit 0",
+      "runtime": "passed; tools/runtime-compat/verify.ps1 rebuilt the updated integrated WebAssembly harness and exited 0; the clean full Pascal/production run also passed its integrated runtime and differential gates",
       "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
       "android_build": "passed fresh offline on 2026-11-24: .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64",
       "windows_ctest": "passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly"
@@ -225,14 +266,14 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The integrated prototype matches 34,744 variable-size state fields across ten checkpoints, including one pause-to-play transition; two sound events / 20 fields and nine ordered playfield writes / 36 fields also match. One generated 961-byte SAV matches at all 565 stable positions; 396 fresh-world undefined/pointer positions are classified (327 differ, 69 happen to match). The fixture explicitly sets otherwise-undefined WorldInfo.unk1 to zero. Pascal save error outcomes, loaded-file byte preservation, broader transitions, and the ten required fixtures remain open."
+      "The integrated prototype matches 41,690 variable-size state fields across 12 checkpoints, including pause-to-play, post-save, and post-reload transitions; two sound events / 20 fields and nine ordered playfield writes / 36 fields also match. One generated 961-byte SAV matches at all 565 stable positions; 396 fresh-world undefined/pointer positions are classified (327 differ, 69 happen to match). Both sides load the exact Pascal-generated SAV (WorldLoad=true; zoo_world_load=0), then the round-trip save matches all 949 preserved non-pointer bytes while classifying the 12 process-specific stat pointer positions. Pascal WorldSave failure-path outcomes, other scenarios, and the ten required fixtures remain open."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
       "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.",
-      "E2-10: extend named transition, generated-byte, return/error, sound, and cell-write verification across the frozen ten-fixture replay corpus; add loaded-file byte-preservation and save/restore/load comparisons; create and pass all ten fixtures with zero unexplained differences.",
+      "E2-10: extend named transition, generated-byte, return/error, sound, and cell-write verification across the frozen ten-fixture replay corpus; broaden same-file loaded-byte preservation and save/restore/load comparisons across varied worlds; create and pass all ten fixtures with zero unexplained differences.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
     "non_blocking_limitations": [
@@ -255,7 +296,8 @@
       "Pre-transition prototype checkpoint: the integrated Pascal/production replay matched 31,260 state fields, two sound events / 20 fields, and nine cell writes / 36 fields. The later T1 checkpoint addition is recorded in the latest result.",
       "Extended the integrated replay with ordered playfield cell writes. After the staged BRDXFER boundary fix, a clean full Pascal runner passed 84 direct sessions and 43/43 comparisons, with zero unexplained mismatches. The prototype remains outside E2-10 required fixtures, which are 0/10 complete.",
       "Added dynamic L/S/T/C/F replay checkpoints and normalized game-role comparison. The clean Pascal suite passed 84 direct sessions and 43/43 configured differentials; the prototype matched 34,744 fields across ten checkpoints, plus sound and cell-write traces. E2-10 remains at 0/10 required fixtures.",
-      "Added generated .SAV differential capture to the E2-10 prototype. The clean run still passed 84 direct Pascal sessions and 43/43 configured differentials; ten state checkpoints, 34,744 fields, two sound events, nine cell writes, and 565 deterministic save bytes matched. Another 396 fresh-world undefined/pointer bytes are classified; the prototype remains 0/10 required fixtures and Pascal save error outcomes remain open."
+      "Added generated .SAV differential capture to the E2-10 prototype. The clean run still passed 84 direct Pascal sessions and 43/43 configured differentials; ten state checkpoints, 34,744 fields, two sound events, nine cell writes, and 565 deterministic save bytes matched. Another 396 fresh-world undefined/pointer bytes are classified; the prototype remains 0/10 required fixtures and Pascal save error outcomes remain open.",
+      "Extended INTEGPRB through a second state transition, same-file .SAV load, and round-trip save. The clean full run passed 84 direct Pascal sessions and 43/43 configured comparisons; 12 checkpoints/41,690 fields matched, WorldLoad=true matched zoo_world_load=0, 565 fresh-world stable bytes and 949 loaded-file bytes matched. Compiling and running the allocator-sensitive replay in separate fresh DOSBox-X sessions standardizes its allocation history. E2-10 remains partial at 0/10 fixtures."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -284,27 +326,34 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "238eac23fe2a8eede39d31eed4e5cd36fc217a8d",
+      "source_revision": "c9206f379a488415ebfc32ea0355406efbb7ade4",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 84,
       "configured_differentials_passed": 43,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "For BRDXFER only, staged GAME.PAS replaces TextWindowSelect at the DisplayIOError acknowledgement boundary with TextWindowRejected := true; InputKeyPressed := #0. This skips the blocking modal interaction; the short-payload file reads, IOResult checks, DisplayIOError return, BoardCreate, and editor cleanup run in reconstructed Pascal.",
-      "integrated_pascal_probe": "compiled and ran; generated INTEGPR.OUT, INTEGSND.OUT, INTEGCEL.OUT, and INTEGSAV.SAV",
-      "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT build/pascal-compat-verification/INTEGCEL.OUT build/pascal-compat-verification/INTEGSAV.SAV",
+      "integrated_pascal_probe": "compiled in a DOSBox-X session and executed in a fresh session; generated INTEGPR.OUT, INTEGSND.OUT, INTEGCEL.OUT, INTEGSAV.SAV, INTEGLOD.OUT, and INTEG2SV.SAV",
+      "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT build/pascal-compat-verification/INTEGCEL.OUT build/pascal-compat-verification/INTEGSAV.SAV build/pascal-compat-verification/INTEGLOD.OUT build/pascal-compat-verification/INTEG2SV.SAV",
       "integrated_differential_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "complete clean runner; 84 direct sessions and 43 configured differentials passed; integrated prototype matched ten checkpoints, 34,744 state fields, sound/cell traces, and 565 deterministic bytes of one generated SAV; E2-02 and E2-10 remain open",
+      "status": "complete clean runner; 84 direct sessions, 43/43 configured differentials, and runtime checks passed; 12 integrated checkpoints and 41,690 state fields matched; same-file Pascal WorldLoad=true and production zoo_world_load=0 matched; 565 fresh-world stable save bytes and 949 loaded-file round-trip bytes matched; E2-02 and E2-10 remain open",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
-      "integrated_checkpoint_count": 10,
-      "integrated_state_fields_compared": 34744,
+      "integrated_checkpoint_count": 12,
+      "integrated_state_fields_compared": 41690,
       "integrated_sound_event_fields_compared": 20,
       "integrated_cell_write_fields_compared": 36,
       "integrated_save_deterministic_bytes_matched": 565,
       "integrated_save_classified_positions": 396,
       "integrated_save_classified_differences": 327,
-      "integrated_save_differential_exit_code": 0
+      "integrated_save_differential_exit_code": 0,
+      "integrated_transition_count": 3,
+      "integrated_generated_save_stable_bytes_matched": 565,
+      "integrated_loaded_roundtrip_preserved_bytes_matched": 949,
+      "integrated_loaded_roundtrip_pointer_positions_classified": 12,
+      "pascal_world_load_result": true,
+      "production_world_load_result": 0,
+      "compile_run_environment_intervention": "Compile INTEGPRB in one DOSBox-X session and execute it in a fresh DOSBox-X session. The same-session path terminated after cycle capture before sidecars; separating sessions controls the compiler-inherited DOS allocation history without modifying gameplay semantics."
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain."
   }

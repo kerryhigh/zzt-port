@@ -39,9 +39,10 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **16/16** passed (1 save, 8 load/reset, 7 insertion cases); source-model rows: **256**.
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
 - Production-only regression cases: **not enumerated; one targeted E2-02 short-header safe-reopen regression passed**; the finite case inventory is still being mapped.
-- Integrated replay fixtures: **0/10** complete. Prototype comparisons: 34744 fields across 10 checkpoints; per-cycle checkpoints: present.
+- Integrated replay fixtures: **0/10** complete. Prototype comparisons: 41690 fields across 12 checkpoints; per-cycle checkpoints: present.
 - Integrated generated save: **565/565** deterministic byte positions match; 396 positions are classified as uninitialized Pascal padding or process-specific pointers; differing classified values: 327; production result: 0.
-- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed; runtime=passed in the 2026-11-25 clean full Pascal/production compatibility run; tools/runtime-compat/verify.ps1 exit 0; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly.
+- Integrated save reload: compiled Pascal WorldLoad=True; production zoo_world_load=0; round-trip save preserved 949/949 bytes; 12 process-pointer positions classified.
+- Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed; runtime=passed; tools/runtime-compat/verify.ps1 rebuilt the updated integrated WebAssembly harness and exited 0; the clean full Pascal/production run also passed its integrated runtime and differential gates; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly.
 
 ## Frozen source inventory
 
@@ -62,14 +63,15 @@ Total unclassified source inventory entries: **1465**; explicitly excluded: **10
 
 - Required fixtures: 10.
 - Completed fixtures: 0.
-- Prototype: INTEGPRB: six zero-speed cycles with loaded, loop-start, pause-to-play transition, per-cycle, and final snapshots; two interacting objects; not one of the ten fixtures with 34744 total field comparisons across 10 checkpoints; per-checkpoint counts: variable: 3,473 loaded/start/final; 3,475 at transition and each cycle; this is not counted as a complete E2-10 fixture.
+- Prototype: INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures with 41690 total field comparisons across 12 checkpoints; per-checkpoint counts: variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle; this is not counted as a complete E2-10 fixture.
 - Logical sound-queue events in the prototype: 2 events / 20 event fields; checkpoint sound state: compared; overflow: False.
 - Ordered playfield cell writes in the prototype: 9 events / 36 event fields; capture: matched; generated oracle sidecar SHA-256: 6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa.
-- Generated `.SAV` comparison: 565/565 stable bytes matched; 396 classified positions (327 differing values); raw file size/hash: 961 bytes / `4e781a728d4673d732fe1e34724f979236b603e79451a9edc8644b89f1c02aee`. Pascal return/error comparison: outstanding.
+- Generated `.SAV` comparison: 565/565 stable bytes matched; 396 classified positions (327 differing values); raw file size/hash: 961 bytes / `378a6aaae4ef3f8f040f720c006a8896c6a52d4b672b599d0367fb3ace704700`. Pascal save error result: no return value; failure-path outcome remains outstanding.
+- Same-file reload/round-trip: Pascal WorldLoad=True, production zoo_world_load=0; 949/949 loaded-file bytes preserved exactly; 12 process pointer bytes classified; input and second-save hashes: `378a6aaae4ef3f8f040f720c006a8896c6a52d4b672b599d0367fb3ace704700` / `8b4d70ab16e3c730f592197a508b409d0bf0e6e244491bd979b738e75466b0e3`.
 - Per-cycle checkpoint comparisons: implemented.
 - State-transition checkpoints: implemented.
 - First-divergence reporting: implemented.
-- INTEGPRB prototype: buffered movement, two boulder pushes, and two interacting #GIVE/#IDLE scripts: 10 checkpoints; 34744 state-field comparisons total; passed; 2 logical sound queue events / 20 event fields and 9 playfield cell writes / 36 event fields matched; one pause-to-play state transition matched; generated 961-byte SAV compared with 565 stable positions matching and 396 classified uninitialized/pointer positions (327 differed, 69 matched) (DP evidence).
+- INTEGPRB prototype: buffered movement, two boulder pushes, and two interacting #GIVE/#IDLE scripts: 12 checkpoints; 41690 state-field comparisons total; passed; 2 logical sound queue events / 20 event fields and 9 playfield writes / 36 event fields matched; pause-to-play, save, and reload transitions matched; 565 fresh-world stable SAV bytes and 949 loaded-file non-pointer bytes matched (DP evidence).
   - loaded initial state: 3473 fields; matched.
   - game-loop start: 3473 fields; matched.
   - state transition 1 (pause-to-play): 3475 fields; matched.
@@ -79,7 +81,9 @@ Total unclassified source inventory entries: **1465**; explicitly excluded: **10
   - cycle 4: 3475 fields; matched.
   - cycle 5: 3475 fields; matched.
   - cycle 6: 3475 fields; matched.
-  - final state: 3473 fields; matched.
+  - state transition 2 (after first save): 3473 fields; matched.
+  - state transition 3 (after loading the shared Pascal SAV): 3473 fields; matched.
+  - final state after round-trip save: 3473 fields; matched.
 
 ## Mismatches, limitations, and remaining work
 
@@ -91,7 +95,7 @@ Total unclassified source inventory entries: **1465**; explicitly excluded: **10
 - E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.
 - E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.
 - E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.
-- E2-10: extend named transition, generated-byte, return/error, sound, and cell-write verification across the frozen ten-fixture replay corpus; add loaded-file byte-preservation and save/restore/load comparisons; create and pass all ten fixtures with zero unexplained differences.
+- E2-10: extend named transition, generated-byte, return/error, sound, and cell-write verification across the frozen ten-fixture replay corpus; broaden same-file loaded-byte preservation and save/restore/load comparisons across varied worlds; create and pass all ten fixtures with zero unexplained differences.
 - E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record.
 
 ### Non-blocking limitations and optional investigations
@@ -104,14 +108,14 @@ Total unclassified source inventory entries: **1465**; explicitly excluded: **10
 - Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.
 - Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.
 - Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.
-- The integrated prototype matches 34,744 variable-size state fields across ten checkpoints, including one pause-to-play transition; two sound events / 20 fields and nine ordered playfield writes / 36 fields also match. One generated 961-byte SAV matches at all 565 stable positions; 396 fresh-world undefined/pointer positions are classified (327 differ, 69 happen to match). The fixture explicitly sets otherwise-undefined WorldInfo.unk1 to zero. Pascal save error outcomes, loaded-file byte preservation, broader transitions, and the ten required fixtures remain open.
+- The integrated prototype matches 41,690 variable-size state fields across 12 checkpoints, including pause-to-play, post-save, and post-reload transitions; two sound events / 20 fields and nine ordered playfield writes / 36 fields also match. One generated 961-byte SAV matches at all 565 stable positions; 396 fresh-world undefined/pointer positions are classified (327 differ, 69 happen to match). Both sides load the exact Pascal-generated SAV (WorldLoad=true; zoo_world_load=0), then the round-trip save matches all 949 preserved non-pointer bytes while classifying the 12 process-specific stat pointer positions. Pascal WorldSave failure-path outcomes, other scenarios, and the ten required fixtures remain open.
 
 ## Latest verification record
 
-- Latest full Pascal-runner attempt: exit code 0; complete clean runner; 84 direct sessions and 43 configured differentials passed; integrated prototype matched ten checkpoints, 34,744 state fields, sound/cell traces, and 565 deterministic bytes of one generated SAV; E2-02 and E2-10 remain open.
-- The latest integrated Pascal differential is reported separately: exit 0; 34744 snapshot fields, 2 logical sound events, 9 ordered playfield cell writes, and 565/565 deterministic save bytes matched.
+- Latest full Pascal-runner attempt: exit code 0; complete clean runner; 84 direct sessions, 43/43 configured differentials, and runtime checks passed; 12 integrated checkpoints and 41,690 state fields matched; same-file Pascal WorldLoad=true and production zoo_world_load=0 matched; 565 fresh-world stable save bytes and 949 loaded-file round-trip bytes matched; E2-02 and E2-10 remain open.
+- The latest integrated Pascal differential is reported separately: exit 0; 41690 snapshot fields, 2 logical sound events, 9 ordered playfield cell writes, 565/565 first-save bytes, and 949/949 loaded-file round-trip bytes matched.
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; executable SHA-256 072c1944635ccc545a816e128625e3405feab559021e4ef60b2d512f97f754c0; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 238eac23fe2a8eede39d31eed4e5cd36fc217a8d: test: compare integrated gameplay save bytes (E2-10 partial).
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: c9206f379a488415ebfc32ea0355406efbb7ade4: test: compare Pascal save reload replay (E2-10 partial).
 - Last completed full Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
@@ -133,5 +137,6 @@ Total unclassified source inventory entries: **1465**; explicitly excluded: **10
 - Extended the integrated replay with ordered playfield cell writes. After the staged BRDXFER boundary fix, a clean full Pascal runner passed 84 direct sessions and 43/43 comparisons, with zero unexplained mismatches. The prototype remains outside E2-10 required fixtures, which are 0/10 complete.
 - Added dynamic L/S/T/C/F replay checkpoints and normalized game-role comparison. The clean Pascal suite passed 84 direct sessions and 43/43 configured differentials; the prototype matched 34,744 fields across ten checkpoints, plus sound and cell-write traces. E2-10 remains at 0/10 required fixtures.
 - Added generated .SAV differential capture to the E2-10 prototype. The clean run still passed 84 direct Pascal sessions and 43/43 configured differentials; ten state checkpoints, 34,744 fields, two sound events, nine cell writes, and 565 deterministic save bytes matched. Another 396 fresh-world undefined/pointer bytes are classified; the prototype remains 0/10 required fixtures and Pascal save error outcomes remain open.
+- Extended INTEGPRB through a second state transition, same-file .SAV load, and round-trip save. The clean full run passed 84 direct Pascal sessions and 43/43 configured comparisons; 12 checkpoints/41,690 fields matched, WorldLoad=true matched zoo_world_load=0, 565 fresh-world stable bytes and 949 loaded-file bytes matched. Compiling and running the allocator-sensitive replay in separate fresh DOSBox-X sessions standardizes its allocation history. E2-10 remains partial at 0/10 fixtures.
 
 Generated by `python tools/compatibility/generate_progress.py`. Do not edit this report manually.
