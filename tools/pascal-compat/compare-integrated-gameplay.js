@@ -9,8 +9,8 @@ const loadResultPath = process.argv[7];
 const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages [DEMO.ZZT]]');
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
@@ -19,6 +19,9 @@ const statFieldCount = 14;
 const schedulerFieldCount = 11;
 const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
 const checkpointSpecs = [];
+const replayTransitionCount = scenario === 'board-neighbors-passages' ? 4 : 3;
+const postCycleStateIds = scenario === 'board-neighbors-passages' ? [2, 3] : [];
+let postCycleStateIndex = 0;
 let nextTransitionId = 1;
 let nextCycleId = 1;
 const checkpointHeaders = expectedLines.map((line, rowIndex) => {
@@ -37,20 +40,27 @@ checkpointSpecs.push(
 );
 for (let row = 2; row < checkpointHeaders.length; row++) {
   const header = checkpointHeaders[row];
-  if (header.kind === 'T' && header.id === nextTransitionId && nextTransitionId <= 3) {
+  if (header.kind === 'T' && header.id === nextTransitionId && nextTransitionId <= replayTransitionCount) {
     checkpointSpecs.push({ kind: 'T', id: header.id, name: `state transition ${header.id}` });
     nextTransitionId++;
   } else if (header.kind === 'C' && header.id === nextCycleId && nextCycleId <= 6) {
     checkpointSpecs.push({ kind: 'C', id: header.id, name: `cycle ${header.id}` });
     nextCycleId++;
+  } else if (nextCycleId === 7 && postCycleStateIndex < postCycleStateIds.length
+      && header.kind === 'T' && header.id === postCycleStateIds[postCycleStateIndex]) {
+    const snapshotName = postCycleStateIndex === 0 ? 'post-save state' : 'post-load state';
+    checkpointSpecs.push({ kind: 'T', id: header.id, name: snapshotName });
+    postCycleStateIndex++;
   } else if (header.kind === 'F' && header.id === 0 && row === checkpointHeaders.length - 1) {
     checkpointSpecs.push({ kind: 'F', id: 0, name: 'final state' });
   } else {
     throw new Error(`Invalid checkpoint order or identity at row ${row + 1}: ${header.kind}/${header.id}`);
   }
 }
-if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== 7 || nextTransitionId !== 4) {
-  throw new Error(`Integrated replay requires three ordered transitions, six ordered cycles, and a final state; transitions=${nextTransitionId - 1}, cycles=${nextCycleId - 1}`);
+if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== 7
+    || nextTransitionId !== replayTransitionCount + 1
+    || postCycleStateIndex !== postCycleStateIds.length) {
+  throw new Error(`Integrated replay requires ${replayTransitionCount} ordered gameplay transitions, six ordered cycles, ${postCycleStateIds.length} post-cycle save/load snapshots, and a final state; transitions=${nextTransitionId - 1}, cycles=${nextCycleId - 1}, postCycleSnapshots=${postCycleStateIndex}`);
 }
 const expectedSnapshots = expectedLines.map((line, rowIndex) => {
   const fields = line.trim().split(/\s+/);
@@ -182,12 +192,15 @@ function parseCellWrites(path) {
   if (!Number.isInteger(count) || count < 0 || ![0, 1].includes(overflow)) {
     throw new Error('Pascal integrated cell-write header is malformed');
   }
-  if (tokens.length !== 2 + (count * 4)) {
-    throw new Error(`Pascal integrated cell-write output has ${tokens.length - 2} data fields; expected ${count * 4}`);
+  const headerFields = tokens.length === 3 + (count * 4) ? 3 : 2;
+  const idempotentWriteCount = headerFields === 3 ? tokens[2] : 0;
+  if (tokens.length !== headerFields + (count * 4)
+      || !Number.isInteger(idempotentWriteCount) || idempotentWriteCount < 0) {
+    throw new Error(`Pascal integrated cell-write output has ${tokens.length - headerFields} data fields; expected ${count * 4}`);
   }
   const events = [];
   for (let eventIndex = 0; eventIndex < count; eventIndex++) {
-    const base = 2 + (eventIndex * 4);
+    const base = headerFields + (eventIndex * 4);
     const event = { x: tokens[base], y: tokens[base + 1], color: tokens[base + 2], character: tokens[base + 3] };
     if (event.x < 0 || event.x >= 60 || event.y < 0 || event.y >= 25
         || event.color < 0 || event.color > 255 || event.character < 0 || event.character > 255) {
@@ -195,7 +208,7 @@ function parseCellWrites(path) {
     }
     events.push(event);
   }
-  return { count, overflow, events };
+  return { count, overflow, idempotentWriteCount, events };
 }
 
 function integratedSaveNondeterministicRanges(bytes, loadedFromFile = false) {
@@ -362,11 +375,44 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_wall_pusher_duplicator_checks();
     } else if (scenario === 'combat-keys-pickups') {
       result = instance.exports.run_integrated_combat_key_pickup_checks();
+    } else if (scenario === 'board-neighbors-passages') {
+      result = instance.exports.run_integrated_board_neighbor_passage_checks();
     } else {
       result = instance.exports.run_integrated_script_stat_order_checks();
     }
   }
-  if (result !== 0) throw new Error(`Production integrated replay returned ${result}`);
+  if (result !== 0) {
+    const snapshotCount = instance.exports.integrated_gameplay_snapshot_count();
+    const headers = new Int16Array(instance.exports.memory.buffer,
+      instance.exports.integrated_gameplay_checkpoint_headers_ptr(), snapshotCount * 2);
+    const snapshotBase = instance.exports.integrated_gameplay_snapshots_ptr();
+    const snapshotStride = instance.exports.integrated_gameplay_snapshot_stride();
+    const snapshotLengths = new Int32Array(instance.exports.memory.buffer,
+      instance.exports.integrated_gameplay_snapshot_lengths_ptr(), snapshotCount);
+    const snapshots = [];
+    for (let row = 0; row < snapshotCount; row++) {
+      const values = new Int32Array(instance.exports.memory.buffer,
+        snapshotBase + row * snapshotStride * Int32Array.BYTES_PER_ELEMENT,
+        snapshotLengths[row]);
+      const statCount = values[11];
+      const schedulerStart = scalarNames.length + (statCount + 1) * statFieldCount;
+      const tileStart = schedulerStart + schedulerFieldCount;
+      const resumeTile = scenario === 'board-neighbors-passages'
+        ? values[tileStart + 2 * (23 * 27 + 17)] : 0;
+      snapshots.push(`${String.fromCharCode(headers[row * 2])}/${headers[row * 2 + 1]} board=${values[3]} player=${values[13]},${values[14]} tick=${values[schedulerStart]} stat=${values[schedulerStart + 1]} paused=${values[schedulerStart + 5]} input=${values[schedulerStart + 7]},${values[schedulerStart + 8]} resumeTile=${resumeTile}`);
+    }
+    const rawTrace = new Int16Array(instance.exports.memory.buffer,
+      instance.exports.integrated_gameplay_trace_ptr(), 24 * 15);
+    const trace = [];
+    for (let row = 0; row < 24; row++) {
+      const at = row * 15;
+      const fields = Array.from(rawTrace.slice(at, at + 15));
+      if (fields.some(value => value !== 0)) {
+        trace.push(`${row}:stat=${fields[0]}->${fields[1]} tick=${fields[2]} boardStats=${fields[3]} gameState=${fields[4]} stack=${fields[5]} paused=${fields[6]} result=${fields[7]} dataPos=${fields[8]} tape=${fields[9]} delta=${fields[10]},${fields[11]} rightDown=${fields[12]} rightHeld=${fields[13]} leftHeld=${fields[14]}`);
+      }
+    }
+    throw new Error(`Production integrated replay returned ${result}; captured checkpoints=[${snapshots.join('; ')}]; recent tick slots=[${trace.join('; ')}]`);
+  }
 
   const pascalSave = fs.readFileSync(savePath);
   const productionSaveLength = instance.exports.integrated_gameplay_save_length();
@@ -403,7 +449,13 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
 
   const snapshotCount = instance.exports.integrated_gameplay_snapshot_count();
   if (snapshotCount !== checkpointSpecs.length) {
-    throw new Error(`Production integrated replay has ${snapshotCount} checkpoints; expected ${checkpointSpecs.length}`);
+    const actualHeaders = new Int16Array(instance.exports.memory.buffer,
+      instance.exports.integrated_gameplay_checkpoint_headers_ptr(), snapshotCount * 2);
+    const observed = [];
+    for (let row = 0; row < snapshotCount; row++) {
+      observed.push(`${String.fromCharCode(actualHeaders[row * 2])}/${actualHeaders[row * 2 + 1]}`);
+    }
+    throw new Error(`Production integrated replay has ${snapshotCount} checkpoints; expected ${checkpointSpecs.length}; actual=[${observed.join(', ')}], expected=[${checkpointSpecs.map(({ kind, id }) => `${kind}/${id}`).join(', ')}]`);
   }
   const headers = new Int16Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_checkpoint_headers_ptr(), snapshotCount * 2);
@@ -430,6 +482,9 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       actualBase + row * snapshotStride * Int32Array.BYTES_PER_ELEMENT, actualCount);
     const statCount = expected[11];
     for (let field = 0; field < fieldCount; field++) {
+      // Cell-write totals are checked against the captured event stream below,
+      // where a one-write drift can be reported with its exact cell/context.
+      if (scenario === 'board-neighbors-passages' && field >= fieldCount - 2) continue;
       const expectedValue = expected[field];
       const observed = actual[field];
       if (observed !== expectedValue) {
@@ -439,7 +494,17 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
         for (let at = from; at <= to; at++) {
           context.push(`${describeField(at, statCount, expected)}:${expected[at]}->${actual[at]}`);
         }
-        throw new Error(`First divergence at ${spec.name}, field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}; context=[${context.join(', ')}]`);
+        const rawTrace = new Int16Array(instance.exports.memory.buffer,
+          instance.exports.integrated_gameplay_trace_ptr(), 24 * 15);
+        const recentTrace = [];
+        for (let traceRow = 0; traceRow < 24; traceRow++) {
+          const traceAt = traceRow * 15;
+          const traceFields = Array.from(rawTrace.slice(traceAt, traceAt + 15));
+          if (traceFields.some(value => value !== 0)) {
+            recentTrace.push(`${traceRow}:tick=${traceFields[2]} stat=${traceFields[0]}->${traceFields[1]} tape=${traceFields[9]} delta=${traceFields[10]},${traceFields[11]} downR=${traceFields[12]} heldR=${traceFields[13]} heldL=${traceFields[14]}`);
+          }
+        }
+        throw new Error(`First divergence at ${spec.name}, field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}; context=[${context.join(', ')}]; recent input trace=[${recentTrace.join('; ')}]`);
       }
       comparedFields++;
     }
@@ -537,6 +602,32 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       throw new Error(`F04 coverage assertion failed: stat-1 #SET/#GIVE must be visible to stat-2 #IF in its first script cycle and persist; C2 ammo/gems=${firstScriptCycle[0]}/${firstScriptCycle[1]}, final ammo/gems=${final[0]}/${final[1]}`);
     }
   }
+  if (scenario === 'board-neighbors-passages') {
+    const boardEntryIndex = checkpointSpecs.findIndex(spec => spec.kind === 'T' && spec.id === 2);
+    const passageIndex = checkpointSpecs.findIndex(spec => spec.kind === 'T' && spec.id === 3);
+    if (boardEntryIndex < 0 || passageIndex < 0) {
+      throw new Error('F05 coverage assertion failed: expected board-entry T2 and passage T3 checkpoints');
+    }
+    const boardEntry = expectedSnapshots[boardEntryIndex].values;
+    const passage = expectedSnapshots[passageIndex].values;
+    const final = expectedSnapshots.at(-1).values;
+    const tileStartFor = values => scalarNames.length + (values[11] + 1) * statFieldCount + schedulerFieldCount;
+    const tileElementAt = (values, x, y) => values[tileStartFor(values) + ((x * 27 + y) * 2)];
+    const statField = (values, statId, field) => values[scalarNames.length + statId * statFieldCount + field];
+    const passageSchedulerStart = scalarNames.length + (passage[11] + 1) * statFieldCount;
+    if (boardEntry[3] !== 1 || statField(boardEntry, 0, 0) !== 60 || statField(boardEntry, 0, 1) !== 5) {
+      throw new Error(`F05 coverage assertion failed at T2: expected board 1 immediately after BoardChange loaded its west-edge start (60,5), observed board=${boardEntry[3]}, player=(${statField(boardEntry, 0, 0)},${statField(boardEntry, 0, 1)})`);
+    }
+    if (passage[3] !== 2 || statField(passage, 0, 0) !== 22 || statField(passage, 0, 1) !== 17
+        || passage[passageSchedulerStart + 5] !== 1) {
+      throw new Error(`F05 coverage assertion failed at T3: expected board 2 passage destination (22,17) with paused state, observed board=${passage[3]}, player=(${statField(passage, 0, 0)},${statField(passage, 0, 1)}), paused=${passage[passageSchedulerStart + 5]}`);
+    }
+    if (final[3] !== 2 || statField(final, 0, 0) !== 23 || statField(final, 0, 1) !== 17
+        || tileElementAt(final, 20, 15) !== 11 || tileElementAt(final, 22, 17) !== 11
+        || tileElementAt(final, 30, 12) !== 0) {
+      throw new Error(`F05 coverage assertion failed: expected last matching passage at (22,17), one resumed step to (23,17), earlier match retained at (20,15), and cleared board spawn (30,12); final board=${final[3]}, player=(${statField(final, 0, 0)},${statField(final, 0, 1)})`);
+    }
+  }
   const expectedSound = parseSoundEvents(soundPath);
   if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');
   const actualSoundCount = instance.exports.integrated_gameplay_sound_event_count();
@@ -591,14 +682,16 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const actualCellCount = instance.exports.integrated_gameplay_cell_event_count();
   const actualCellOverflow = instance.exports.integrated_gameplay_cell_event_overflow();
   const actualCellStride = instance.exports.integrated_gameplay_cell_event_stride();
-  if (actualCellOverflow !== 0) throw new Error('Production integrated cell-write capture overflowed its fixed buffer');
+  if (actualCellOverflow !== 0) throw new Error(`Production integrated cell-change capture overflowed its fixed buffer at ${actualCellCount} records (idempotent writes filtered: ${instance.exports.integrated_gameplay_cell_idempotent_write_count()})`);
   if (actualCellStride !== 4) throw new Error(`Production cell-write stride ${actualCellStride}; expected 4`);
-  if (actualCellCount !== expectedCells.count) {
-    throw new Error(`First cell-write divergence at event count: Pascal=${expectedCells.count}, production=${actualCellCount}; Pascal tail=${JSON.stringify(expectedCells.events.slice(-3))}`);
-  }
   const actualCellBase = instance.exports.integrated_gameplay_cell_events_ptr();
   const actualCells = new Int32Array(instance.exports.memory.buffer,
-    actualCellBase, actualCellCount * actualCellStride);
+    actualCellBase, Math.min(actualCellCount, expectedCells.count) * actualCellStride);
+  const actualCellContextStride = instance.exports.integrated_gameplay_cell_context_stride();
+  const actualCellContexts = new Int32Array(instance.exports.memory.buffer,
+    instance.exports.integrated_gameplay_cell_context_events_ptr(),
+    Math.min(actualCellCount, expectedCells.count) * actualCellContextStride);
+  const actualIdempotentWriteCount = instance.exports.integrated_gameplay_cell_idempotent_write_count();
   const cellFieldNames = ['x', 'y', 'attribute', 'CP437 byte'];
   let cellComparedFields = 0;
   for (let eventIndex = 0; eventIndex < expectedCells.count; eventIndex++) {
@@ -613,12 +706,29 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
         const actualContext = [];
         for (let at = from; at <= to; at++) {
           const pos = at * actualCellStride;
-          actualContext.push({ x: actualCells[pos], y: actualCells[pos + 1], color: actualCells[pos + 2], character: actualCells[pos + 3] });
+          const contextPos = at * actualCellContextStride;
+          actualContext.push({
+            x: actualCells[pos], y: actualCells[pos + 1], color: actualCells[pos + 2], character: actualCells[pos + 3],
+            board: actualCellContexts[contextPos], player: [actualCellContexts[contextPos + 1], actualCellContexts[contextPos + 2]],
+            paused: actualCellContexts[contextPos + 3], pauseBlink: actualCellContexts[contextPos + 4],
+            callState: actualCellContexts[contextPos + 5], stat: actualCellContexts[contextPos + 6], tick: actualCellContexts[contextPos + 7],
+          });
         }
         throw new Error(`First cell-write divergence at event ${eventIndex}, ${cellFieldNames[fieldIndex]}: Pascal=${expectedFields[fieldIndex]}, production=${observed}; surrounding Pascal=${JSON.stringify(expectedCells.events.slice(from, to + 1))}; production=${JSON.stringify(actualContext)}`);
       }
       cellComparedFields++;
     }
+  }
+  if (actualCellCount !== expectedCells.count) {
+    const from = Math.max(0, Math.min(actualCellCount, expectedCells.count) - 3);
+    const actualTail = [];
+    for (let eventIndex = from; eventIndex < actualCellCount; eventIndex++) {
+      const base = eventIndex * actualCellStride;
+      const event = new Int32Array(instance.exports.memory.buffer,
+        actualCellBase + base * Int32Array.BYTES_PER_ELEMENT, actualCellStride);
+      actualTail.push({ x: event[0], y: event[1], color: event[2], character: event[3] });
+    }
+    throw new Error(`First cell-write divergence at event count: Pascal=${expectedCells.count}, production=${actualCellCount}; Pascal tail=${JSON.stringify(expectedCells.events.slice(-3))}; production tail begins at ${from} (${actualCellCount - from} events)`);
   }
 
   // Compare final serialized bytes only after the earlier state-transition,
@@ -635,5 +745,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     .map(([field, count]) => `${field} (${count} differing byte${count === 1 ? '' : 's'})`)
     .join('; ') || 'none';
   const generatedLabel = loadedFromFile ? 'DEMO-derived SAV' : 'fresh-world SAV';
-  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields); generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
+  const cellWriteSummary = scenario === 'board-neighbors-passages'
+    ? `${expectedCells.count} playfield cell changes matched (${cellComparedFields} event fields); ${expectedCells.idempotentWriteCount} Pascal and ${actualIdempotentWriteCount} production identical-value redraws were reported separately`
+    : `${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields)`;
+  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary}; generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

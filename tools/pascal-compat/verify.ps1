@@ -347,7 +347,7 @@ foreach ($case in @(
     [IO.File]::WriteAllBytes((Join-Path $stageRoot ($case.Name + '.HI')), $bytes)
 }
 
-function New-DosboxConfig([string]$Name, [string[]]$Commands) {
+function New-DosboxConfig([string]$Name, [string[]]$Commands, [string]$Cycles = '3000') {
     $lines = [Collections.Generic.List[string]]::new()
     $lines.Add('[sdl]')
     $lines.Add('output=surface')
@@ -356,7 +356,7 @@ function New-DosboxConfig([string]$Name, [string[]]$Commands) {
     $lines.Add('memsize=16')
     $lines.Add('[cpu]')
     $lines.Add('core=normal')
-    $lines.Add('cycles=3000')
+    $lines.Add(('cycles=' + $Cycles))
     $lines.Add('[autoexec]')
     $lines.Add(('mount c ' + [char]34 + $stageRoot + [char]34))
     $lines.Add('C:')
@@ -368,8 +368,8 @@ function New-DosboxConfig([string]$Name, [string[]]$Commands) {
     return (Resolve-Path -LiteralPath $configPath).Path
 }
 
-function Invoke-DosboxSession([string]$Name, [string[]]$Commands) {
-    $configPath = New-DosboxConfig $Name $Commands
+function Invoke-DosboxSession([string]$Name, [string[]]$Commands, [string]$Cycles = '3000') {
+    $configPath = New-DosboxConfig $Name $Commands $Cycles
     $process = Start-Process -FilePath $DosboxExecutable -ArgumentList @('-conf', ('"{0}"' -f $configPath)) -WindowStyle Hidden -PassThru
     if (-not $process.WaitForExit(30000)) {
         Stop-Process -Id $process.Id -Force
@@ -397,8 +397,9 @@ type
 var
 	GameLoopProbeStopAfter, GameLoopProbeCycles, GameLoopProbeStartTick: integer;
 	GameLoopProbeTransitionCount, GameLoopProbeLastBoard, GameLoopProbeLastState: integer;
-	GameLoopProbeEnabled: boolean;
+	GameLoopProbeEnabled, GameLoopProbeSeedPauseBlink: boolean;
 	GameLoopProbeLastPaused, GameLoopProbeCycleCompleted: boolean;
+	GameLoopProbeCaptureNextBoardChange: boolean;
 	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
 	GameLoopProbeCellWriteCount: longint;
 	GameLoopProbeCellWriteEvents: PGameLoopProbeCellWriteEventArray;
@@ -502,6 +503,24 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 '@
 $probeWriterInsertIndex = $probeUsesIndex + $probeUsesAnchor.Length
 $stagedGame = $stagedGame.Insert($probeWriterInsertIndex, $probeWriter)
+$boardChangeStart = $stagedGame.LastIndexOf('procedure BoardChange(boardId: integer);', [StringComparison]::Ordinal)
+$boardCreateStart = $stagedGame.IndexOf('procedure BoardCreate;', $boardChangeStart, [StringComparison]::Ordinal)
+if ($boardChangeStart -lt 0 -or $boardCreateStart -lt 0) { throw 'Could not isolate BoardChange for integrated board-transition capture.' }
+$boardChangeBlock = $stagedGame.Substring($boardChangeStart, $boardCreateStart - $boardChangeStart)
+$boardOpenAnchor = 'BoardOpen(boardId);'
+if ([regex]::Matches($boardChangeBlock, [regex]::Escape($boardOpenAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate BoardOpen inside BoardChange for integrated transition capture.'
+}
+$boardChangeCapture = @'
+if GameLoopProbeEnabled and GameLoopProbeCaptureNextBoardChange then begin
+	GameLoopProbeCaptureNextBoardChange := false;
+	GameLoopProbeLastBoard := World.Info.CurrentBoard;
+	GameLoopProbeTransitionCount := GameLoopProbeTransitionCount + 1;
+	GameLoopProbeCapture('T', GameLoopProbeTransitionCount);
+end;
+'@
+$boardChangeBlock = $boardChangeBlock.Replace($boardOpenAnchor, $boardOpenAnchor + "`r`n`t" + $boardChangeCapture.Trim())
+$stagedGame = $stagedGame.Substring(0, $boardChangeStart) + $boardChangeBlock + $stagedGame.Substring($boardCreateStart)
 $gamePlayLoopStart = $stagedGame.LastIndexOf('procedure GamePlayLoop(boardChanged: boolean);', [StringComparison]::Ordinal)
 $gameTitleLoopStart = $stagedGame.IndexOf('procedure GameTitleLoop;', $gamePlayLoopStart, [StringComparison]::Ordinal)
 if ($gamePlayLoopStart -lt 0 -or $gameTitleLoopStart -lt 0) { throw 'Could not isolate GamePlayLoop for zero-speed instrumentation.' }
@@ -513,7 +532,8 @@ $startStatAnchor = 'CurrentStatTicked := Board.StatCount + 1;'
 $startStatIndex = $gamePlayLoop.IndexOf($startStatAnchor, $startTickIndex + $startTickAnchor.Length, [StringComparison]::Ordinal)
 if ($startStatIndex -lt 0) { throw 'Could not locate GamePlayLoop stat initialization for the integrated snapshot.' }
 $startStatEnd = $startStatIndex + $startStatAnchor.Length
-$gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tGameLoopProbeTransitionCount := 0;`r`n`t`tGameLoopProbeCycleCompleted := false;`r`n`t`tif GameLoopProbeEnabled then begin`r`n`t`t`tGameLoopProbeCapture('S', 0);`r`n`t`t`tGameLoopProbeLastBoard := World.Info.CurrentBoard;`r`n`t`t`tGameLoopProbeLastState := GameStateElement;`r`n`t`t`tGameLoopProbeLastPaused := GamePaused;`r`n`t`t`tGameLoopProbeCellCaptureEnabled := true;`r`n`t`tend;" + $gamePlayLoop.Substring($startStatEnd)
+# GAME.PAS leaves pauseBlink uninitialized. Only F05 opts into a controlled staging seed, matching LibZoo's zero-initialized pause blink state without changing earlier replay traces.
+$gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tGameLoopProbeTransitionCount := 0;`r`n`t`tGameLoopProbeCycleCompleted := false;`r`n`t`tif GameLoopProbeEnabled then begin`r`n`t`t`tif GameLoopProbeSeedPauseBlink then pauseBlink := false;`r`n`t`t`tGameLoopProbeCapture('S', 0);`r`n`t`t`tGameLoopProbeLastBoard := World.Info.CurrentBoard;`r`n`t`t`tGameLoopProbeLastState := GameStateElement;`r`n`t`t`tGameLoopProbeLastPaused := GamePaused;`r`n`t`t`tGameLoopProbeCellCaptureEnabled := true;`r`n`t`tend;" + $gamePlayLoop.Substring($startStatEnd)
 $cycleAdvancePattern = '(?s)(CurrentStatTicked := 0;\s*InputUpdate;)'
 if ([regex]::Matches($gamePlayLoop, $cycleAdvancePattern).Count -ne 1) {
     throw 'Could not uniquely locate the completed GamePlayLoop cycle for zero-speed instrumentation.'
@@ -581,28 +601,25 @@ if ($engineLogText -match 'Error\s+\d+:') {
 Write-Host 'Compiling and running the direct Turbo Pascal shared-#BIND-alias probe...'
 # Compile against the freshly built engine units without /B. A forced unit rebuild produces
 # Turbo Pascal 5.5 Error 70 (unit version mismatch) in this allocator-sensitive probe.
-Invoke-DosboxSession 'BINDALIA' @(
-    'TPC.EXE /EBIN /UBIN BINDALIA.PAS > BINDALIA.LOG',
-    'BIN\BINDALIA.EXE'
-)
+Invoke-DosboxSession 'BINDALIA-COMPILE' @('TPC.EXE /EBIN /UBIN BINDALIA.PAS > BINDALIA.LOG')
+Invoke-DosboxSession 'BINDALIA-RUN' @('BIN\BINDALIA.EXE') 'max'
 Write-Host 'Compiling and running direct Turbo Pascal #BIND allocator-reuse probe...'
 Invoke-DosboxSession 'BINDREUS' @(
     'TPC.EXE /EBIN /UBIN BINDREUS.PAS > BINDREUS.LOG',
     'BIN\BINDREUS.EXE'
 )
 Write-Host 'Compiling and running direct Turbo Pascal #BIND multi-buffer reuse-order probe...'
-Invoke-DosboxSession 'BINDORDR' @(
-    'TPC.EXE /EBIN /UBIN BINDORDR.PAS > BINDORDR.LOG',
-    'BIN\BINDORDR.EXE'
-)
+Invoke-DosboxSession 'BINDORDR-COMPILE' @('TPC.EXE /EBIN /UBIN BINDORDR.PAS > BINDORDR.LOG')
+Invoke-DosboxSession 'BINDORDR-RUN' @('BIN\BINDORDR.EXE') 'max'
 Write-Host 'Compiling and running direct Turbo Pascal #BIND allocation-size cases...'
-Invoke-DosboxSession 'BINDSIZE' @(
-    'TPC.EXE /EBIN /UBIN BINDSIZE.PAS > BINDSIZE.LOG',
-    'BIN\BINDSIZE.EXE SML', 'BIN\BINDSIZE.EXE MED', 'BIN\BINDSIZE.EXE LRG',
-    'BIN\BINDSIZE.EXE XL', 'BIN\BINDSIZE.EXE F41', 'BIN\BINDSIZE.EXE F45',
-    'BIN\BINDSIZE.EXE F50', 'BIN\BINDSIZE.EXE F55', 'BIN\BINDSIZE.EXE F60',
-    'BIN\BINDSIZE.EXE F63', 'BIN\BINDSIZE.EXE F64'
-)
+Invoke-DosboxSession 'BINDSIZE-COMPILE' @('TPC.EXE /EBIN /UBIN BINDSIZE.PAS > BINDSIZE.LOG')
+# Each case constructs its allocation graph from scratch. Running it after the
+# compiler or another case reuses DOS memory that changes the observed block
+# placement, so execute every deterministic scenario from a clean runtime.
+$bindSizeScenarios = @('SML', 'MED', 'LRG', 'XL', 'F41', 'F45', 'F50', 'F55', 'F60', 'F63', 'F64')
+foreach ($scenario in $bindSizeScenarios) {
+    Invoke-DosboxSession "BINDSIZE-$scenario" @("BIN\BINDSIZE.EXE $scenario") 'max'
+}
 Write-Host 'Compiling and running direct Turbo Pascal #BIND small-tail allocation cases...'
 $bindTailCommands = [Collections.Generic.List[string]]::new()
 $bindTailCommands.Add('TPC.EXE /EBIN /UBIN BINDTAIL.PAS > BINDTAIL.LOG')
@@ -705,7 +722,33 @@ foreach ($probe in $probeFiles) {
     $baseName = [IO.Path]::GetFileNameWithoutExtension($probe.DosName)
     $compile = "TPC.EXE $($probe.CompileFlags) $($probe.DosName) > $baseName.LOG"
     Write-Host "Compiling and running Turbo Pascal probe: $baseName"
-    Invoke-DosboxSession $baseName @($compile, "BIN\$($probe.Program).EXE")
+    # NEGLEN reads a 65,535-byte payload through the original signed-length path.
+    # Compile and execute separately because the compiler's allocation history
+    # can alter this unchecked malformed-file load result. Three fresh sessions
+    # return the same -1 record length. Max cycles only reduces host wait time
+    # for this non-clock-dependent file-load probe.
+    if ($probe.Program -in @('NEGLEN', 'NEGBRD', 'STARPRB', 'CENTIPR', 'PUSHDUP', 'BINDPROB', 'SLIMEPRB', 'DRAWPRB', 'MSGTIK', 'TORCHPR')) {
+        $sessionPrefix = $probe.Program
+        Invoke-DosboxSession "$sessionPrefix-COMPILE" @($compile) 'max'
+        if (-not (Test-Path -LiteralPath (Join-Path $stageBin "$($probe.Program).EXE") -PathType Leaf)) {
+            throw "Turbo Pascal did not produce BIN\$($probe.Program).EXE. See $stageRoot\$($probe.Program).LOG and $stageRoot\$sessionPrefix-COMPILE.LOG."
+        }
+        # Fresh maximum-speed runtime sessions avoid compiler allocation
+        # history in malformed signed-length loads. STARPRB and CENTIPR also
+        # need a clean DOS allocation image: STARPRB's seeded tick fixture
+        # leaves StepX/StepY untouched before its first callback, while
+        # CENTIPR performs a deterministic 100,001-candidate seed scan before
+        # it opens the output file. PUSHDUP performs repeated board/stat
+        # allocation and callback cycles, and BINDPROB checks #BIND pointer
+        # alias state. SLIMEPRB rebuilds the board between five callback
+        # cases, and DRAWPRB repeatedly captures draw/tick output. MSGTIK
+        # captures seven message-timer render/decrement cases. TORCHPR writes
+        # no output when run in the compiler's allocation history; a fresh
+        # runtime session produces both expected rows. All are clock-independent.
+        Invoke-DosboxSession "$sessionPrefix-RUN" @("BIN\$($probe.Program).EXE") 'max'
+    } else {
+        Invoke-DosboxSession $baseName @($compile, "BIN\$($probe.Program).EXE") '3000'
+    }
 }
 
 Write-Host 'Compiling and running isolated direct Turbo Pascal OOP #IF cases: OOPIFPRB'
@@ -814,22 +857,32 @@ if (-not (Test-Path -LiteralPath $oopFlagsOutput -PathType Leaf)) {
 }
 
 Write-Host 'Compiling and running direct Turbo Pascal OOP #SEND lock and target-iteration cases: OOPSENDPRB'
-Invoke-DosboxSession 'OOPSENDPRB' @(
-    'TPC.EXE /B /EBIN /UBIN OOPSEND.PAS > OOPSEND.LOG',
-    'BIN\OOPSEND.EXE'
-)
+Invoke-DosboxSession 'OOPSEND-COMPILE' @('TPC.EXE /B /EBIN /UBIN OOPSEND.PAS > OOPSEND.LOG') 'max'
+if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'OOPSEND.EXE') -PathType Leaf)) {
+    throw "Turbo Pascal did not produce BIN\OOPSEND.EXE. See $stageRoot\OOPSEND.LOG and $stageRoot\OOPSEND-COMPILE.LOG."
+}
+# The pointer-alias and target-iteration fixture writes no rows in the
+# compiler's DOS allocation history; run the compiled direct Pascal probe in a
+# fresh maximum-speed session to control allocator history.
+Invoke-DosboxSession 'OOPSENDPRB' @('BIN\OOPSEND.EXE') 'max'
 $oopSendOutput = Join-Path $stageRoot 'OOPSEND.OUT'
 if (-not (Test-Path -LiteralPath $oopSendOutput -PathType Leaf)) {
     throw 'Turbo Pascal OOP #SEND probe did not create OOPSEND.OUT.'
 }
 
-Write-Host 'Compiling and running direct Turbo Pascal ElementObjectTick cases: OBJTIKPRB'
-$objectTickCommands = [Collections.Generic.List[string]]::new()
-$objectTickCommands.Add('TPC.EXE /B /EBIN /UBIN OBJTIK.PAS > OBJTIK.LOG')
-for ($caseId = 1; $caseId -le 4; $caseId++) {
-    $objectTickCommands.Add(('BIN\OBJTIK.EXE {0}' -f $caseId))
+Write-Host 'Compiling direct Turbo Pascal ElementObjectTick cases: OBJTIK'
+Invoke-DosboxSession 'OBJTIK-COMPILE' @('TPC.EXE /B /EBIN /UBIN OBJTIK.PAS > OBJTIK.LOG') 'max'
+if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'OBJTIK.EXE') -PathType Leaf)) {
+    throw "Turbo Pascal did not produce BIN\OBJTIK.EXE. See $stageRoot\OBJTIK.LOG and $stageRoot\OBJTIK-COMPILE.LOG."
 }
-Invoke-DosboxSession 'OBJTIKPRB' $objectTickCommands.ToArray()
+# Run each compiled direct handler case from a fresh DOSBox-X allocation
+# history. Consecutive process exits in one DOSBox session made case 2 hang
+# despite cases 2-4 completing and matching individually in isolated sessions.
+# These direct ElementObjectTick calls do not consult the DOS clock.
+for ($caseId = 1; $caseId -le 4; $caseId++) {
+    $caseName = 'OBJTIK{0:D2}' -f $caseId
+    Invoke-DosboxSession $caseName @(('BIN\OBJTIK.EXE {0}' -f $caseId)) 'max'
+}
 $objectTickRows = [Collections.Generic.List[string]]::new()
 for ($caseId = 1; $caseId -le 4; $caseId++) {
     $caseOutputPath = Join-Path $stageRoot ('OBJTIK{0:D2}.OUT' -f $caseId)
@@ -884,10 +937,14 @@ for ($caseId = 1; $caseId -le 11; $caseId++) {
 }
 
 Write-Host 'Compiling and running direct Turbo Pascal OOP parser and line-reader cases: OOPPARSEPRB'
-Invoke-DosboxSession 'OOPPARSEPRB' @(
-    'TPC.EXE /B /EBIN /UBIN OOPPARSE.PAS > OOPPARSE.LOG',
-    'BIN\OOPPARSE.EXE'
-)
+# The 2,837 direct parser/line-reader cases are clock-independent. Compile and
+# execute separately so the compiler's DOS allocation history cannot leave the
+# oracle process with an empty partial output file; use host speed for runtime.
+Invoke-DosboxSession 'OOPPARSE-COMPILE' @('TPC.EXE /B /EBIN /UBIN OOPPARSE.PAS > OOPPARSE.LOG') 'max'
+if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'OOPPARSE.EXE') -PathType Leaf)) {
+    throw "Turbo Pascal did not produce BIN\OOPPARSE.EXE. See $stageRoot\OOPPARSE.LOG and $stageRoot\OOPPARSE-COMPILE.LOG."
+}
+Invoke-DosboxSession 'OOPPARSEPRB' @('BIN\OOPPARSE.EXE') 'max'
 $oopParserOutputPath = Join-Path $stageRoot 'OOPPARSE.OUT'
 if (-not (Test-Path -LiteralPath $oopParserOutputPath -PathType Leaf)) {
     throw "Turbo Pascal OOP parser probe did not create OOPPARSE.OUT. See $stageRoot\OOPPARSE.LOG."
@@ -923,7 +980,9 @@ $oopAnyCommands.Add('TPC.EXE /B /EBIN /UBIN OOPANYP.PAS > OOPANYP.LOG')
 for ($elementId = 0; $elementId -le 53; $elementId++) {
     $oopAnyCommands.Add(('BIN\OOPANYP.EXE {0}' -f $elementId))
 }
-Invoke-DosboxSession 'OOPANYPRB' $oopAnyCommands.ToArray()
+# All 54 named-element checks are clock-independent; keep the batch below the
+# bounded DOSBox-X session window without changing the tested Pascal routines.
+Invoke-DosboxSession 'OOPANYPRB' $oopAnyCommands.ToArray() 'max'
 $oopAnyRows = [Collections.Generic.List[string]]::new()
 $oopAnyNamedElementCount = 0
 for ($elementId = 0; $elementId -le 53; $elementId++) {
@@ -1204,6 +1263,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DEMOINT.PAS') -Destination (Joi
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MOTIONIN.PAS') -Destination (Join-Path $stageRoot 'MOTIONIN.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'COMBATIN.PAS') -Destination (Join-Path $stageRoot 'COMBATIN.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'STATORD.PAS') -Destination (Join-Path $stageRoot 'STATORD.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BOARDPASSIN.PAS') -Destination (Join-Path $stageRoot 'BRDPASS.PAS')
 Write-Host 'Compiling and running direct Turbo Pascal sound-tick probe: SOUNDTIK'
 Invoke-DosboxSession 'SOUNDTIK' @(
     'TPC.EXE /B /EBIN /ISRC /USRC SOUNDTIK.PAS > SOUNDTIK.LOG',
@@ -1260,6 +1320,11 @@ foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INT
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
         throw "Pascal DEMO traversal replay did not write $fixtureOutput. See $stageRoot\DEMOINT.LOG."
     }
+}
+$demoReplayRoot = Join-Path $stageRoot 'integrated-demo'
+New-Item -ItemType Directory -Force -Path $demoReplayRoot | Out-Null
+foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+    Copy-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Destination (Join-Path $demoReplayRoot $fixtureOutput)
 }
 
 # Exercise the original nested EditorFloodFill routine directly. The test-only
@@ -1434,10 +1499,17 @@ $stagedGameForBrdProbe = $stagedGameBeforeBrdProbe.Replace(
 [IO.File]::WriteAllText($stagedGamePath, $stagedGameForBrdProbe, [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BRDXFER.PAS') -Destination (Join-Path $stageRoot 'BRDXFER.PAS')
 Write-Host 'Compiling and running the direct Turbo Pascal short-payload editor import probe: BRDXFER'
-Invoke-DosboxSession 'BRDXFER' @(
-    'TPC.EXE /B /EBIN /ISRC /USRC BRDXFER.PAS > BRDXFER.LOG',
-    'BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT'
+Invoke-DosboxSession 'BRDXFER-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC BRDXFER.PAS > BRDXFER.LOG'
 )
+if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'BRDXFER.EXE') -PathType Leaf)) {
+    throw "Turbo Pascal did not produce BIN\BRDXFER.EXE. See $stageRoot\BRDXFER.LOG and $stageRoot\BRDXFER-COMPILE.LOG."
+}
+# The imported board's deliberately short payload exercises original
+# IOResult/BoardOpen behavior. Running after the compiler in the same DOSBox-X
+# allocator history can hang; the identical compiled probe succeeds in a fresh
+# maximum-speed session, with no clock-dependent behavior in this operation.
+Invoke-DosboxSession 'BRDXFER-RUN' @('BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT') 'max'
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText($stagedGamePath, $stagedGameBeforeBrdProbe, [Text.UTF8Encoding]::new($false))
 
@@ -1979,13 +2051,13 @@ try {
         'synthetic'
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated gameplay comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
-        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $demoReplayRoot 'INTEGPR.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
-        (Join-Path $stageRoot 'INTEGSND.OUT') `
-        (Join-Path $stageRoot 'INTEGCEL.OUT') `
-        (Join-Path $stageRoot 'INTEGSAV.SAV') `
-        (Join-Path $stageRoot 'INTEGLOD.OUT') `
-        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        (Join-Path $demoReplayRoot 'INTEGSND.OUT') `
+        (Join-Path $demoReplayRoot 'INTEGCEL.OUT') `
+        (Join-Path $demoReplayRoot 'INTEGSAV.SAV') `
+        (Join-Path $demoReplayRoot 'INTEGLOD.OUT') `
+        (Join-Path $demoReplayRoot 'INTEG2SV.SAV') `
         'demo-traversal' `
         (Join-Path $stageRoot 'DEMO.ZZT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production DEMO traversal comparison failed with exit code $LASTEXITCODE." }
@@ -2080,6 +2152,11 @@ end;
 			InputProbeNormalizedTape := ''
 		else
 			InputProbeNormalizedTape := Copy(InputProbeNormalizedTape, 2, Length(InputProbeNormalizedTape) - 1);
+	end else begin
+		InputDeltaX := 0;
+		InputDeltaY := 0;
+		InputShiftPressed := false;
+		InputKeyPressed := #0;
 	end;
 '@
     $stagedInput = $stagedInput.Insert($inputUpdateEnd, $normalizedInputProbe)
@@ -2143,6 +2220,37 @@ end;
         'object-stat-order'
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F04 object-stat-order replay failed with exit code $LASTEXITCODE." }
 
+    Write-Host 'Compiling and running the F05 board-neighbor/passage gameplay replay: BOARDPASSIN'
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'BRDPASS.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'BRDPASS.EXE') -Force -ErrorAction SilentlyContinue
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'BOARDPASSIN-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC BRDPASS.PAS > BRDCOMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'BRDPASS.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\BRDPASS.EXE. See $stageRoot\BRDCOMP.LOG and $stageRoot\BOARDPASSIN-COMPILE.LOG."
+    }
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInputWithoutNormalizedTape, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'BOARDPASSIN' @('BIN\BRDPASS.EXE')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+            throw "Pascal F05 integrated replay did not write $fixtureOutput. See $stageRoot\BRDPASS.LOG."
+        }
+    }
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'board-neighbors-passages'
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F05 board-neighbor/passage replay failed with exit code $LASTEXITCODE." }
+
     & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
         'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
@@ -2159,6 +2267,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 34 # Includes BRDXFER's short-payload session and the DEMO/F02/F03/F04 integrated replay fixtures; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BINDALIA, BINDREUS, BINDORDR, BINDSIZE, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSENDPRB, OBJTIKPRB, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 65 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05 integrated fixtures, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

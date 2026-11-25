@@ -47,6 +47,9 @@ var
 	loadOutput: text;
 
 begin
+	{ Initialize test-only capture hooks before any setup can call BoardChange. }
+	GameLoopProbeEnabled := false;
+	GameLoopProbeCaptureNextBoardChange := false;
 	VideoWriteText := CaptureCellWrite;
 	New(IoTmpBuf);
 	RandSeed := 0;
@@ -111,6 +114,8 @@ begin
 	if not roundTripLoaded then RunError(255);
 	GameLoopProbeCapture('T', 3);
 	WorldSave('INTEG2SV', '.SAV');
+	GameLoopProbeEnabled := false;
+	GameLoopProbeCaptureNextBoardChange := false;
 	GameLoopProbeCapture('F', 0);
 	FreeMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 	GameLoopProbeCellWriteEvents := nil;

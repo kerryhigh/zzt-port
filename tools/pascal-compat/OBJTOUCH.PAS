@@ -14,6 +14,10 @@ var
 
 procedure SetObject(statId, x, y: integer);
 begin
+	{ Stat 2 is inactive in cases 1-3; seed its printed DataPos. }
+	{ Case 4 sets its active DataPos explicitly. }
+	if Board.StatCount < 2 then
+		Board.Stats[2].DataPos := 0;
 	Board.Stats[statId].X := x;
 	Board.Stats[statId].Y := y;
 	Board.Stats[statId].Cycle := 3;

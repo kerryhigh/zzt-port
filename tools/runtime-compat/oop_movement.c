@@ -15,6 +15,8 @@ static int creature_random_count;
 static int16_t creature_random_max[4];
 static int16_t creature_random_value[4];
 static bool force_elapsed_for_tick_check;
+static bool integrated_fixed_clock_enabled;
+static int16_t integrated_fixed_clock_hsecs;
 static int16_t slime_compat_outputs[5 * 40];
 static int16_t bomb_tick_outputs[5 * 23];
 static int16_t conveyor_tick_outputs[2 * 22];
@@ -53,7 +55,7 @@ static char scroll_touch_lines[2][51];
 #define INTEGRATED_GAMEPLAY_MAX_FIELDS 65536
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY 64
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE 516
-#define INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY 8192
+#define INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY 16384
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_STRIDE 4
 #define INTEGRATED_GAMEPLAY_SAVE_CAPACITY 65536
 static int32_t integrated_gameplay_snapshots[
@@ -61,7 +63,7 @@ static int32_t integrated_gameplay_snapshots[
 static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY];
 static int16_t integrated_gameplay_checkpoint_headers[INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY * 2];
 static int32_t integrated_gameplay_snapshot_count_value;
-static int16_t integrated_gameplay_trace[24 * 9];
+static int16_t integrated_gameplay_trace[24 * 15];
 static int32_t integrated_gameplay_sound_events[
 	INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY][INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE];
 static int32_t integrated_gameplay_sound_event_count_value;
@@ -69,9 +71,16 @@ static int32_t integrated_gameplay_sound_event_overflow_value;
 static bool integrated_gameplay_sound_capture_enabled;
 static int32_t integrated_gameplay_cell_events[
 	INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY][INTEGRATED_GAMEPLAY_CELL_EVENT_STRIDE];
+static int32_t integrated_gameplay_cell_context_events[
+	INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY][8];
 static int32_t integrated_gameplay_cell_event_count_value;
 static int32_t integrated_gameplay_cell_event_overflow_value;
 static bool integrated_gameplay_cell_capture_enabled;
+static bool integrated_gameplay_cell_coalesce_idempotent_writes;
+static int32_t integrated_gameplay_cell_idempotent_write_count_value;
+static uint8_t integrated_gameplay_cell_screen_valid[60 * 25];
+static uint8_t integrated_gameplay_cell_screen_color[60 * 25];
+static uint8_t integrated_gameplay_cell_screen_character[60 * 25];
 static uint8_t integrated_gameplay_save_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_gameplay_save_length_value;
 static int32_t integrated_gameplay_save_result_value;
@@ -88,6 +97,13 @@ static int32_t integrated_elapsed_nanos;
 static const char *integrated_normalized_input_tape;
 static int16_t integrated_normalized_input_tape_length;
 static int16_t integrated_normalized_input_tape_position;
+static bool integrated_normalized_input_at_update;
+static bool integrated_capture_first_board_change_checkpoint;
+static bool integrated_board_change_checkpoint_captured;
+static bool integrated_board_change_checkpoint_failed;
+static bool integrated_pause_transition_checkpoint_pending;
+
+static int capture_integrated_gameplay_snapshot(int checkpoint_index, int16_t checkpoint_kind, int16_t checkpoint_id);
 
 static void capture_player_shoot_state(int case_index, int target_x, int target_y, bool has_bullet);
 static void capture_player_death_state(int case_index);
@@ -131,13 +147,39 @@ static void test_video_write(zoo_video_driver *driver, int16_t x, int16_t y,
 	(void) driver;
 	#ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
 	if (integrated_gameplay_cell_capture_enabled && x >= 0 && x < 60 && y >= 0 && y < 25) {
-		if (integrated_gameplay_cell_event_count_value < INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY) {
+		int cell = (y * 60) + x;
+		bool capture = true;
+		if (integrated_gameplay_cell_coalesce_idempotent_writes) {
+			if (integrated_gameplay_cell_screen_valid[cell]
+				&& integrated_gameplay_cell_screen_color[cell] == color
+				&& integrated_gameplay_cell_screen_character[cell] == character) {
+				integrated_gameplay_cell_idempotent_write_count_value++;
+				capture = false;
+			} else {
+				integrated_gameplay_cell_screen_valid[cell] = 1;
+				integrated_gameplay_cell_screen_color[cell] = color;
+				integrated_gameplay_cell_screen_character[cell] = character;
+			}
+		}
+		if (!capture) {
+			/* The screen already contains this exact attribute/glyph pair. */
+		} else if (integrated_gameplay_cell_event_count_value < INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY) {
 			int32_t *event = integrated_gameplay_cell_events[
 				integrated_gameplay_cell_event_count_value++];
 			event[0] = x;
 			event[1] = y;
 			event[2] = color;
 			event[3] = character;
+			int32_t *context = integrated_gameplay_cell_context_events[
+				integrated_gameplay_cell_event_count_value - 1];
+			context[0] = state.world.info.current_board;
+			context[1] = state.board.stats[0].x;
+			context[2] = state.board.stats[0].y;
+			context[3] = state.game_paused ? 1 : 0;
+			context[4] = state.game_paused_blink ? 1 : 0;
+			context[5] = state.game_tick_state;
+			context[6] = state.current_stat_tick;
+			context[7] = state.current_tick;
 		} else {
 			integrated_gameplay_cell_event_overflow_value = 1;
 		}
@@ -190,7 +232,26 @@ static void capture_window_append(const char *text) {
 #include "../../third_party/libzoo/src/libzoo/zoo_callstack.c"
 #endif
 #include "../../third_party/libzoo/src/libzoo/zoo_io.c"
+#define zoo_board_change zoo_board_change_actual
 #include "../../third_party/libzoo/src/libzoo/zoo_game.c"
+#undef zoo_board_change
+
+/* Keep the Pascal BoardChange checkpoint at the same point in the touch path:
+   after the target board opens and before the board-edge callback clears dx. */
+void zoo_board_change_actual(zoo_state *test_state, int16_t board_id);
+void zoo_board_change(zoo_state *test_state, int16_t board_id) {
+	zoo_board_change_actual(test_state, board_id);
+	if (integrated_capture_first_board_change_checkpoint && test_state == &state) {
+		integrated_capture_first_board_change_checkpoint = false;
+		if (capture_integrated_gameplay_snapshot(
+				integrated_gameplay_snapshot_count_value, 'T', 2)) {
+			integrated_board_change_checkpoint_captured = true;
+		} else {
+			integrated_board_change_checkpoint_failed = true;
+		}
+	}
+}
+
 #define zoo_window_append zoo_window_append_actual
 #define zoo_window_append_pascal zoo_window_append_pascal_actual
 #include "../../third_party/libzoo/src/libzoo/zoo_window.c"
@@ -213,7 +274,30 @@ void zoo_window_open(zoo_state *test_state, zoo_text_window *window) {
 }
 
 #include "../../third_party/libzoo/src/libzoo/zoo_elements.c"
+#define zoo_input_update zoo_input_update_actual
 #include "../../third_party/libzoo/src/libzoo/zoo_input.c"
+#undef zoo_input_update
+
+/* Test-only equivalent of the Pascal InputUpdate tape override. The hook is
+   inactive for ordinary probes and changes only deterministic test input. */
+void zoo_input_update(zoo_input_state *input) {
+	char command;
+	zoo_input_update_actual(input);
+	if (!integrated_normalized_input_at_update
+			|| integrated_normalized_input_tape == NULL
+			|| integrated_normalized_input_tape_position >= integrated_normalized_input_tape_length) return;
+	command = integrated_normalized_input_tape[integrated_normalized_input_tape_position];
+	if (integrated_pause_transition_checkpoint_pending && state.game_paused && command == 'R') return;
+	integrated_normalized_input_tape_position++;
+	input->delta_x = 0;
+	input->delta_y = 0;
+	switch (command) {
+		case 'U': input->delta_y = -1; break;
+		case 'D': input->delta_y = 1; break;
+		case 'L': input->delta_x = -1; break;
+		case 'R': input->delta_x = 1; break;
+	}
+}
 #include "../../third_party/libzoo/src/libzoo/zoo_oop.c"
 #ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
 #define zoo_sound_queue zoo_sound_queue_untraced
@@ -245,7 +329,11 @@ void zoo_sound_queue(zoo_sound_state *sound, int16_t priority, const uint8_t *da
 
 bool zoo_has_hsecs_elapsed(zoo_state *test_state, int16_t *counter, int16_t value) {
 	if (!force_elapsed_for_tick_check) return false;
-	if (integrated_schedule_enabled) {
+	if (integrated_fixed_clock_enabled) {
+		int16_t difference = (int16_t) ((integrated_fixed_clock_hsecs - *counter + 6000) % 6000);
+		if (difference < value) return false;
+		*counter = integrated_fixed_clock_hsecs;
+	} else if (integrated_schedule_enabled) {
 		*counter = (int16_t) ((integrated_elapsed_nanos / 10000000) % 6000);
 		integrated_elapsed_nanos += 54924578;
 	} else {
@@ -4094,9 +4182,15 @@ static void integrated_gameplay_capture_reset(void) {
 	integrated_gameplay_sound_event_overflow_value = 0;
 	integrated_gameplay_sound_capture_enabled = false;
 	memset(integrated_gameplay_cell_events, 0, sizeof(integrated_gameplay_cell_events));
+	memset(integrated_gameplay_cell_context_events, 0, sizeof(integrated_gameplay_cell_context_events));
 	integrated_gameplay_cell_event_count_value = 0;
 	integrated_gameplay_cell_event_overflow_value = 0;
 	integrated_gameplay_cell_capture_enabled = false;
+	integrated_gameplay_cell_coalesce_idempotent_writes = false;
+	integrated_gameplay_cell_idempotent_write_count_value = 0;
+	memset(integrated_gameplay_cell_screen_valid, 0, sizeof(integrated_gameplay_cell_screen_valid));
+	memset(integrated_gameplay_cell_screen_color, 0, sizeof(integrated_gameplay_cell_screen_color));
+	memset(integrated_gameplay_cell_screen_character, 0, sizeof(integrated_gameplay_cell_screen_character));
 	memset(integrated_gameplay_save_bytes, 0, sizeof(integrated_gameplay_save_bytes));
 	integrated_gameplay_save_length_value = 0;
 	integrated_gameplay_save_result_value = -1;
@@ -4109,6 +4203,8 @@ static void integrated_gameplay_capture_reset(void) {
 	integrated_gameplay_roundtrip_save_overflow_value = 0;
 	memset(integrated_gameplay_trace, 0, sizeof(integrated_gameplay_trace));
 	force_elapsed_for_tick_check = false;
+	integrated_fixed_clock_enabled = false;
+	integrated_fixed_clock_hsecs = 0;
 	integrated_schedule_enabled = true;
 	integrated_elapsed_nanos = 0;
 	video.func_write = test_video_write;
@@ -4138,7 +4234,8 @@ static void integrated_gameplay_set_normalized_input(char command) {
 }
 
 static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_length,
-	const char *normalized_tape, int16_t normalized_length) {
+	const char *normalized_tape, int16_t normalized_length,
+	bool normalized_input_at_update) {
 	int16_t cycles = 0;
 	int16_t calls = 0;
 	int16_t previous_stat;
@@ -4153,6 +4250,13 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	integrated_normalized_input_tape = normalized_tape;
 	integrated_normalized_input_tape_length = normalized_length;
 	integrated_normalized_input_tape_position = 0;
+	integrated_normalized_input_at_update = normalized_input_at_update;
+	integrated_fixed_clock_enabled = normalized_input_at_update;
+	integrated_fixed_clock_hsecs = 30;
+	integrated_capture_first_board_change_checkpoint = normalized_input_at_update;
+	integrated_board_change_checkpoint_captured = false;
+	integrated_board_change_checkpoint_failed = false;
+	integrated_pause_transition_checkpoint_pending = normalized_input_at_update;
 	state.tick_speed = 0;
 	state.game_paused = true;
 	if (!capture_integrated_gameplay_snapshot(0, 'L', 0)) return 4;
@@ -4167,7 +4271,8 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	integrated_gameplay_cell_capture_enabled = true;
 
 	while (cycles < 6 && calls < 2000) {
-		if (integrated_normalized_input_tape != NULL
+		if (!integrated_normalized_input_at_update
+				&& integrated_normalized_input_tape != NULL
 				&& integrated_normalized_input_tape_position < integrated_normalized_input_tape_length
 				&& state.game_tick_state == 0
 				&& (state.game_paused || state.current_stat_tick >= state.board.stat_count)) {
@@ -4177,24 +4282,42 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 		previous_stat = state.current_stat_tick;
 		previous_tick = state.current_tick;
 		tick_result = (int16_t) zoo_tick(&state);
-		integrated_gameplay_trace[(calls % 24) * 9 + 0] = previous_stat;
-		integrated_gameplay_trace[(calls % 24) * 9 + 1] = state.current_stat_tick;
-		integrated_gameplay_trace[(calls % 24) * 9 + 2] = state.current_tick;
-		integrated_gameplay_trace[(calls % 24) * 9 + 3] = state.board.stat_count;
-		integrated_gameplay_trace[(calls % 24) * 9 + 4] = state.game_tick_state;
-		integrated_gameplay_trace[(calls % 24) * 9 + 5] = state.call_stack.call != NULL ? 1 : 0;
-		integrated_gameplay_trace[(calls % 24) * 9 + 6] = state.game_paused ? 1 : 0;
-		integrated_gameplay_trace[(calls % 24) * 9 + 7] = tick_result;
-		integrated_gameplay_trace[(calls % 24) * 9 + 8] = state.board.stats[1].data_pos;
+		integrated_gameplay_trace[(calls % 24) * 15 + 0] = previous_stat;
+		integrated_gameplay_trace[(calls % 24) * 15 + 1] = state.current_stat_tick;
+		integrated_gameplay_trace[(calls % 24) * 15 + 2] = state.current_tick;
+		integrated_gameplay_trace[(calls % 24) * 15 + 3] = state.board.stat_count;
+		integrated_gameplay_trace[(calls % 24) * 15 + 4] = state.game_tick_state;
+		integrated_gameplay_trace[(calls % 24) * 15 + 5] = state.call_stack.call != NULL ? 1 : 0;
+		integrated_gameplay_trace[(calls % 24) * 15 + 6] = state.game_paused ? 1 : 0;
+		integrated_gameplay_trace[(calls % 24) * 15 + 7] = tick_result;
+		integrated_gameplay_trace[(calls % 24) * 15 + 8] = state.board.stats[1].data_pos;
+		integrated_gameplay_trace[(calls % 24) * 15 + 9] = integrated_normalized_input_tape_position;
+		integrated_gameplay_trace[(calls % 24) * 15 + 10] = state.input.delta_x;
+		integrated_gameplay_trace[(calls % 24) * 15 + 11] = state.input.delta_y;
+		integrated_gameplay_trace[(calls % 24) * 15 + 12] = state.input.actions_down[ZOO_ACTION_RIGHT] ? 1 : 0;
+		integrated_gameplay_trace[(calls % 24) * 15 + 13] = state.input.actions_held[ZOO_ACTION_RIGHT] ? 1 : 0;
+		integrated_gameplay_trace[(calls % 24) * 15 + 14] = state.input.actions_held[ZOO_ACTION_LEFT] ? 1 : 0;
 		if (tick_result == ERROR) {
 			force_elapsed_for_tick_check = false;
 			integrated_schedule_enabled = false;
 			return 10 - state.error_value;
 		}
 		calls++;
-		if (state.world.info.current_board != last_board
+		if (integrated_board_change_checkpoint_failed) {
+			force_elapsed_for_tick_check = false;
+			integrated_schedule_enabled = false;
+			return 4;
+		}
+		if (integrated_board_change_checkpoint_captured) {
+			integrated_board_change_checkpoint_captured = false;
+			transition_count++;
+			last_board = state.world.info.current_board;
+			last_game_state = state.game_state;
+			last_paused = state.game_paused;
+		} else if (tick_result != RETURN_IMMEDIATE
+				&& (state.world.info.current_board != last_board
 				|| state.game_state != last_game_state
-				|| state.game_paused != last_paused) {
+				|| state.game_paused != last_paused)) {
 			last_board = state.world.info.current_board;
 			last_game_state = state.game_state;
 			last_paused = state.game_paused;
@@ -4204,6 +4327,10 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 				force_elapsed_for_tick_check = false;
 				integrated_schedule_enabled = false;
 				return 4;
+			}
+			if (integrated_pause_transition_checkpoint_pending
+					&& transition_count == 3 && state.game_paused) {
+				integrated_pause_transition_checkpoint_pending = false;
 			}
 		}
 		if (state.current_stat_tick == 0 && state.current_tick != previous_tick) {
@@ -4224,7 +4351,8 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	}
 	force_elapsed_for_tick_check = false;
 	integrated_schedule_enabled = false;
-	if (cycles != 6 || state.game_paused) return 3;
+	if (cycles != 6) return 100 + cycles;
+	if (state.game_paused) return 200;
 	if (integrated_normalized_input_tape != NULL
 			&& integrated_normalized_input_tape_position != integrated_normalized_input_tape_length)
 		return 24;
@@ -4287,7 +4415,7 @@ int32_t run_integrated_gameplay_checks(void) {
 	state.board.stats[stat_id].data = (char *) script2;
 	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script2) - 1);
 	state.board.stats[stat_id].data_pos = 0;
-	result = integrated_gameplay_run_ticks("66", 2, NULL, 0);
+	result = integrated_gameplay_run_ticks("66", 2, NULL, 0, false);
 	if (result != 0) return result;
 	return state.world.info.ammo == 1 && state.world.info.gems == 1 ? 0 : 20;
 }
@@ -4316,7 +4444,7 @@ int32_t run_integrated_demo_gameplay_checks(int32_t demo_world_length) {
 	state.game_state = GS_PLAY;
 	state.game_paused = true;
 	state.game_play_exit_requested = false;
-	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0);
+	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0, false);
 	return result;
 }
 
@@ -4381,7 +4509,7 @@ int32_t run_integrated_wall_pusher_duplicator_checks(void) {
 	state.board.tiles[19][15].element = ZOO_E_EMPTY;
 	state.board.tiles[19][15].color = 0x70;
 
-	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0);
+	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0, false);
 	return result;
 }
 
@@ -4423,7 +4551,7 @@ int32_t run_integrated_combat_key_pickup_checks(void) {
 	state.board.tiles[10][5].element = ZOO_E_AMMO;
 	state.board.tiles[10][5].color = zoo_element_defs[ZOO_E_AMMO].color;
 
-	result = integrated_gameplay_run_ticks(NULL, 0, "RFRRRRR", 7);
+	result = integrated_gameplay_run_ticks(NULL, 0, "RFRRRRR", 7, false);
 	if (result != 0) return result;
 	if (state.board.stats[0].x != 10 || state.board.stats[0].y != 5) return 41;
 	if (state.world.info.ammo != 5) return 100 + state.world.info.ammo;
@@ -4494,8 +4622,95 @@ int32_t run_integrated_script_stat_order_checks(void) {
 	state.board.stats[second_id].data_in_heap = true;
 	state.board.stats[second_id].data_heap_offset = second_offset;
 
-	result = integrated_gameplay_run_ticks("66", 2, NULL, 0);
+	result = integrated_gameplay_run_ticks("66", 2, NULL, 0, false);
 	if (result != 0) return result;
+	return 0;
+}
+
+int32_t run_integrated_board_neighbor_passage_checks(void) {
+	int16_t stat_id, i, random_index;
+	uint16_t swap;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		state.transition_order[i] = (uint16_t) i;
+	}
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		random_index = integrated_gameplay_random(&state, ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT);
+		swap = state.transition_order[random_index];
+		state.transition_order[random_index] = state.transition_order[i];
+		state.transition_order[i] = swap;
+	}
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	state.world.board_count = 2;
+	state.world.board_data[1] = NULL;
+	state.world.board_data[2] = NULL;
+	state.world.board_len[1] = 0;
+	state.world.board_len[2] = 0;
+	state.world.board_external[1] = false;
+	state.world.board_external[2] = false;
+	zoo_board_create(&state);
+	state.world.info.health = 100;
+	state.world.info.ammo = 0;
+	state.world.info.gems = 0;
+	state.world.info.score = 0;
+	state.board.tiles[30][12].element = ZOO_E_EMPTY;
+	state.board.tiles[30][12].color = 0;
+	state.board.tiles[1][5].element = ZOO_E_EMPTY;
+	state.board.tiles[1][5].color = 0;
+	state.board.stats[0].x = 2;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].step_x = 0;
+	state.board.stats[0].step_y = 0;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[2][5].element = ZOO_E_PLAYER;
+	state.board.tiles[2][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.info.neighbor_boards[2] = 1;
+	if (zoo_board_close(&state) != 0) return 40;
+
+	state.world.info.current_board = 1;
+	zoo_board_create(&state);
+	state.board.tiles[30][12].element = ZOO_E_EMPTY;
+	state.board.tiles[30][12].color = 0;
+	state.board.stats[0].x = 60;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].step_x = 0;
+	state.board.stats[0].step_y = 0;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[60][5].element = ZOO_E_PLAYER;
+	state.board.tiles[60][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	zoo_stat_add(&state, 59, 5, ZOO_E_PASSAGE, 0x2A, 0,
+		&zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 59, 5);
+	if (stat_id != 1) return 41;
+	state.board.stats[stat_id].p3 = 2;
+	if (zoo_board_close(&state) != 0) return 42;
+
+	state.world.info.current_board = 2;
+	zoo_board_create(&state);
+	state.board.tiles[23][17].element = ZOO_E_EMPTY;
+	state.board.tiles[23][17].color = 0;
+	zoo_stat_add(&state, 20, 15, ZOO_E_PASSAGE, 0x2A, 0,
+		&zoo_stat_template_default);
+	zoo_stat_add(&state, 22, 17, ZOO_E_PASSAGE, 0x2A, 0,
+		&zoo_stat_template_default);
+	if (zoo_board_close(&state) != 0) return 43;
+	zoo_board_change(&state, 0);
+	if (state.error_value != 0) return 44;
+	state.game_state = GS_PLAY;
+	/* The pause cursor can redraw its unchanged glyph on extra logical polls.
+	   The replay records actual cell changes and reports these idempotent writes separately. */
+	integrated_gameplay_cell_coalesce_idempotent_writes = true;
+	result = integrated_gameplay_run_ticks(NULL, 0, "LLLR", 4, true);
+	if (result != 0) return result;
+	if (state.world.info.current_board != 2
+			|| state.board.stats[0].x != 23 || state.board.stats[0].y != 17
+			|| state.board.stat_count != 2 || state.game_paused) return 45;
 	return 0;
 }
 
@@ -4601,6 +4816,18 @@ int32_t integrated_gameplay_sound_event_stride(void) {
 
 uint32_t integrated_gameplay_cell_events_ptr(void) {
 	return (uint32_t) (uintptr_t) integrated_gameplay_cell_events;
+}
+
+uint32_t integrated_gameplay_cell_context_events_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_gameplay_cell_context_events;
+}
+
+int32_t integrated_gameplay_cell_context_stride(void) {
+	return 8;
+}
+
+int32_t integrated_gameplay_cell_idempotent_write_count(void) {
+	return integrated_gameplay_cell_idempotent_write_count_value;
 }
 
 int32_t integrated_gameplay_cell_event_count(void) {

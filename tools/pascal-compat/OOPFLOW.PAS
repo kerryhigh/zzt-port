@@ -24,6 +24,8 @@ begin
 	Board.Stats[1].StepX := 0;
 	Board.Stats[1].StepY := 0;
 	Board.Stats[1].DataPos := 0;
+	Board.Stats[1].Under.Element := E_EMPTY;
+	Board.Stats[1].Under.Color := $70;
 	Board.Tiles[10][10].Element := E_OBJECT;
 	Board.Tiles[10][10].Color := $0F;
 	Board.Tiles[11][10].Element := eastElement;
