@@ -7,8 +7,9 @@ end;
 {$F-}
 var
 	output: text;
+	brdFile: file;
 	encoded: array[0..68] of byte;
-	ix, iy, i: integer;
+	ix, iy, i, boardLength: integer;
 begin
 	VideoWriteText := QuietWrite;
 	TickSpeed := 4;
@@ -25,6 +26,12 @@ begin
 	BoardClose;
 	if World.BoardLen[World.Info.CurrentBoard] < SizeOf(encoded) then Halt(2);
 	Move(World.BoardData[World.Info.CurrentBoard]^, encoded, SizeOf(encoded));
+	boardLength := World.BoardLen[World.Info.CurrentBoard];
+	Assign(brdFile, 'BOARDENC.BRD');
+	Rewrite(brdFile, 1);
+	BlockWrite(brdFile, boardLength, SizeOf(word));
+	BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
+	Close(brdFile);
 
 	Write(output, 'runs');
 	for i := 0 to 5 do

@@ -1756,6 +1756,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASOUT.SAV') -PathType L
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASPROBE.HI') -PathType Leaf)) {
     throw "HiSaveProbe did not write PASPROBE.HI. See $stageRoot\HISAVPRB.LOG."
 }
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BOARDENC.BRD') -PathType Leaf)) {
+    throw "BoardClose probe did not write BOARDENC.BRD. See $stageRoot\BOARDENC.LOG."
+}
 
 Push-Location $repoRoot
 try {
@@ -1765,6 +1768,10 @@ try {
         (Join-Path $stageRoot 'BOARDRLE.BIN') `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production board RLE count comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-boardenc.js' `
+        (Join-Path $stageRoot 'BOARDENC.BRD') `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal BoardClose/shared .BRD byte comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-brd-transfer.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
