@@ -340,6 +340,7 @@ $integratedGameplayArgs = @(
 	'-Wl,--no-entry', '-Wl,--export=run_integrated_gameplay_checks',
 	'-Wl,--export=integrated_demo_world_bytes_ptr', '-Wl,--export=integrated_demo_world_bytes_capacity',
 	'-Wl,--export=run_integrated_demo_gameplay_checks',
+	'-Wl,--export=run_integrated_wall_pusher_duplicator_checks',
     '-Wl,--export=integrated_gameplay_output_ptr', '-Wl,--export=integrated_gameplay_trace_ptr',
     '-Wl,--export=integrated_gameplay_snapshots_ptr', '-Wl,--export=integrated_gameplay_checkpoint_headers_ptr',
     '-Wl,--export=integrated_gameplay_snapshot_count', '-Wl,--export=integrated_gameplay_snapshot_lengths_ptr',

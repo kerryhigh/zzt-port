@@ -4290,6 +4290,71 @@ int32_t run_integrated_demo_gameplay_checks(int32_t demo_world_length) {
 	return result;
 }
 
+int32_t run_integrated_wall_pusher_duplicator_checks(void) {
+	static const char duplicated_object_script[] = "#GIVE GEMS 1\r#IDLE\r";
+	int16_t stat_id;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	zoo_board_create(&state);
+	state.world.info.health = 100;
+	state.world.info.gems = 0;
+	state.world.info.ammo = 0;
+	state.world.info.score = 0;
+	state.board.stats[0].x = 5;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[5][5].element = ZOO_E_PLAYER;
+	state.board.tiles[5][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.tiles[6][5].element = ZOO_E_EMPTY;
+	state.board.tiles[6][5].color = 0x70;
+	state.board.tiles[7][5].element = ZOO_E_BOULDER;
+	state.board.tiles[7][5].color = 0x0E;
+	state.board.tiles[8][5].element = ZOO_E_EMPTY;
+	state.board.tiles[8][5].color = 0x70;
+	state.board.tiles[9][5].element = ZOO_E_SOLID;
+	state.board.tiles[9][5].color = 0x0F;
+
+	/* Preserve the original stat order: object, two pushers, duplicator. */
+	zoo_stat_add(&state, 21, 15, ZOO_E_OBJECT, 0x0A, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 21, 15);
+	if (stat_id != 1) return 40;
+	state.board.stats[stat_id].data = (char *) duplicated_object_script;
+	state.board.stats[stat_id].data_len = (int16_t) (sizeof(duplicated_object_script) - 1);
+	state.board.stats[stat_id].data_pos = 0;
+
+	zoo_stat_add(&state, 10, 10, ZOO_E_PUSHER, 0x0F, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 10, 10);
+	if (stat_id != 2) return 41;
+	state.board.stats[stat_id].step_x = 1;
+	zoo_stat_add(&state, 11, 10, ZOO_E_PUSHER, 0x0F, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 11, 10);
+	if (stat_id != 3) return 42;
+	state.board.stats[stat_id].step_x = 1;
+	state.board.tiles[12][10].element = ZOO_E_BOULDER;
+	state.board.tiles[12][10].color = 0x0E;
+	state.board.tiles[13][10].element = ZOO_E_EMPTY;
+	state.board.tiles[13][10].color = 0x70;
+	state.board.tiles[14][10].element = ZOO_E_SOLID;
+	state.board.tiles[14][10].color = 0x0F;
+
+	zoo_stat_add(&state, 20, 15, ZOO_E_DUPLICATOR, 0x0E, 1, &zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 20, 15);
+	if (stat_id != 4) return 43;
+	state.board.stats[stat_id].step_x = 1;
+	state.board.stats[stat_id].p1 = 5;
+	state.board.stats[stat_id].p2 = 2;
+	state.board.tiles[19][15].element = ZOO_E_EMPTY;
+	state.board.tiles[19][15].color = 0x70;
+
+	result = integrated_gameplay_run_ticks("666666", 6);
+	return result;
+}
+
 uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {
 	return (uint32_t) (uintptr_t) integrated_gameplay_reload_input_bytes;
 }

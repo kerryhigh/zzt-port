@@ -10,7 +10,7 @@ const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
 if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
@@ -351,12 +351,16 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   if (scenario === 'synthetic') {
     result = instance.exports.run_integrated_gameplay_checks();
   } else {
-    const demoBytes = fs.readFileSync(demoWorldPath);
-    const demoCapacity = instance.exports.integrated_demo_world_bytes_capacity();
-    if (demoBytes.length > demoCapacity) throw new Error(`DEMO.ZZT length ${demoBytes.length} exceeds production replay input capacity ${demoCapacity}`);
-    new Uint8Array(instance.exports.memory.buffer,
-      instance.exports.integrated_demo_world_bytes_ptr(), demoBytes.length).set(demoBytes);
-    result = instance.exports.run_integrated_demo_gameplay_checks(demoBytes.length);
+    if (scenario === 'demo-traversal') {
+      const demoBytes = fs.readFileSync(demoWorldPath);
+      const demoCapacity = instance.exports.integrated_demo_world_bytes_capacity();
+      if (demoBytes.length > demoCapacity) throw new Error(`DEMO.ZZT length ${demoBytes.length} exceeds production replay input capacity ${demoCapacity}`);
+      new Uint8Array(instance.exports.memory.buffer,
+        instance.exports.integrated_demo_world_bytes_ptr(), demoBytes.length).set(demoBytes);
+      result = instance.exports.run_integrated_demo_gameplay_checks(demoBytes.length);
+    } else {
+      result = instance.exports.run_integrated_wall_pusher_duplicator_checks();
+    }
   }
   if (result !== 0) throw new Error(`Production integrated replay returned ${result}`);
 
@@ -464,6 +468,33 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       return values[playerStatStart] !== startX || values[playerStatStart + 1] !== startY || values[3] !== startBoard;
     });
     if (!traversed) throw new Error(`DEMO traversal input tape produced no player movement from board ${startBoard} (${startX},${startY})`);
+  }
+  if (scenario === 'walls-pushers-duplicators') {
+    const final = expectedSnapshots.at(-1).values;
+    const statCount = final[11];
+    const tileStart = scalarNames.length + (statCount + 1) * statFieldCount + schedulerFieldCount;
+    const tileElementAt = (x, y) => final[tileStart + ((x * 27 + y) * 2)];
+    const statField = (statId, field) => final[scalarNames.length + statId * statFieldCount + field];
+    const requiredTiles = [
+      [8, 5, 24, 'player pushed the boulder up to the wall'],
+      [9, 5, 21, 'player-side solid wall'],
+      [11, 10, 40, 'first pusher advanced through the chain'],
+      [12, 10, 40, 'second pusher advanced through the chain'],
+      [13, 10, 24, 'pusher moved the boulder up to the wall'],
+      [14, 10, 21, 'pusher-side solid wall'],
+      [19, 15, 36, 'duplicator-created object'],
+      [20, 15, 12, 'duplicator remains in its source cell'],
+      [21, 15, 36, 'duplicator source object remains in place'],
+    ];
+    if (statCount !== 5) throw new Error(`F02 coverage assertion failed: expected source plus cloned object and three mechanism stats (5 total), observed ${statCount}`);
+    for (const [x, y, expected, behavior] of requiredTiles) {
+      const observed = tileElementAt(x, y);
+      if (observed !== expected) throw new Error(`F02 coverage assertion failed at tile (${x},${y}) for ${behavior}: expected element ${expected}, observed ${observed}`);
+    }
+    if (statField(0, 0) !== 7 || statField(2, 0) !== 11 || statField(3, 0) !== 12 || statField(5, 0) !== 19 || statField(5, 1) !== 15) {
+      throw new Error(`F02 coverage assertion failed: expected pusher chain and appended duplicator stat order; stats=${JSON.stringify([2, 3, 4, 5].map(id => final.slice(scalarNames.length + id * statFieldCount, scalarNames.length + (id + 1) * statFieldCount)))}`);
+    }
+    if (final[1] < 2) throw new Error(`F02 coverage assertion failed: expected source and same-cycle cloned object scripts to execute, observed gems=${final[1]}`);
   }
   const expectedSound = parseSoundEvents(soundPath);
   if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');
