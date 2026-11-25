@@ -2,12 +2,29 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-24",
-    "root_revision": "36336df: expanded E2-10 integrated replay snapshots and isolated Pascal timing probes",
+    "root_revision": "b6c6f13: test: trace Pascal .BRD IOResult clearing (E2-02 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "passed",
     "pascal_exit_code": 0,
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01>; exit 0",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -DosboxExecutable C:\\DOSBox-X\\dosbox-x.exe; exit 0",
+    "brd_short_read_probe": {
+      "probe": "tools/pascal-compat/BRDIOPRB.PAS",
+      "evidence_class": "D",
+      "result": "passed",
+      "partial_length": {
+        "first_ioresult": 100,
+        "destination_word_after_read": 4610,
+        "next_ioresult": 0
+      },
+      "short_payload": {
+        "header_ioresult": 0,
+        "payload_ioresult": 100,
+        "next_ioresult": 0,
+        "destination_bytes": [16, 32, 165, 165]
+      },
+      "editor_transfer_end_to_end": "pending"
+    },
     "toolchain": {
       "pascal": "Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository)",
       "dosbox_x": "DOSBox-X 2026.10.01; SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed",
@@ -80,7 +97,7 @@
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
-      "Truncated .BRD reads differ at the API boundary: Pascal records I/O error 100 and retains partial length/payload bytes; the shared production codec reports a library error and Android wrapper policy also resets/closes state. Exact engine result and reset semantics remain unresolved.",
+      "Truncated .BRD reads remain unresolved at the editor-operation boundary. Direct BRDIOPRB evidence now records IOResult 100 followed by 0; source-derived review shows DisplayIOError calls IOResult twice, so EditorTransferBoard's short-length path proceeds to BoardOpen after freeing the prior buffer, while a short payload reaches the final error branch. The freed-buffer result has not been captured under a controlled Pascal allocation history, and Android currently resets the board for both shapes.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
       "The integrated prototype now compares RNG seed words, one stat-pair script alias relation, and 19 script bytes at loaded, loop-start, per-cycle, and final checkpoints. Complete script alias graphs, logical cell-write/sound-event streams, state-transition checkpoints, and generated file bytes remain unverified; it does not count toward the ten required fixtures."
@@ -108,7 +125,8 @@
       "Moved .HI initialization, load/reset, save, ranking, and insertion into the shared LibZoo API; Android retains file and CP437 entry adapters.",
       "Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.",
       "Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.",
-      "Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures."
+      "Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.",
+      "E2-02: a fresh clean run passed 83 direct Pascal sessions and 42/42 configured comparisons. BRDIOPRB now proves the first IOResult consumes error 100; end-to-end EditorTransferBoard state after a short length header remains pending."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
