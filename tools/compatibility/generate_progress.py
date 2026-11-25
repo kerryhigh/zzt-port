@@ -168,7 +168,8 @@ def main() -> None:
         "",
         "## Latest verification record",
         "",
-        f"- Latest full Pascal-runner attempt: exit code {runner.get('latest_attempt', {}).get('full_pascal_runner_exit_code', 'not recorded')}; {runner.get('latest_attempt', {}).get('status', 'not recorded')}. {runner.get('latest_attempt', {}).get('failure', '')}",
+        f"- Latest full Pascal-runner attempt: exit code {runner.get('latest_attempt', {}).get('full_pascal_runner_exit_code', 'not recorded')}; {runner.get('latest_attempt', {}).get('status', 'not recorded')}"
+        + (f". {runner['latest_attempt']['failure']}" if runner.get('latest_attempt', {}).get('failure') else "."),
         f"- The latest integrated Pascal differential is reported separately: exit {runner.get('latest_attempt', {}).get('integrated_differential_exit_code', 'not recorded')}; {integrated.get('prototype_field_comparisons', 'not recorded')} snapshot fields, {integrated.get('sound_events_compared', 'not recorded')} logical sound events, and {integrated.get('cell_writes_compared', 'not recorded')} ordered playfield cell writes matched.",
         f"- Toolchain: {runner.get('toolchain', {}).get('pascal', 'not recorded')}; {runner.get('toolchain', {}).get('dosbox_x', 'DOSBox-X version not recorded')}.",
         f"- Source revision: LibZoo baseline `{inv['baseline']['libzoo_commit']}`; local LibZoo overlay `{runner.get('libzoo_local_commit', 'not recorded')}`; Pascal source hashes in the manifest; root Git revision: {runner.get('root_revision', 'not yet recorded')}.",

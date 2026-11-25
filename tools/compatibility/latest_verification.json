@@ -2,12 +2,12 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "d61ec17: test: compare integrated playfield writes (E2-10 partial)",
+    "root_revision": "af03a2d5e95a21b1105de311d8a7d701e8af7216: test: stabilize BRDXFER Pascal probe boundary",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "The last complete full Pascal run passed 84 sessions and 43/43 configured differentials on c7c49c3. The 2026-11-25 attempt compiled and ran INTEGPRB and later editor probes, then timed out in BRDXFER before the runner summary; see latest_attempt. The standalone integrated differential and runtime suite passed after fixture normalization.",
+    "pascal_suite_result": "The clean full Pascal runner passed on 2026-11-25: 84/84 direct Turbo Pascal sessions and 43/43 configured Pascal-to-production differentials. The short-header BoardOpen attempt remains excluded because it has no stable oracle result. The staged BRDXFER modal acknowledgement boundary is documented in tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md.",
     "pascal_exit_code": 0,
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain <Turbo Pascal 5.5 directory> -DosboxExecutable <DOSBox-X 2026.10.01 executable>; exit 0",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable 'C:/Users/Kerry/Downloads/MallVR_v0.13.2_Loader/MallVR_v0.13.2_Loader/engine/dosbox-x.exe'; exit 0",
     "brd_short_read_probe": {
       "probe": "tools/pascal-compat/BRDIOPRB.PAS",
       "evidence_class": "D",
@@ -31,11 +31,11 @@
       "editor_transfer_probe": {
         "probe": "tools/pascal-compat/BRDXFER.PAS",
         "evidence_class": "D",
-        "result": "short-payload passed; short-header unresolved",
+        "result": "short-payload passed in clean full run under explicit staged modal-boundary substitution; short-header unresolved",
         "fixture": "short payload: declared length 4, two payload bytes present",
         "staging_interventions": [
           "Staged EDITOR.PAS supplies the import choice and fixture filename at existing prompt boundaries.",
-          "Staged GAME.PAS supplies Escape at the existing error-dialog key boundary; DisplayIOError, IOResult, file reads, BoardCreate, and cleanup routines remain reconstructed Pascal code."
+          "Staged GAME.PAS substitutes TextWindowRejected := true; InputKeyPressed := #0 at the TextWindowSelect acknowledgement boundary, representing the state after Escape and skipping only the blocking modal selection interaction. DisplayIOError, IOResult handling, file reads, BoardCreate, and editor cleanup remain reconstructed Pascal routines; this probe does not verify modal key handling."
         ],
         "short_payload_output": "board 0 255 0 4 31 30 12 0",
         "short_header_attempt": {
@@ -59,13 +59,13 @@
       "sessions": 84,
       "standard_programs": 54,
       "standalone_sessions": 30,
-      "session_result": "all configured sessions passed; unresolved short-header attempt excluded"
+      "session_result": "84/84 configured sessions passed in the latest clean runner; unstable short-header attempt excluded"
     },
     "direct_differential_comparisons": {
       "configured": 43,
       "passed": 43,
       "failed": 0,
-      "result": "all configured comparisons passed in the clean runner; short-header editor-state differential remains pending"
+      "result": "43/43 configured comparisons passed in the latest clean full runner; zero unexplained mismatches; short-header editor-state comparison remains pending"
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -178,7 +178,7 @@
     "other_suites": {
       "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
-      "runtime": "passed after integrated cell-write capture and normalized player-glyph fixture state; tools/runtime-compat/verify.ps1 exit 0",
+      "runtime": "passed in the 2026-11-25 clean full Pascal/production compatibility run; tools/runtime-compat/verify.ps1 exit 0",
       "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
       "android_build": "passed fresh offline on 2026-11-24: .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64",
       "windows_ctest": "passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly"
@@ -188,8 +188,7 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The integrated prototype now matches 31,260 variable-size state fields, two logical SoundQueue events (20 event fields), and nine ordered playfield writes (36 fields). It still lacks distinct state-transition checkpoints, generated file bytes, and the ten required fixtures.",
-      "The 2026-11-25 full Pascal runner attempt compiled and ran INTEGPRB and subsequent editor probes, then timed out in the BRDXFER DOSBox-X session (30 seconds). This is an unresolved verification-run interruption, not a reported production/oracle differential."
+      "The integrated prototype now matches 31,260 variable-size state fields, two logical SoundQueue events (20 event fields), and nine ordered playfield writes (36 fields). It still lacks distinct state-transition checkpoints, generated file bytes, and the ten required fixtures."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
@@ -216,8 +215,8 @@
       "Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.",
       "Generalized integrated replay snapshots to live stat counts and unique script owners; the clean Pascal suite passed 84 direct sessions and 43/43 configured differentials. The two-script, three-stat prototype matched 31,158 fields across nine checkpoints. E2-10 remains open at 0/10 fixtures.",
       "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity.",
-      "Extended the integrated Pascal/production prototype to compare sound queue state at each snapshot and capture SoundQueue request/result events. A direct integrated comparison matched 31,242 variable-size snapshot fields and two sound events (20 fields); runtime verification passed. The encompassing full Pascal runner currently stops at a BRDXFER DOSBox-X timeout, so this is partial evidence, not a new full-suite pass.",
-      "Extended the integrated replay with ordered playfield cell writes. The Pascal and production traces matched across 9 events / 36 fields and 31,260 state fields; runtime verification passed. The full Pascal runner still times out in BRDXFER, so the suite remains incomplete."
+      "Extended the integrated Pascal/production prototype to compare sound queue state and SoundQueue request/result events. The latest clean runner passes 84 direct sessions and 43/43 comparisons after the BRDXFER modal-boundary fix; the prototype matched 31,260 state fields, two sound events (20 fields), and nine cell writes (36 fields).",
+      "Extended the integrated replay with ordered playfield cell writes. After the staged BRDXFER boundary fix, a clean full Pascal runner passed 84 direct sessions and 43/43 comparisons, with zero unexplained mismatches. The prototype remains outside E2-10 required fixtures, which are 0/10 complete."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -246,13 +245,18 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable C:/Users/Kerry/Downloads/MallVR_v0.13.2_Loader/MallVR_v0.13.2_Loader/engine/dosbox-x.exe",
-      "full_pascal_runner_exit_code": 1,
-      "failure": "DOSBox-X did not exit from the BRDXFER session within the runner 30-second timeout. The integrated probe and several following editor probes had completed before the timeout.",
+      "source_revision": "af03a2d5e95a21b1105de311d8a7d701e8af7216",
+      "full_pascal_runner_exit_code": 0,
+      "direct_pascal_sessions_passed": 84,
+      "configured_differentials_passed": 43,
+      "configured_differentials_failed": 0,
+      "failure": null,
+      "staging_boundary_intervention": "For BRDXFER only, staged GAME.PAS replaces TextWindowSelect at the DisplayIOError acknowledgement boundary with TextWindowRejected := true; InputKeyPressed := #0. This skips the blocking modal interaction; the short-payload file reads, IOResult checks, DisplayIOError return, BoardCreate, and editor cleanup run in reconstructed Pascal.",
       "integrated_pascal_probe": "compiled and ran; generated INTEGPR.OUT, INTEGSND.OUT, and INTEGCEL.OUT",
       "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT build/pascal-compat-verification/INTEGCEL.OUT",
       "integrated_differential_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "partial attempt; not a complete clean Pascal suite"
+      "status": "complete clean runner; 84 direct sessions and 43 configured differentials passed; this does not complete E2-02 or E2-10"
     }
   }
 }

@@ -13,7 +13,7 @@ short-payload 0 100 next-IOResult 0 16 32 165 165
 
 The one-byte length read leaves the prior high byte (`0x12`) intact and replaces the low byte with `0x02`, yielding 4610 (`0x1202`). The short payload leaves its unread suffix at the seeded `0xA5`. The next `IOResult` is zero in both cases.
 
-`tools/pascal-compat/BRDXFER.PAS` also runs the actual nested `EditorTransferBoard` through `EditorLoop`. The staged editor unit supplies the import choice and fixture name at prompt boundaries. The staged game unit supplies Escape at the existing error-dialog key boundary. File reads, `DisplayIOError`, `BoardCreate`/`BoardOpen`, and editor cleanup still run from the reconstructed Pascal routines.
+`tools/pascal-compat/BRDXFER.PAS` also runs the actual nested `EditorTransferBoard` through `EditorLoop`. The staged editor unit supplies the import choice and fixture name at prompt boundaries. At the `DisplayIOError` acknowledgement boundary, the staged game unit substitutes the state after an Escape response (`TextWindowRejected := true; InputKeyPressed := #0`) instead of entering the blocking `TextWindowSelect` loop. The file reads, both `IOResult` checks, `DisplayIOError` return value, `BoardCreate`, and editor cleanup remain reconstructed Pascal routines. The modal selection interaction itself is not covered by this probe.
 
 The short-payload fixture declares four bytes and provides two. Direct output:
 
@@ -48,3 +48,16 @@ The older one-byte-header fixture was named `SHORTHEAD` (nine characters), so Tu
 - The runner recreated its staging directory. Reconstructed Pascal gameplay source units remained untouched; probe hooks and deterministic prompt input were applied only in the staging copy.
 
 E2-02 remains partial. The short-payload editor behavior is directly captured and compared for selected state; the short-header final state is source-derived, not directly verified. Complete the frozen malformed-read boundary matrix and resolve the shared short-header editor-state comparison without depending on freed host memory.
+
+
+## 2026-11-25 runner-boundary update
+
+The first full-run attempts timed out in `BRDXFER`: setting `InputKeyPressed := KEY_ESCAPE` before `TextWindowSelect` was ineffective because `TextWindowSelect` calls `InputUpdate`, and a staged auto-Escape hook also failed to leave the modal path. The verified runner now replaces only that staged call with the post-Escape state assignment described above. A clean run against the runner contents later committed as `af03a2d5e95a21b1105de311d8a7d701e8af7216` (`test: stabilize BRDXFER Pascal probe boundary`) completed successfully:
+
+- Full `tools/pascal-compat/verify.ps1` runner: exit **0**.
+- Direct Turbo Pascal 5.5 sessions: **84/84 passed**; the unstable short-header attempt remains excluded.
+- Configured Pascal-to-production comparisons: **43/43 passed**, zero unexplained mismatches.
+- The short-payload `BRDXFER` output remained `board 0 255 0 4 31 30 12 0`; this records the direct import path and resulting `BoardCreate` state with the modal acknowledgement substituted.
+- The integrated prototype comparison passed **31,260 state fields** at nine checkpoints, two logical sound events / 20 fields, and nine playfield writes / 36 fields. The runtime suite passed.
+
+This closes the runner interruption, not E2-02 or E2-10. The short-header final state remains unresolved, and `INTEGPRB` is still a prototype outside the ten required integrated fixtures (0/10 complete). The staged modal substitution is an explicit input-boundary intervention; it does not verify the text-window selection loop or Escape handling.
