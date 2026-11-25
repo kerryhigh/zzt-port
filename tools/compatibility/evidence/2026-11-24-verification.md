@@ -10,7 +10,7 @@ This is the latest clean compatibility run for the current E2-02 editor-transfer
 - Exit code: **0**. **84 direct Turbo Pascal 5.5 sessions passed**: 54 standard programs and 30 standalone sessions.
 - **43/43 configured Pascal-to-production comparisons passed**, including the short-payload editor transfer outcome and seven selected board/player fields.
 - The shared `.HI` suite passed **16 direct byte comparisons** against compiled Pascal: one save, eight load/reset, and seven add cases, each comparing the complete 1,590-byte table. The separate 256-row insertion model remains source-derived evidence.
-- The integrated prototype compared **30,789 fields**: 3,421 fields at each of nine checkpoints (loaded state, game-loop start, six cycles, and final state). RNG seed words, one stat script-pointer alias relation, and the fixture script bytes were included. All matched. It is not one of the ten E2-10 fixtures and still lacks complete alias graphs, cell-write and sound-event streams, state-transition checkpoints, and generated file bytes.
+- The integrated prototype compared **30,816 fields**: 3,424 fields at each of nine checkpoints (loaded state, game-loop start, six cycles, and final state). RNG seed words, the full 2×2 script-pointer equality matrix for its two live stats, and the fixture script bytes were included. All matched. It is not one of the ten E2-10 fixtures; its schema remains fixed to two stats, and it still lacks logical cell-write and sound-event streams, state-transition checkpoints, and generated file bytes.
 - Source-derived evidence remains separate: 256 `.HI` insertion model rows and five Android CP437 name-adapter assertions are not counted as compiled-Pascal probes.
 - The valid short-header fixture attempt (`SHORTHD.BRD`) is unresolved: the DOSBox-X run stalled; an instrumented run ended with Pascal runtime error 203 in the freed-buffer `BoardOpen` path. It is not included in the 84 passing sessions or 43 passing comparisons. The older nine-character `SHORTHEAD` fixture was invalid under DOS 8.3 and its earlier purported output was removed.
 
@@ -40,6 +40,10 @@ Turbo Pascal and DOSBox-X binaries are excluded from the repository. The recorde
 | DOSBox-X executable | `B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3` |
 
 The Android build used the existing Gradle 8.11.1 distribution, Android Gradle Plugin 8.10.0, SDK Platform 35, and NDK 27.2.12479018. Node.js was `v22.19.0`; Java was 17. Local paths and proprietary compiler/emulator binaries are intentionally omitted.
+
+## E2-10 replay schema follow-up — 2026-11-24
+
+Commit `d88ce52` extends the prototype's alias comparison from the single stat-0/stat-1 relation to every ordered pointer-equality pair for its two live stats. The Pascal probe and production harness both emit the same 2×2 matrix at all nine checkpoints. A fresh clean Pascal runner passed with exit code 0: 84 direct sessions, 43/43 configured differentials, and 9×3,424 integrated comparisons. The runtime compatibility suite also passed after the schema change. This is **DP** evidence for the two-stat prototype only; it does not complete E2-10 or add a fixture to the required ten.
 
 ## Result and limits
 

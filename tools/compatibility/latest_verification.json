@@ -2,7 +2,7 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-24",
-    "root_revision": "3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial)",
+    "root_revision": "d88ce52: test: compare integrated stat alias graph (E2-10 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "passed; corrected short-header direct attempt remains unresolved and is excluded from passing counts",
@@ -75,8 +75,10 @@
       "required_fixtures": 10,
       "completed_fixtures": 0,
       "prototype_name": "INTEGPRB: six zero-speed cycles with loaded, loop-start, per-cycle, and final snapshots; not one of the ten fixtures",
-      "prototype_fields_compared": 3421,
-      "prototype_field_comparisons": 30789,
+      "prototype_fields_compared": 3424,
+      "prototype_field_comparisons": 30816,
+      "oracle_output_size_bytes": 65084,
+      "oracle_output_sha256": "3BEE89F210A01C898D25C2728379E36399F2AB6F5D93682BF0360037FBAB8A26",
       "prototype_checkpoint_count": 9,
       "checkpoint_names": [
         "loaded initial state",
@@ -96,18 +98,18 @@
           "fixture": "INTEGPRB prototype: buffered movement, two boulder pushes, and #GIVE/#IDLE",
           "evidence_class": "DP",
           "checkpoints": 9,
-          "fields_per_checkpoint": 3421,
-          "field_comparisons": 30789,
+          "fields_per_checkpoint": 3424,
+          "field_comparisons": 30816,
           "result": "passed",
-          "limitations": "This prototype is not one of the ten required fixtures. It captures one stat alias relation and the fixture object script, but not complete alias graphs, logical cell-write or sound-event streams, state-transition checkpoints, or generated file bytes."
+          "limitations": "This prototype is not one of the ten required fixtures. It captures the complete 2x2 script-pointer equality matrix for this fixture's two live stats and the fixture object script, but the schema is fixed to two stats and does not capture logical cell-write or sound-event streams, state-transition checkpoints, or generated file bytes."
         }
       ],
-      "schema_revision": "e2-10-prototype-r2",
+      "schema_revision": "e2-10-prototype-r3",
       "state_transition_checkpoints": false,
       "captured_categories": [
         "World, stat, scheduler, input, playable tile, and source-border/sentinel fields",
         "RNG seed low and high words",
-        "Stat 0/1 script data-pointer alias relation",
+        "Complete 2x2 script data-pointer equality matrix for the two live stats in this fixture",
         "All 19 script bytes for stat 1 in this fixture"
       ]
     },
@@ -124,7 +126,7 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The integrated prototype now compares RNG seed words, one stat-pair script alias relation, and 19 script bytes at loaded, loop-start, per-cycle, and final checkpoints. Complete script alias graphs, logical cell-write/sound-event streams, state-transition checkpoints, and generated file bytes remain unverified; it does not count toward the ten required fixtures."
+      "The integrated prototype now compares RNG seed words, the complete 2x2 script-pointer equality matrix for its two live stats, and 19 script bytes at loaded, loop-start, per-cycle, and final checkpoints. Variable-size alias graphs for fixtures with changing or larger stat sets, logical cell-write/sound-event streams, state-transition checkpoints, and generated file bytes remain unverified; it does not count toward the ten required fixtures."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
@@ -149,7 +151,7 @@
       "Moved .HI initialization, load/reset, save, ranking, and insertion into the shared LibZoo API; Android retains file and CP437 entry adapters.",
       "Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.",
       "Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.",
-      "Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.",
+      "Expanded the integrated replay snapshot to compare all four pointer-equality relationships between its two live stats. The clean Pascal suite passed 84 direct sessions and 43/43 configured differentials; the prototype matched 30,816 fields across nine checkpoints. E2-10 remains open at 0/10 fixtures.",
       "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity."
     ],
     "high_score_differential": {
