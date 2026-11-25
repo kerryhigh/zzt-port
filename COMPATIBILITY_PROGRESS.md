@@ -34,7 +34,7 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Evidence inventory
 
-- Direct compiled-Pascal probe sessions: **84** (54 standard programs; 30 standalone sessions).
+- Direct compiled-Pascal probe sessions: **86** (54 standard programs; 32 standalone sessions).
 - Direct Pascal-to-production differential comparisons: **42/42** passed; failed: **0**; run result: **all configured comparisons passed in the clean runner**.
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **16/16** passed (1 save, 8 load/reset, 7 insertion cases); source-model rows: **256**.
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
@@ -74,7 +74,7 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 ### Mandatory remaining work
 
 - E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.
-- E2-02: complete the exhaustive byte/error boundary matrix and resolve truncated .BRD behavior.
+- E2-02: complete the exhaustive byte/error boundary matrix and compare both directly observed truncated .BRD editor outcomes against a shared import/error-state API under the same controlled allocation history.
 - E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell, text-window, and logical sound acceptance cases.
 - E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.
 - E2-10: add complete alias-graph, logical cell-write/sound-event, state-transition, and serialized-byte captures; create and pass the ten frozen integrated replay fixtures.
@@ -87,7 +87,7 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 
 ## Known discrepancies and unresolved questions
 
-- Truncated .BRD editor imports remain unresolved at the short-header boundary. Direct BRDXFER evidence confirms the short-payload path reaches BoardCreate after the error dialog; source-derived review predicts the short-header path reaches BoardOpen after freeing the prior buffer, but that allocator-sensitive result is not captured. Android currently resets for both shapes, so only short-payload behavior is directly matched.
+- Truncated .BRD imports are captured for the payload path and one seeded short-header allocation history. The short-header result repeated across three fresh DOSBox-X processes, but other allocation histories and an equivalent shared-engine editor-state API comparison remain open. Android resets for both shapes, while the observed Pascal short-header trace reopens the prior serialized board.
 - Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.
 - Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.
 - The integrated prototype now compares RNG seed words, one stat-pair script alias relation, and 19 script bytes at loaded, loop-start, per-cycle, and final checkpoints. Complete script alias graphs, logical cell-write/sound-event streams, state-transition checkpoints, and generated file bytes remain unverified; it does not count toward the ten required fixtures.
@@ -95,7 +95,7 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 ## Latest verification record
 
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 642f0c0: test: capture editor .BRD short-payload reset (E2-02 partial).
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 25486c5: test: repeat Pascal .BRD short-header import (E2-02 partial).
 - Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -DosboxExecutable C:\DOSBox-X\dosbox-x.exe; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
@@ -112,6 +112,6 @@ Total unclassified source inventory entries: **1468**; explicitly excluded: **10
 - Compared 16 complete .HI records against direct compiled-Pascal outputs with zero mismatches; 256 source-model rows remain separate S evidence.
 - Rebuilt Android arm64-v8a/x86_64 and Windows x64 after the shared .HI refactor; Android builds and Windows CTest 3/3 passed.
 - Expanded the reusable integrated replay snapshot schema to 3,421 fields per checkpoint; isolated sound/scheduler/gameplay oracle sessions to keep DOSBox-X timing reproducible. E2-10 remains open at 0/10 fixtures.
-- E2-02: a fresh clean run passed 84 direct Pascal sessions and 42/42 configured comparisons. BRDIOPRB proves the first IOResult consumes error 100; BRDXFER directly captures the real EditorTransferBoard short-payload BoardCreate reset. The one-byte header branch remains unresolved.
+- E2-02: a fresh clean run passed 86 direct Pascal sessions and 42/42 configured comparisons. BRDXFER captures BoardCreate after a short payload and prior-board reopen after a one-byte header under one seeded trace; the header output repeated across three fresh DOSBox-X processes. Shared-engine editor-state comparison and the full boundary matrix remain open.
 
 Generated by `python tools/compatibility/generate_progress.py`. Do not edit this report manually.

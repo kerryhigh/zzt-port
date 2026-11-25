@@ -162,7 +162,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-      "verification_result": "Partial: direct Pascal captures title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after a short editor payload. Truncation at every boundary for every applicable format and the editor short-header final state remain unverified."
+      "verification_result": "Partial: direct Pascal captures title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, BoardCreate after a short editor payload, and the short-header BoardOpen result for one seeded allocation trace repeated in three fresh DOSBox-X processes. Truncation at every boundary for every applicable format and other short-header allocation histories remain unverified."
     },
     {
       "id": "E2-02-AC004",
@@ -185,7 +185,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-      "verification_result": "Partial: byte and result comparisons exist for selected .ZZT/.SAV, valid .BRD, and .HI operations. The short-payload editor reset has direct Pascal evidence but no equivalent shared-engine state API comparison; short-header state, complete error classes, and untouched-buffer suffixes remain open."
+      "verification_result": "Partial: byte and result comparisons exist for selected .ZZT/.SAV, valid .BRD, and .HI operations. Both short-payload reset and seeded short-header BoardOpen results have direct Pascal evidence, but neither has an equivalent shared-engine editor-state API comparison; other allocation histories, complete error classes, and untouched-buffer suffixes remain open."
     },
     {
       "id": "E2-02-AC005",
@@ -206,7 +206,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-      "verification_result": "Partial: the clean run has 42 configured Pascal-to-production comparisons and 16 direct .HI byte comparisons with no unexplained mismatch, but many serialized-field and malformed-read cases in AC002/AC003 have no direct differential. E2-02 cannot pass until all cases are paired and the truncated .BRD operation semantics are resolved."
+      "verification_result": "Partial: the clean run has 42 configured Pascal-to-production comparisons and 16 direct .HI byte comparisons with no unexplained mismatch, but many serialized-field and malformed-read cases in AC002/AC003 have no direct differential. The two truncated .BRD outcomes are captured for controlled histories; E2-02 still requires paired shared-engine editor-state comparisons and the complete frozen boundary matrix."
     },
     {
       "id": "E2-03-AC001",
