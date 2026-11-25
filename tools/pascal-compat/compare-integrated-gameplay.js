@@ -6,7 +6,9 @@ if (!pascalPath || !wasmPath) throw new Error('Usage: compare-integrated-gamepla
 
 const cellCount = 62 * 27;
 const scriptBytes = 19;
-const fieldCount = 51 + cellCount * 2 + 2 + 1 + scriptBytes;
+const aliasGraphSize = 2;
+const aliasGraphFields = aliasGraphSize * aliasGraphSize;
+const fieldCount = 51 + cellCount * 2 + 2 + aliasGraphFields + scriptBytes;
 const checkpointSpecs = [
   { kind: 'L', id: 0, name: 'loaded initial state' },
   { kind: 'S', id: 0, name: 'game-loop start' },
@@ -60,8 +62,11 @@ function describeField(index) {
   }
   if (index === tileFieldEnd) return 'RNG seed low word';
   if (index === tileFieldEnd + 1) return 'RNG seed high word';
-  if (index === tileFieldEnd + 2) return 'stat 0/1 script pointer alias';
-  return `stat 1 script byte ${index - tileFieldEnd - 3}`;
+  if (index < tileFieldEnd + 2 + aliasGraphFields) {
+    const aliasIndex = index - tileFieldEnd - 2;
+    return `script pointer alias stat ${Math.floor(aliasIndex / aliasGraphSize)}=${aliasIndex % aliasGraphSize}`;
+  }
+  return `stat 1 script byte ${index - tileFieldEnd - 2 - aliasGraphFields}`;
 }
 
 (async () => {

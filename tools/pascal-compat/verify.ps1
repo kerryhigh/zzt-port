@@ -399,7 +399,7 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 	begin
 		Assign(output, 'INTEGPR.OUT');
 		Append(output);
-		Write(output, checkpointKind, ' ', checkpointId, ' ', 51 + ((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 + 1 + 19, ' ',
+		Write(output, checkpointKind, ' ', checkpointId, ' ', 51 + ((BOARD_WIDTH + 2) * (BOARD_HEIGHT + 2) * 2) + 2 + 4 + 19, ' ',
 			World.Info.Ammo, ' ', World.Info.Gems, ' ', World.Info.Health,
 			' ', World.Info.CurrentBoard, ' ', World.Info.Torches, ' ', World.Info.TorchTicks,
 			' ', World.Info.EnergizerTicks, ' ', World.Info.Score,
@@ -419,8 +419,10 @@ procedure GameLoopProbeCapture(checkpointKind: char; checkpointId: integer);
 		for ix := 0 to BOARD_WIDTH + 1 do
 			for iy := 0 to BOARD_HEIGHT + 1 do
 				Write(output, Board.Tiles[ix][iy].Element, ' ', Board.Tiles[ix][iy].Color, ' ');
-		Write(output, (RandSeed and $FFFF), ' ', ((RandSeed shr 16) and $FFFF), ' ',
-			Ord(Board.Stats[0].Data = Board.Stats[1].Data), ' ');
+		Write(output, (RandSeed and $FFFF), ' ', ((RandSeed shr 16) and $FFFF), ' ');
+		for statId := 0 to 1 do
+			for scriptByteIndex := 0 to 1 do
+				Write(output, Ord(Board.Stats[statId].Data = Board.Stats[scriptByteIndex].Data), ' ');
 		for scriptByteIndex := 0 to 18 do begin
 			scriptByte := 0;
 			if (Board.Stats[1].Data <> nil) and (scriptByteIndex < Board.Stats[1].DataLen) then
