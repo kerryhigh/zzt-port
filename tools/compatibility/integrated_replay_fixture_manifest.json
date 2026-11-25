@@ -1,0 +1,199 @@
+{
+  "schema_revision": "e2-10-required-fixtures-v1",
+  "frozen_date": "2026-11-25",
+  "checklist_requirement": "E2-10",
+  "required_fixture_count": 10,
+  "corpus_policy": "These are the ten existing mandatory scenarios in ENGINE_2.0_CHECKLIST.md. Do not add mandatory fixtures unless new evidence demonstrates a material compatibility defect.",
+  "evidence_classes": {
+    "D": "Direct compiled reconstructed-Pascal probe",
+    "S": "Source-derived expectation",
+    "P": "Production-only regression",
+    "DP": "Direct Pascal-to-production differential",
+    "I": "Integrated replay through actual gameplay routines and the real game loop"
+  },
+  "fixtures": [
+    {
+      "id": "E2-10-F01",
+      "scenario": "DEMO start and ordinary traversal",
+      "status": "complete",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": [
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:WorldLoad",
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:BoardChange",
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:BoardEnter",
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_change,zoo_board_enter,zoo_game_start,zoo_tick"
+      ],
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_change,zoo_board_enter,zoo_game_start,zoo_tick",
+        "tools/runtime-compat/oop_movement.c:run_integrated_demo_gameplay_checks"
+      ],
+      "test_fixture": "third_party/reconstruction-of-zzt/RES/DEMO.ZZT",
+      "oracle_probe": "tools/pascal-compat/DEMOINT.PAS",
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "runner": "tools/pascal-compat/verify.ps1",
+      "staging_interventions": [
+        "Set RandSeed to zero before loading the source world so the initial random sequence is reproducible.",
+        "Set TickSpeed to zero and use the staged SoundProbeSetSchedule(0,0,0) logical clock tape so six game cycles complete deterministically.",
+        "Queue six right-direction bytes before entering the original GamePlayLoop; preserve Pascal InputUpdate behavior, including its penultimate-byte buffer quirk.",
+        "Run the compiled DEMOINT executable in a fresh DOSBox-X session after its separate compile session to isolate compiler-inherited DOS allocation history.",
+        "Capture VideoWriteText cell writes and SoundQueue calls without replacing gameplay routines."
+      ],
+      "verification": {
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "f3b0f2ff6afdd80c7e8980ebf6930ae9cbd8672d",
+        "clean_runner_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 85,
+        "pascal_to_production_differential_invocations_in_clean_run": "45/45",
+        "checkpoints": ["L0", "S0", "T1", "C1", "C2", "C3", "C4", "C5", "C6", "T2", "T3", "F0"],
+        "checkpoint_count": 12,
+        "fields_compared_per_checkpoint": 3456,
+        "state_field_comparisons": 41472,
+        "state_field_differences": 0,
+        "player_traversal": {
+          "board": 1,
+          "start": [30, 12],
+          "after_first_move": [31, 12],
+          "after_second_move": [32, 12],
+          "cycle_checkpoint": "C2"
+        },
+        "logical_sound_events": 0,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 5,
+        "ordered_playfield_cell_write_fields": 20,
+        "cell_write_differences": 0,
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "source_world_size_bytes": 26465,
+          "source_world_sha256": "b54610b5a52b125fa3083f38f6beec1cf2178655575fc0d60e999e2659253831",
+          "generated_save_size_bytes": 26465,
+          "generated_save_sha256": "d6be70b9d00bbc302b43e5b045c979821d0d5fafb04c68a5152bc2cfbef5f0e0",
+          "stable_serialized_bytes_compared": 25241,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 1224,
+          "classified_pointer_positions_differing": 0,
+          "round_trip_save_sha256": "d6be70b9d00bbc302b43e5b045c979821d0d5fafb04c68a5152bc2cfbef5f0e0"
+        },
+        "oracle_outputs": [
+          {"path": "build/pascal-compat-verification/INTEGPR.OUT", "size_bytes": 102882, "sha256": "d35403a5780d86757f5044cd0e60adb51ff3dea492241fce9431c3ac380f502d"},
+          {"path": "build/pascal-compat-verification/INTEGSND.OUT", "size_bytes": 5, "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"},
+          {"path": "build/pascal-compat-verification/INTEGCEL.OUT", "size_bytes": 67, "sha256": "52b98df54a92143b1816983a277e902ab8b02ff567c4adfe40ac1ef319ddaa40"},
+          {"path": "build/pascal-compat-verification/INTEGSAV.SAV", "size_bytes": 26465, "sha256": "d6be70b9d00bbc302b43e5b045c979821d0d5fafb04c68a5152bc2cfbef5f0e0"},
+          {"path": "build/pascal-compat-verification/INTEG2SV.SAV", "size_bytes": 26465, "sha256": "d6be70b9d00bbc302b43e5b045c979821d0d5fafb04c68a5152bc2cfbef5f0e0"}
+        ]
+      }
+    },
+    {
+      "id": "E2-10-F02",
+      "scenario": "walls, pushers, duplicators, and collision ordering",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:pusher,duplicator,and collision callbacks"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick", "third_party/libzoo/src/libzoo/zoo_elements.c:pusher,duplicator,and collision callbacks"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F03",
+      "scenario": "combat, bullets, keys/doors, and pickups",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:player,projectile,key,door,and pickup callbacks"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick", "third_party/libzoo/src/libzoo/zoo_elements.c:player,projectile,key,door,and pickup callbacks"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F04",
+      "scenario": "object stat order plus multiple interacting OOP scripts",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/OOP.PAS:OOP run and dispatch paths"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick", "third_party/libzoo/src/libzoo/zoo_oop.c:OOP run and dispatch paths"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F05",
+      "scenario": "board edges, neighbor transitions, and passages",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:BoardChange,BoardEnter,GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:passage callback"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_change,zoo_board_enter,zoo_tick,zoo_board_passage_teleport"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F06",
+      "scenario": "dark room, torch, Energizer, timers, and death",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop,BoardDrawTile", "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:torch,energizer,damage,and death callbacks"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick", "third_party/libzoo/src/libzoo/zoo_elements.c:torch,energizer,damage,and death callbacks"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F07",
+      "scenario": "pause, zero/positive-speed scheduling, and delayed input",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/INPUT.PAS:InputUpdate"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_game_start,zoo_tick", "third_party/libzoo/src/libzoo/zoo_input.c:zoo_input_update"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F08",
+      "scenario": "save, restore, world reload, and board change",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:WorldSave,WorldLoad,BoardChange,BoardEnter,GamePlayLoop"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_world_load,zoo_world_save", "third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_change,zoo_board_enter,zoo_tick"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F09",
+      "scenario": "editor mutation, .BRD round-trip, and play of the edited board",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:EditorLoop,BoardImport,BoardExport", "third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_editor_brd_import_record,zoo_editor_brd_serialize", "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    },
+    {
+      "id": "E2-10-F10",
+      "scenario": "malformed-file recovery and high-score insertion path",
+      "status": "pending",
+      "evidence_classes": ["D", "DP", "I"],
+      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:WorldLoad,GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:HighScoresAdd"],
+      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_world_load", "third_party/libzoo/src/libzoo/zoo_high_scores.c:zoo_highscores_add", "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick"],
+      "test_fixture": null,
+      "oracle_probe": null,
+      "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
+      "verification": {"result": "pending", "fixture_completion_credit": 0}
+    }
+  ]
+}

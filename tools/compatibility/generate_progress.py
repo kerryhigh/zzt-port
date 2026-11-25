@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 INVENTORY = ROOT / "tools/compatibility/acceptance_inventory.json"
 RUN = ROOT / "tools/compatibility/latest_verification.json"
 SERIALIZATION_MANIFEST = ROOT / "tools/compatibility/serialization_fixture_manifest.json"
+INTEGRATED_FIXTURE_MANIFEST = ROOT / "tools/compatibility/integrated_replay_fixture_manifest.json"
 OUT = ROOT / "COMPATIBILITY_PROGRESS.md"
 
 
@@ -23,6 +24,35 @@ def main() -> None:
         if SERIALIZATION_MANIFEST.exists()
         else {}
     )
+    integrated_fixture_manifest = (
+        json.loads(INTEGRATED_FIXTURE_MANIFEST.read_text(encoding="utf-8"))
+        if INTEGRATED_FIXTURE_MANIFEST.exists()
+        else {"required_fixture_count": 0, "fixtures": []}
+    )
+    integrated_fixtures = integrated_fixture_manifest.get("fixtures", [])
+    required_fixture_count = integrated_fixture_manifest.get("required_fixture_count", 0)
+    fixture_ids = [item.get("id") for item in integrated_fixtures]
+    if len(integrated_fixtures) != required_fixture_count or len(set(fixture_ids)) != len(fixture_ids):
+        raise ValueError("The frozen integrated replay manifest must contain exactly its declared number of unique fixture IDs")
+
+    def fixture_has_completion_evidence(item: dict) -> bool:
+        result = item.get("verification", {})
+        return (
+            item.get("status") == "complete"
+            and {"D", "DP", "I"}.issubset(set(item.get("evidence_classes", [])))
+            and result.get("result") == "passed"
+            and result.get("clean_runner_exit_code") == 0
+            and result.get("state_field_differences") == 0
+            and result.get("cell_write_differences") == 0
+            and result.get("save_round_trip", {}).get("stable_serialized_byte_differences") == 0
+        )
+
+    completed_integrated_fixtures = [
+        item for item in integrated_fixtures if fixture_has_completion_evidence(item)
+    ]
+    pending_integrated_fixtures = [
+        item for item in integrated_fixtures if item not in completed_integrated_fixtures
+    ]
     serialization_formats = serialization_manifest.get("formats", [])
     serialization_samples_matched = sum(
         1
@@ -130,7 +160,7 @@ def main() -> None:
         ] if serialization_formats else ["  - No source-produced serialization samples are recorded in a manifest."]),
         f"- Source-derived expectation cases: **{evidence.get('source_derived_expectations', 'not enumerated')}**; these are separate from compiled-Pascal probes.",
         f"- Production-only regression cases: **{evidence.get('production_only_regressions', 'not enumerated')}**; the finite case inventory is still being mapped.",
-        f"- Integrated replay fixtures: **{integrated.get('completed_fixtures', 0)}/{integrated.get('required_fixtures', 10)}** complete. Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
+        f"- Integrated replay fixtures: **{len(completed_integrated_fixtures)}/{required_fixture_count}** complete from [`integrated_replay_fixture_manifest.json`](tools/compatibility/integrated_replay_fixture_manifest.json). Prototype comparisons: {integrated.get('prototype_field_comparisons', 'not recorded')} fields across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-cycle checkpoints: {'present' if integrated.get('per_cycle_checkpoints') else 'not implemented'}.",
         f"- Integrated generated save: **{integrated_save.get('deterministic_bytes_matched', 'not recorded')}/{integrated_save.get('deterministic_bytes_total', 'not recorded')}** deterministic byte positions match; {integrated_save.get('classified_nondeterministic_positions', 'not recorded')} positions are classified as uninitialized Pascal padding or process-specific pointers; differing classified values: {integrated_save.get('classified_byte_differences', 'not recorded')}; production result: {integrated_save.get('production_result', 'not recorded')}.",
         f"- Integrated save reload: compiled Pascal WorldLoad={integrated_roundtrip.get('pascal_world_load_result', 'not recorded')}; production zoo_world_load={integrated_roundtrip.get('production_world_load_result', 'not recorded')}; round-trip save preserved {integrated_roundtrip.get('preserved_bytes_matched', 'not recorded')}/{integrated_roundtrip.get('preserved_bytes_total', 'not recorded')} bytes; {integrated_roundtrip.get('classified_process_pointer_positions', 'not recorded')} process-pointer positions classified.",
         f"- Other suite results: serializer={misc.get('serializer', 'not recorded')}; runtime={misc.get('runtime', 'not recorded')}; Android CP437/key bridge={misc.get('android_compat', 'not recorded')}; Android build={misc.get('android_build', 'not recorded')}; Windows CTest={misc.get('windows_ctest', 'not recorded')}.",
@@ -160,8 +190,8 @@ def main() -> None:
         "",
         "## Per-cycle integrated replay",
         "",
-        f"- Required fixtures: {integrated.get('required_fixtures', 10)}.",
-        f"- Completed fixtures: {integrated.get('completed_fixtures', 0)}.",
+        f"- Required fixtures: {required_fixture_count} (fixed by `{integrated_fixture_manifest.get('schema_revision', 'unversioned')}`).",
+        f"- Completed fixtures: {len(completed_integrated_fixtures)}/{required_fixture_count}; completed IDs: {', '.join(item['id'] for item in completed_integrated_fixtures) or 'none'}; pending IDs: {', '.join(item['id'] for item in pending_integrated_fixtures) or 'none'}.",
         f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_field_comparisons', 'not recorded')} total field comparisons across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-checkpoint counts: {integrated.get('prototype_fields_compared', 'not recorded')}; this is not counted as a complete E2-10 fixture.",
         f"- Logical sound-queue events in the prototype: {integrated.get('sound_events_compared', 'not recorded')} events / {integrated.get('sound_event_fields_compared', 'not recorded')} event fields; checkpoint sound state: {'compared' if integrated.get('sound_checkpoint_state_compared') else 'outstanding'}; overflow: {integrated.get('sound_event_overflow', 'not recorded')}.",
         f"- Ordered playfield cell writes in the prototype: {integrated.get('cell_writes_compared', 'not recorded')} events / {integrated.get('cell_write_fields_compared', 'not recorded')} event fields; capture: {'matched' if integrated.get('logical_cell_write_capture') and not integrated.get('cell_event_overflow') else 'outstanding or overflowed'}; generated oracle sidecar SHA-256: {integrated.get('cell_oracle_output_sha256', 'not recorded')}.",
@@ -171,6 +201,10 @@ def main() -> None:
         f"- State-transition checkpoints: {'implemented' if integrated.get('state_transition_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
         f"- First-divergence diagnostic negative control: {integrated_diagnostic.get('result', 'not recorded')}; {integrated_diagnostic.get('report', 'no controlled mismatch report recorded')}. This instrumentation check receives no replay-fixture or compatibility-case completion credit.",
+        *([
+            f"- `{item['id']}` {item['scenario']}: **{item.get('verification', {}).get('result', 'unclassified')}**; {item.get('verification', {}).get('checkpoint_count', 'not recorded')} checkpoints / {item.get('verification', {}).get('state_field_comparisons', 'not recorded')} state fields; {item.get('verification', {}).get('state_field_differences', 'not recorded')} state differences; {item.get('verification', {}).get('logical_sound_events', 'not recorded')} sound events; {item.get('verification', {}).get('ordered_playfield_cell_writes', 'not recorded')} cell writes; {item.get('verification', {}).get('save_round_trip', {}).get('stable_serialized_bytes_compared', 'not recorded')} stable save bytes compared with {item.get('verification', {}).get('save_round_trip', {}).get('stable_serialized_byte_differences', 'not recorded')} differences."
+            for item in integrated_fixtures
+        ] if integrated_fixtures else ["- No frozen integrated fixture inventory is recorded."]),
         *([
             f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints; {item.get('field_comparisons', 'not recorded')} state-field comparisons total; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
             for item in integrated.get("per_cycle_results", [])
