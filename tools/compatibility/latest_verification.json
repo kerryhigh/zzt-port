@@ -2,7 +2,7 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "c7dcbd22007f48c6e251cd8e0036497e43bfda5b: test: compare Pascal BoardClose WorldSave output (E2-02 partial)",
+    "root_revision": "05b653336b4da933737920a6ddad913aeaaadf74: test: guard integrated replay first-divergence reports (E2-10 partial)",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
     "pascal_suite_result": "Clean full runner passed on 2026-11-25: 84/84 direct Turbo Pascal 5.5 sessions and 44/44 configured Pascal-to-production comparison invocations. The compiled-Pascal BoardClose/WorldSave output matched shared LibZoo zoo_board_close plus zoo_io_world_write byte-for-byte across the complete 25,928-byte .ZZT (SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa); the 289-byte Pascal board record separately matched shared .BRD import/export. Runtime compatibility passed. The integrated prototype matched 12 checkpoints and 41,690 state fields, two sound events / 20 fields, nine cell writes / 36 fields, and 565 deterministic bytes in a generated 961-byte fresh-world SAV. Both engines then loaded the exact Pascal-generated SAV (WorldLoad=true; zoo_world_load=0) and generated a round-trip SAV with all 949 preserved non-pointer bytes matching; only 12 process-specific stat pointer positions were classified. The integrated probe is compiled and run in separate DOSBox-X sessions to control inherited allocator history. The short-header BoardOpen attempt remains excluded because it has no stable oracle result; the BRDXFER modal-boundary intervention is documented separately.",
@@ -99,6 +99,9 @@
       "diagnostic_negative_control": {
         "result": "passed",
         "verification_date": "2026-11-25",
+        "in_full_clean_runner": true,
+        "full_clean_runner_exit_code": 0,
+        "verification_root_revision": "05b653336b4da933737920a6ddad913aeaaadf74",
         "classification": "verification-tooling negative control; not D, S, P, DP, or I compatibility evidence",
         "mutation": "A disposable copy of INTEGPR.OUT had only C1 field 0 (ammo) incremented; the compiled-Pascal oracle output was not edited.",
         "report": "First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; context=[ammo:1->0, gems:0->0, health:100->100]",
@@ -309,7 +312,8 @@
       "Added dynamic L/S/T/C/F replay checkpoints and normalized game-role comparison. The clean Pascal suite passed 84 direct sessions and 43/43 configured differentials; the prototype matched 34,744 fields across ten checkpoints, plus sound and cell-write traces. E2-10 remains at 0/10 required fixtures.",
       "Added generated .SAV differential capture to the E2-10 prototype. The clean run still passed 84 direct Pascal sessions and 43/43 configured differentials; ten state checkpoints, 34,744 fields, two sound events, nine cell writes, and 565 deterministic save bytes matched. Another 396 fresh-world undefined/pointer bytes are classified; the prototype remains 0/10 required fixtures and Pascal save error outcomes remain open.",
       "Extended INTEGPRB through a second state transition, same-file .SAV load, and round-trip save. The clean full run passed 84 direct Pascal sessions and 43/43 configured comparisons; 12 checkpoints/41,690 fields matched, WorldLoad=true matched zoo_world_load=0, 565 fresh-world stable bytes and 949 loaded-file bytes matched. Compiling and running the allocator-sensitive replay in separate fresh DOSBox-X sessions standardizes its allocation history. E2-10 remains partial at 0/10 fixtures.",
-      "Added a direct Pascal BoardClose/WorldSave differential at the actual file boundary. The clean full runner passed 84 direct sessions and 44/44 configured comparison invocations; all 25,928 .ZZT bytes matched shared LibZoo output, and the 289-byte board record still round-trips through shared .BRD import/export. E2-02 AC001 remains partial; the four-format fixture manifest and field/error matrix remain open."
+      "Added a direct Pascal BoardClose/WorldSave differential at the actual file boundary. The clean full runner passed 84 direct sessions and 44/44 configured comparison invocations; all 25,928 .ZZT bytes matched shared LibZoo output, and the 289-byte board record still round-trips through shared .BRD import/export. E2-02 AC001 remains partial; the four-format fixture manifest and field/error matrix remain open.",
+      "Added a repeatable integrated first-divergence negative control to the clean Pascal runner. On 2026-11-25 the full runner passed 84 direct sessions and 44/44 comparisons; an intentional disposable C1 ammo mismatch was reported at cycle 1 with adjacent-field context, and the original Pascal capture SHA-256 remained unchanged. This verifies diagnostics only and leaves E2-10 at 0/10 fixtures."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -338,7 +342,7 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "c7dcbd22007f48c6e251cd8e0036497e43bfda5b",
+      "source_revision": "05b653336b4da933737920a6ddad913aeaaadf74",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 84,
       "configured_differentials_passed": 44,
@@ -348,8 +352,9 @@
       "integrated_pascal_probe": "compiled in a DOSBox-X session and executed in a fresh session; generated INTEGPR.OUT, INTEGSND.OUT, INTEGCEL.OUT, INTEGSAV.SAV, INTEGLOD.OUT, and INTEG2SV.SAV",
       "integrated_differential_command": "node tools/pascal-compat/compare-integrated-gameplay.js build/pascal-compat-verification/INTEGPR.OUT build/runtime-compatibility/integrated_gameplay.wasm build/pascal-compat-verification/INTEGSND.OUT build/pascal-compat-verification/INTEGCEL.OUT build/pascal-compat-verification/INTEGSAV.SAV build/pascal-compat-verification/INTEGLOD.OUT build/pascal-compat-verification/INTEG2SV.SAV",
       "integrated_differential_exit_code": 0,
+      "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "complete clean runner; 84 direct sessions and 44/44 configured comparison invocations passed; Pascal BoardClose/WorldSave and shared LibZoo matched the complete 25,928-byte .ZZT, and the 289-byte BoardClose record round-trip passed; runtime checks passed; 12 integrated checkpoints / 41,690 fields, same-file Pascal WorldLoad=true and production zoo_world_load=0, 565 fresh-world stable save bytes and 949 loaded-file round-trip bytes matched; E2-02 and E2-10 remain open",
+      "status": "complete clean runner; 84 direct sessions and 44/44 configured comparison invocations passed; integrated first-divergence negative control passed and preserved the original Pascal output hash; Pascal BoardClose/WorldSave and shared LibZoo matched the complete 25,928-byte .ZZT, and the 289-byte BoardClose record round-trip passed; runtime checks passed; 12 integrated checkpoints / 41,690 fields, same-file Pascal WorldLoad=true and production zoo_world_load=0, 565 fresh-world stable save bytes and 949 loaded-file round-trip bytes matched; E2-02 and E2-10 remain open",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
       "integrated_checkpoint_count": 12,
       "integrated_state_fields_compared": 41690,
