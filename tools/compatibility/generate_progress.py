@@ -97,6 +97,7 @@ def main() -> None:
     probes = runner.get("direct_pascal", {})
     differential = runner.get("direct_differential_comparisons", {})
     integrated = runner.get("integrated_replay", {})
+    latest_integrated = runner.get("latest_attempt", {}).get("integrated_replay_summary", {})
     integrated_diagnostic = integrated.get("diagnostic_negative_control", {})
     integrated_save = integrated.get("generated_save_comparison", {})
     integrated_roundtrip = integrated.get("generated_roundtrip_comparison", {})
@@ -246,7 +247,7 @@ def main() -> None:
         "",
         f"- Latest full Pascal-runner attempt: exit code {runner.get('latest_attempt', {}).get('full_pascal_runner_exit_code', 'not recorded')}; {runner.get('latest_attempt', {}).get('status', 'not recorded')}"
         + (f". {runner['latest_attempt']['failure']}" if runner.get('latest_attempt', {}).get('failure') else "."),
-        f"- The latest integrated Pascal differential is reported separately: exit {runner.get('latest_attempt', {}).get('integrated_differential_exit_code', 'not recorded')}; {integrated.get('prototype_field_comparisons', 'not recorded')} snapshot fields, {integrated.get('sound_events_compared', 'not recorded')} logical sound events, {integrated.get('cell_writes_compared', 'not recorded')} ordered playfield cell writes, {integrated_save.get('deterministic_bytes_matched', 'not recorded')}/{integrated_save.get('deterministic_bytes_total', 'not recorded')} first-save bytes, and {integrated_roundtrip.get('preserved_bytes_matched', 'not recorded')}/{integrated_roundtrip.get('preserved_bytes_total', 'not recorded')} loaded-file round-trip bytes matched.",
+        f"- Latest integrated Pascal differential `{latest_integrated.get('fixture_id', 'not recorded')}`: exit {runner.get('latest_attempt', {}).get('integrated_differential_exit_code', 'not recorded')}; {latest_integrated.get('state_fields_compared', 'not recorded')} snapshot fields, {latest_integrated.get('sound_events', 'not recorded')} logical sound events, {latest_integrated.get('cell_writes', 'not recorded')} ordered playfield cell writes, {latest_integrated.get('generated_save_stable_bytes_matched', 'not recorded')}/{latest_integrated.get('generated_save_stable_bytes_total', 'not recorded')} generated-save stable bytes, and {latest_integrated.get('roundtrip_stable_bytes_matched', 'not recorded')}/{latest_integrated.get('roundtrip_stable_bytes_total', 'not recorded')} loaded-file round-trip stable bytes matched.",
         f"- Toolchain: {runner.get('toolchain', {}).get('pascal', 'not recorded')}; {runner.get('toolchain', {}).get('dosbox_x', 'DOSBox-X version not recorded')}.",
         f"- Source revision: LibZoo baseline `{inv['baseline']['libzoo_commit']}`; local LibZoo overlay `{runner.get('libzoo_local_commit', 'not recorded')}`; Pascal source hashes in the manifest; root Git revision: {runner.get('root_revision', 'not yet recorded')}.",
         f"- Last completed full Pascal suite exit code: {runner.get('pascal_exit_code', 'not recorded')}; command recorded: `{runner.get('command', 'not recorded')}`.",

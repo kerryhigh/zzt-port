@@ -90,14 +90,191 @@
     {
       "id": "E2-10-F02",
       "scenario": "walls, pushers, duplicators, and collision ordering",
-      "status": "pending",
-      "evidence_classes": ["D", "DP", "I"],
-      "source_locations": ["third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop", "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:pusher,duplicator,and collision callbacks"],
-      "production_implementation": ["third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick", "third_party/libzoo/src/libzoo/zoo_elements.c:pusher,duplicator,and collision callbacks"],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "status": "complete",
+      "evidence_classes": [
+        "D",
+        "DP",
+        "I"
+      ],
+      "source_locations": [
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop",
+        "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:pusher,duplicator,and collision callbacks"
+      ],
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick",
+        "third_party/libzoo/src/libzoo/zoo_elements.c:pusher,duplicator,and collision callbacks"
+      ],
+      "test_fixture": "tools/pascal-compat/MOTIONIN.PAS",
+      "oracle_probe": "tools/pascal-compat/MOTIONIN.PAS",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
-      "verification": {"result": "pending", "fixture_completion_credit": 0}
+      "verification": {
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "8d4e5a66018ce5f0762f4e5cd509d871fb10d6b3",
+        "clean_runner_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 86,
+        "pascal_to_production_differential_invocations_in_clean_run": "46/46",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "T1",
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "C5",
+          "C6",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 12,
+        "fields_compared_by_checkpoint": [
+          {
+            "checkpoint": "L0",
+            "fields_compared": 3498,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "S0",
+            "fields_compared": 3498,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T1",
+            "fields_compared": 3498,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C1",
+            "fields_compared": 3498,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C2",
+            "fields_compared": 3552,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C3",
+            "fields_compared": 3552,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C4",
+            "fields_compared": 3552,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C5",
+            "fields_compared": 3552,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C6",
+            "fields_compared": 3552,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2",
+            "fields_compared": 3542,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3",
+            "fields_compared": 3542,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "F0",
+            "fields_compared": 3542,
+            "result": "matched"
+          }
+        ],
+        "state_field_comparisons": 42378,
+        "state_field_differences": 0,
+        "collision_and_duplication_assertions": {
+          "player_boulder_pushed_into_solid": true,
+          "two_pusher_chain_moves_boulder_until_solid": true,
+          "duplicator_clones_object_stat": true,
+          "cloned_object_script_runs_in_same_tick": true,
+          "final_player_x": 7,
+          "pusher_positions_x": [
+            11,
+            12
+          ],
+          "blocked_boulder_x": 13,
+          "blocking_solid_x": 14,
+          "final_stat_count": 5,
+          "source_object_x": 21,
+          "duplicator_x": 20,
+          "clone_x": 19,
+          "minimum_gems_after_object_scripts": 2
+        },
+        "logical_sound_events": 4,
+        "logical_sound_event_fields": 56,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 16,
+        "ordered_playfield_cell_write_fields": 64,
+        "cell_write_differences": 0,
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 1075,
+          "generated_save_sha256": "558e73d4843324a1b48ac11633761d1c6e4af87bd3c56b16551662607c6e5bc2",
+          "stable_serialized_bytes_compared": 643,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 432,
+          "classified_pointer_positions_differing": 6,
+          "round_trip_save_size_bytes": 1075,
+          "round_trip_save_sha256": "16e6d2e68a2695b8ab8c5a61398330cdb8609b5607d161c19e31732d7cbdadc5",
+          "round_trip_stable_serialized_bytes_compared": 1051,
+          "round_trip_stable_serialized_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 24
+        },
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 89988,
+            "sha256": "568e316ca66dcc576273ca16b9e205573e85e25c26abde36adcdfb31fb97d030"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 143,
+            "sha256": "be4a90ceb8eadeb4cfd756d0f13d1571f2456e38dec128ccbd9507e0e0735bad"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 191,
+            "sha256": "0e8aa57f4182ccc42341654394f6ae0fcad6950f1472be9c0ff436bbf216382b"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 1075,
+            "sha256": "558e73d4843324a1b48ac11633761d1c6e4af87bd3c56b16551662607c6e5bc2"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 1075,
+            "sha256": "16e6d2e68a2695b8ab8c5a61398330cdb8609b5607d161c19e31732d7cbdadc5"
+          }
+        ],
+        "fixture_completion_credit": 1,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-walls-pushers-duplicators.md"
+      },
+      "runner": "tools/pascal-compat/verify.ps1",
+      "staging_interventions": [
+        "Set RandSeed to zero before constructing the deterministic board.",
+        "Set World.Info.unk1 to zero because WorldCreate leaves it undefined while the production fixture starts from zeroed storage; no gameplay routine is changed.",
+        "Use six right-direction bytes, zero TickSpeed, and SoundProbeSetSchedule(0,0,0) so the original GamePlayLoop executes six deterministic cycles.",
+        "Capture VideoWriteText cell writes and SoundQueue requests at logical engine boundaries without replacing callbacks or the game loop.",
+        "Compile MOTIONIN in one DOSBox-X session and execute it in a fresh session to control compiler-inherited allocation history."
+      ]
     },
     {
       "id": "E2-10-F03",

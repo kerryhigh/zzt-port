@@ -2,10 +2,10 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "f3b0f2ff6afdd80c7e8980ebf6930ae9cbd8672d: test: add first required DEMO replay (E2-10 partial)",
+    "root_revision": "8d4e5a66018ce5f0762f4e5cd509d871fb10d6b3",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 85/85 direct Turbo Pascal 5.5 sessions and 45/45 configured Pascal-to-production comparison invocations. The integrated DEMO traversal fixture matched 12 checkpoints / 41,472 state fields, five ordered playfield writes, and 25,241 stable bytes in the 26,465-byte DEMO-derived SAV; 1,224 process-pointer bytes were classified with no differing classified values. The player traversed board 1 from (30,12) to (32,12); compiled Pascal WorldLoad=true and production zoo_world_load=0; the same-file round-trip save matched. The earlier synthetic INTEGPRB prototype also matched 12 checkpoints / 41,690 fields, two sound events, nine cell writes, 565 fresh-world save bytes, and 949 loaded-file round-trip bytes. Runtime compatibility passed; zero unexplained mismatches.",
+    "pascal_suite_result": "Clean full runner passed on 2026-11-25: 86/86 direct Turbo Pascal 5.5 sessions and 46/46 configured Pascal-to-production comparison invocations. Required E2-10 fixtures F01 and F02 passed: F01 matched 41,472 state fields; F02 matched 42,378 state fields across 12 checkpoints, four sound events / 56 fields, 16 cell writes / 64 fields, and all stable save bytes. F02 fresh-world SAV classified 432 uninitialized/pointer positions; six process pointer bytes differed only inside those classified positions. Its loaded-file round trip matched all 1,051 stable bytes with 24 pointer positions classified. Runtime compatibility passed; zero unexplained mismatches.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -56,16 +56,16 @@
       "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
-      "sessions": 85,
+      "sessions": 86,
       "standard_programs": 54,
-      "standalone_sessions": 31,
-      "session_result": "85/85 configured direct Pascal sessions passed in the latest clean runner, including DEMOINT; BOARDENC also emits complete binary .BRD and WorldSave outputs."
+      "standalone_sessions": 32,
+      "session_result": "86/86 configured direct Pascal sessions passed in the latest clean runner, including DEMOINT and MOTIONIN; BOARDENC emits complete binary .BRD and WorldSave outputs."
     },
     "direct_differential_comparisons": {
-      "configured": 45,
-      "passed": 45,
+      "configured": 46,
+      "passed": 46,
       "failed": 0,
-      "result": "45/45 configured comparison invocations passed in the latest clean full runner, including the first required integrated DEMO traversal fixture; zero unexplained mismatches in configured cases; short-header editor-state comparison remains pending"
+      "result": "46/46 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01 and F02; zero unexplained mismatches in configured cases; short-header editor-state comparison remains pending."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -73,7 +73,7 @@
     },
     "integrated_replay": {
       "required_fixtures": 10,
-      "completed_fixtures": 1,
+      "completed_fixtures": 2,
       "prototype_name": "INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures",
       "prototype_fields_compared": "variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle",
       "prototype_field_comparisons": 41690,
@@ -195,6 +195,98 @@
           "production_world_load_result": 0,
           "fixture_completion_credit": 1,
           "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-demo-traversal.md"
+        },
+        {
+          "fixture_id": "E2-10-F02",
+          "fixture": "walls, pushers, duplicators, and collision ordering",
+          "checkpoints": 12,
+          "field_comparisons": 42378,
+          "result": "passed",
+          "evidence_class": "D+DP+I",
+          "checkpoint_results": [
+            {
+              "checkpoint": "L0",
+              "fields_compared": 3498,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "S0",
+              "fields_compared": 3498,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T1",
+              "fields_compared": 3498,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C1",
+              "fields_compared": 3498,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C2",
+              "fields_compared": 3552,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C3",
+              "fields_compared": 3552,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C4",
+              "fields_compared": 3552,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C5",
+              "fields_compared": 3552,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C6",
+              "fields_compared": 3552,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T2",
+              "fields_compared": 3542,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T3",
+              "fields_compared": 3542,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "F0",
+              "fields_compared": 3542,
+              "result": "matched"
+            }
+          ],
+          "state_field_differences": 0,
+          "logical_sound_events": 4,
+          "logical_sound_event_fields": 56,
+          "logical_sound_event_differences": 0,
+          "ordered_cell_writes": 16,
+          "ordered_cell_write_fields": 64,
+          "cell_write_differences": 0,
+          "generated_save_size_bytes": 1075,
+          "stable_save_bytes_matched": 643,
+          "stable_save_byte_differences": 0,
+          "classified_process_pointer_positions": 432,
+          "classified_pointer_differences": 6,
+          "round_trip_stable_bytes_matched": 1051,
+          "round_trip_stable_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 24,
+          "pascal_world_load_result": true,
+          "production_world_load_result": 0,
+          "player_collision_path": "player from x=5 pushes Boulder at x=7 into the free x=8 destination; next-cycle push into Solid x=9 is blocked",
+          "pusher_chain_path": "pushers x=10 and x=11 move Boulder from x=12 to x=13 against Solid x=14 and stop",
+          "duplicator_path": "Duplicator at x=20 clones source object from x=21 to x=19; source and clone scripts execute",
+          "fixture_completion_credit": 1,
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-walls-pushers-duplicators.md"
         }
       ],
       "schema_revision": "e2-10-replay-r10-demo-world",
@@ -295,14 +387,14 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The synthetic integrated prototype matches 41,690 variable-size state fields across 12 checkpoints, two sound events / 20 fields, nine ordered playfield writes / 36 fields, 565 stable fresh-world save bytes, and 949 loaded-file round-trip bytes; 396 fresh-world undefined/pointer positions and 12 round-trip pointer positions are classified. Required fixture E2-10-F01 now also matches 41,472 state fields, five ordered cell writes, and 25,241 stable bytes of a DEMO-derived save with 1,224 process-pointer positions classified; zero stable or classified differences were observed. E2-10-F02 through F10 and Pascal WorldSave failure-path outcomes remain open."
+      "The synthetic integrated prototype matches 41,690 variable-size state fields across 12 checkpoints, two sound events / 20 fields, nine ordered playfield writes / 36 fields, 565 stable fresh-world save bytes, and 949 loaded-file round-trip bytes; 396 fresh-world undefined/pointer positions and 12 round-trip pointer positions are classified. Required fixtures E2-10-F01 and F02 both pass with zero stable-byte or state/event differences; E2-10-F03 through F10 and Pascal WorldSave failure-path outcomes remain open."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
       "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.",
-      "E2-10: complete the nine remaining frozen integrated replay fixtures F02-F10; extend the named transition, return/error, sound, cell-write, save/restore/load comparisons across those scenarios; zero unexplained differences are required.",
+      "E2-10: complete the eight remaining frozen integrated replay fixtures F03-F10; extend named transition, return/error, sound, cell-write, save/restore/load comparisons across those scenarios; require zero unexplained differences.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
     "non_blocking_limitations": [
@@ -329,7 +421,8 @@
       "Extended INTEGPRB through a second state transition, same-file .SAV load, and round-trip save. The clean full run passed 84 direct Pascal sessions and 43/43 configured comparisons; 12 checkpoints/41,690 fields matched, WorldLoad=true matched zoo_world_load=0, 565 fresh-world stable bytes and 949 loaded-file bytes matched. Compiling and running the allocator-sensitive replay in separate fresh DOSBox-X sessions standardizes its allocation history. E2-10 remains partial at 0/10 fixtures.",
       "Added a direct Pascal BoardClose/WorldSave differential at the actual file boundary. The clean full runner passed 84 direct sessions and 44/44 configured comparison invocations; all 25,928 .ZZT bytes matched shared LibZoo output, and the 289-byte board record still round-trips through shared .BRD import/export. E2-02 AC001 remains partial; the four-format fixture manifest and field/error matrix remain open.",
       "Added a repeatable integrated first-divergence negative control to the clean Pascal runner. On 2026-11-25 the full runner passed 84 direct sessions and 44/44 comparisons; an intentional disposable C1 ammo mismatch was reported at cycle 1 with adjacent-field context, and the original Pascal capture SHA-256 remained unchanged. This verifies diagnostics only and leaves E2-10 at 0/10 fixtures.",
-      "E2-10-F01 DEMO traversal completed in a clean 2026-11-25 run: 12 checkpoints / 41,472 state fields, five ordered cell writes, two right moves across board 1, and 25,241 stable bytes across save/load round-trip; 85 direct Pascal sessions and 45/45 configured comparisons passed; corpus is 1/10."
+      "E2-10-F01 DEMO traversal completed in a clean 2026-11-25 run: 12 checkpoints / 41,472 state fields, five ordered cell writes, two right moves across board 1, and 25,241 stable bytes across save/load round-trip; 85 direct Pascal sessions and 45/45 configured comparisons passed; corpus is 1/10.",
+      "E2-10-F02 walls/pushers/Duplicator replay passed in a clean 2026-11-25 run: 12 checkpoints / 42,378 state fields, four sound events, 16 cell writes, stable save comparisons, and zero unexplained differences; 86 direct Pascal sessions and 46/46 configured comparisons passed; the fixed corpus is 2/10."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -358,19 +451,19 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "f3b0f2ff6afdd80c7e8980ebf6930ae9cbd8672d",
+      "source_revision": "8d4e5a66018ce5f0762f4e5cd509d871fb10d6b3",
       "full_pascal_runner_exit_code": 0,
-      "direct_pascal_sessions_passed": 85,
-      "configured_differentials_passed": 45,
+      "direct_pascal_sessions_passed": 86,
+      "configured_differentials_passed": 46,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "For BRDXFER only, staged GAME.PAS replaces TextWindowSelect at the DisplayIOError acknowledgement boundary with TextWindowRejected := true; InputKeyPressed := #0. This skips the blocking modal interaction; the short-payload file reads, IOResult checks, DisplayIOError return, BoardCreate, and editor cleanup run in reconstructed Pascal.",
-      "integrated_pascal_probe": "Compiled INTEGPRB and DEMOINT in isolated DOSBox-X compile sessions, then ran each executable in a fresh session; generated separate synthetic and DEMO replay checkpoint, sound, cell-write, save, load-result, and round-trip outputs.",
-      "integrated_differential_command": "Run compare-integrated-gameplay.js for the preserved synthetic INTEGPRB output and for DEMOINT against the tracked DEMO.ZZT input.",
+      "integrated_pascal_probe": "Compiled INTEGPRB, DEMOINT, and MOTIONIN in isolated DOSBox-X compile sessions and executed each replay in fresh sessions; F01 and F02 generated checkpoint, sound, cell-write, save/load-result, and round-trip outputs.",
+      "integrated_differential_command": "Run compare-integrated-gameplay.js for the preserved synthetic INTEGPRB output and for DEMOINT and MOTIONIN against their tracked fixtures.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "complete clean runner; 85 direct sessions and 45/45 configured comparisons passed; synthetic replay and E2-10-F01 DEMO traversal matched with zero unexplained differences; E2-10 remains partial with 1/10 required fixtures",
+      "status": "complete clean runner; 86 direct sessions and 46/46 configured comparisons passed; E2-10-F01 and F02 integrated replays matched with zero unexplained differences; E2-10 remains partial with 2/10 required fixtures",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
       "integrated_checkpoint_count": 12,
       "integrated_state_fields_compared": 41690,
@@ -425,6 +518,37 @@
         "source_world_sha256": "b54610b5a52b125fa3083f38f6beec1cf2178655575fc0d60e999e2659253831",
         "save_sha256": "d6be70b9d00bbc302b43e5b045c979821d0d5fafb04c68a5152bc2cfbef5f0e0",
         "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-demo-traversal.md"
+      },
+      "integrated_f02_fixture": {
+        "fixture_id": "E2-10-F02",
+        "result": "passed",
+        "checkpoint_count": 12,
+        "state_fields_compared": 42378,
+        "state_field_differences": 0,
+        "sound_events": 4,
+        "sound_event_fields": 56,
+        "cell_writes": 16,
+        "cell_write_fields": 64,
+        "stable_generated_save_bytes_matched": 643,
+        "classified_generated_save_positions": 432,
+        "classified_pointer_differences": 6,
+        "stable_roundtrip_save_bytes_matched": 1051,
+        "classified_roundtrip_pointer_positions": 24,
+        "source_world_sha256": null,
+        "generated_save_sha256": "558e73d4843324a1b48ac11633761d1c6e4af87bd3c56b16551662607c6e5bc2",
+        "roundtrip_save_sha256": "16e6d2e68a2695b8ab8c5a61398330cdb8609b5607d161c19e31732d7cbdadc5",
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-walls-pushers-duplicators.md"
+      },
+      "integrated_replay_summary": {
+        "fixture_id": "E2-10-F02",
+        "state_fields_compared": 42378,
+        "sound_events": 4,
+        "cell_writes": 16,
+        "generated_save_stable_bytes_matched": 643,
+        "generated_save_stable_bytes_total": 643,
+        "roundtrip_stable_bytes_matched": 1051,
+        "roundtrip_stable_bytes_total": 1051,
+        "unexplained_differences": 0
       }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain."
