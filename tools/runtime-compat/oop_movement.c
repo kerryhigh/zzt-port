@@ -4833,6 +4833,130 @@ int32_t run_integrated_pause_scheduler_checks(void) {
 	return 0;
 }
 
+int32_t run_integrated_save_restore_world_reload_checks(void) {
+	int16_t stat_id, i, random_index;
+	uint16_t swap;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	/* Match the Pascal startup transition-table shuffle used by F05. */
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		state.transition_order[i] = (uint16_t) i;
+	}
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		random_index = integrated_gameplay_random(&state, ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT);
+		swap = state.transition_order[random_index];
+		state.transition_order[random_index] = state.transition_order[i];
+		state.transition_order[i] = swap;
+	}
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	state.world.board_count = 2;
+	state.world.board_data[1] = NULL;
+	state.world.board_data[2] = NULL;
+	state.world.board_len[1] = 0;
+	state.world.board_len[2] = 0;
+	state.world.board_external[1] = false;
+	state.world.board_external[2] = false;
+	zoo_board_create(&state);
+	state.world.info.health = 100;
+	state.world.info.ammo = 0;
+	state.world.info.gems = 0;
+	state.world.info.score = 0;
+	state.board.tiles[30][12].element = ZOO_E_EMPTY;
+	state.board.tiles[30][12].color = 0;
+	state.board.tiles[1][5].element = ZOO_E_EMPTY;
+	state.board.tiles[1][5].color = 0;
+	state.board.stats[0].x = 2;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].step_x = 0;
+	state.board.stats[0].step_y = 0;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[2][5].element = ZOO_E_PLAYER;
+	state.board.tiles[2][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.info.neighbor_boards[2] = 1;
+	if (zoo_board_close(&state) != 0) return 40;
+
+	state.world.info.current_board = 1;
+	zoo_board_create(&state);
+	state.board.tiles[30][12].element = ZOO_E_EMPTY;
+	state.board.tiles[30][12].color = 0;
+	state.board.stats[0].x = 60;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].step_x = 0;
+	state.board.stats[0].step_y = 0;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[60][5].element = ZOO_E_PLAYER;
+	state.board.tiles[60][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	zoo_stat_add(&state, 59, 5, ZOO_E_PASSAGE, 0x2A, 0,
+		&zoo_stat_template_default);
+	stat_id = zoo_stat_get_id(&state, 59, 5);
+	if (stat_id != 1) return 41;
+	state.board.stats[stat_id].p3 = 2;
+	if (zoo_board_close(&state) != 0) return 42;
+
+	state.world.info.current_board = 2;
+	zoo_board_create(&state);
+	state.board.tiles[23][17].element = ZOO_E_EMPTY;
+	state.board.tiles[23][17].color = 0;
+	zoo_stat_add(&state, 20, 15, ZOO_E_PASSAGE, 0x2A, 0,
+		&zoo_stat_template_default);
+	zoo_stat_add(&state, 22, 17, ZOO_E_PASSAGE, 0x2A, 0,
+		&zoo_stat_template_default);
+	if (zoo_board_close(&state) != 0) return 43;
+	zoo_board_change(&state, 0);
+	if (state.error_value != 0) return 44;
+	state.game_state = GS_PLAY;
+	integrated_gameplay_cell_coalesce_idempotent_writes = true;
+	result = integrated_gameplay_run_ticks(NULL, 0, "LLLR", 4, 6, true, true, true, false);
+	if (result != 0) return result;
+	if (state.world.info.current_board != 2
+			|| state.board.stats[0].x != 23 || state.board.stats[0].y != 17
+			|| state.board.stat_count != 2 || state.game_paused) return 45;
+	return 0;
+}
+
+int32_t integrated_gameplay_mutate_for_f08_restore(void) {
+	state.world.info.health = 77;
+	state.world.info.ammo = 42;
+	zoo_board_change(&state, 0);
+	if (state.error_value != 0) return 46;
+	if (!capture_integrated_gameplay_snapshot(
+			integrated_gameplay_snapshot_count_value, 'T', 3)) return 47;
+	return 0;
+}
+
+int32_t integrated_gameplay_reload_f08_save_from_pascal(int32_t length) {
+	zoo_io_handle load_handle;
+	if (length <= 0 || length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 48;
+	load_handle = zoo_io_open_file_mem(integrated_gameplay_reload_input_bytes,
+		(size_t) length, MODE_READ);
+	integrated_gameplay_reload_result_value = zoo_world_load(&state, &load_handle, false);
+	if (integrated_gameplay_reload_result_value != 0) return 49;
+	zoo_board_change(&state, state.return_board_id);
+	if (state.error_value != 0) return 50;
+	if (!capture_integrated_gameplay_snapshot(
+			integrated_gameplay_snapshot_count_value, 'T', 4)) return 51;
+	return 0;
+}
+
+int32_t integrated_gameplay_reload_f08_world_from_pascal(int32_t length) {
+	zoo_io_handle load_handle;
+	if (length <= 0 || length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 52;
+	load_handle = zoo_io_open_file_mem(integrated_demo_world_bytes,
+		(size_t) length, MODE_READ);
+	integrated_gameplay_reload_result_value = zoo_world_load(&state, &load_handle, false);
+	if (integrated_gameplay_reload_result_value != 0) return 53;
+	zoo_board_change(&state, state.return_board_id);
+	if (state.error_value != 0) return 54;
+	if (!capture_integrated_gameplay_snapshot(
+			integrated_gameplay_snapshot_count_value, 'T', 5)) return 55;
+	return 0;
+}
+
 uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {
 	return (uint32_t) (uintptr_t) integrated_gameplay_reload_input_bytes;
 }

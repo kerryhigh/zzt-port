@@ -9,9 +9,11 @@ const loadResultPath = process.argv[7];
 const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+const worldLoadResultPath = process.argv[11];
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death|pause-positive-scheduler-delayed-input|save-restore-world-reload-board-change [DEMO.ZZT] [INTEGWRL.OUT]]');
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input', 'save-restore-world-reload-board-change'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
+if (scenario === 'save-restore-world-reload-board-change' && (!demoWorldPath || !worldLoadResultPath)) throw new Error('F08 save/restore/world reload comparison requires INTEGWRL.ZZT and INTEGWRL.OUT');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -19,9 +21,10 @@ const statFieldCount = 14;
 const schedulerFieldCount = 11;
 const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
 const checkpointSpecs = [];
-const replayTransitionCount = scenario === 'board-neighbors-passages' ? 4 : 3;
+const replayTransitionCount = ['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario) ? 4 : 3;
 const postCycleStateIds = scenario === 'board-neighbors-passages'
-    || scenario === 'pause-positive-scheduler-delayed-input' ? [2, 3] : [];
+    || scenario === 'pause-positive-scheduler-delayed-input' ? [2, 3]
+    : scenario === 'save-restore-world-reload-board-change' ? [2, 3, 4, 5] : [];
 const expectedCycleCount = scenario === 'dark-room-torch-energizer-timers-death' ? 120
   : scenario === 'pause-positive-scheduler-delayed-input' ? 5 : 6;
 let postCycleStateIndex = 0;
@@ -51,7 +54,9 @@ for (let row = 2; row < checkpointHeaders.length; row++) {
     nextCycleId++;
   } else if (nextCycleId === expectedCycleCount + 1 && postCycleStateIndex < postCycleStateIds.length
       && header.kind === 'T' && header.id === postCycleStateIds[postCycleStateIndex]) {
-    const snapshotName = postCycleStateIndex === 0 ? 'post-save state' : 'post-load state';
+    const snapshotName = scenario === 'save-restore-world-reload-board-change'
+      ? ['post-gameplay save', 'mutated live state', 'restored SAV state', 'reloaded ZZT world'][postCycleStateIndex]
+      : postCycleStateIndex === 0 ? 'post-save state' : 'post-load state';
     checkpointSpecs.push({ kind: 'T', id: header.id, name: snapshotName });
     postCycleStateIndex++;
   } else if (header.kind === 'F' && header.id === 0 && row === checkpointHeaders.length - 1) {
@@ -384,6 +389,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_dark_room_torch_energizer_timers_death_checks();
     } else if (scenario === 'pause-positive-scheduler-delayed-input') {
       result = instance.exports.run_integrated_pause_scheduler_checks();
+    } else if (scenario === 'save-restore-world-reload-board-change') {
+      result = instance.exports.run_integrated_save_restore_world_reload_checks();
     } else {
       result = instance.exports.run_integrated_script_stat_order_checks();
     }
@@ -438,10 +445,31 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const reloadInput = new Uint8Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_reload_input_bytes_ptr(), pascalSave.length);
   reloadInput.set(pascalSave);
-  const productionLoadCall = instance.exports.integrated_gameplay_reload_from_pascal_save(pascalSave.length);
+  if (scenario === 'save-restore-world-reload-board-change') {
+    const mutationCall = instance.exports.integrated_gameplay_mutate_for_f08_restore();
+    if (mutationCall !== 0) throw new Error(`Production F08 live-state mutation/BoardChange returned ${mutationCall}`);
+  }
+  const productionLoadCall = scenario === 'save-restore-world-reload-board-change'
+    ? instance.exports.integrated_gameplay_reload_f08_save_from_pascal(pascalSave.length)
+    : instance.exports.integrated_gameplay_reload_from_pascal_save(pascalSave.length);
   const productionLoadResult = instance.exports.integrated_gameplay_reload_result();
   if (productionLoadCall !== 0 || productionLoadResult !== 0) {
     throw new Error(`Production zoo_world_load failed: call=${productionLoadCall}, result=${productionLoadResult}`);
+  }
+  if (scenario === 'save-restore-world-reload-board-change') {
+    const worldBytes = fs.readFileSync(demoWorldPath);
+    const worldCapacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (worldBytes.length > worldCapacity) throw new Error(`Pascal ZZT world length ${worldBytes.length} exceeds production reload input capacity ${worldCapacity}`);
+    const worldInput = new Uint8Array(instance.exports.memory.buffer,
+      instance.exports.integrated_demo_world_bytes_ptr(), worldBytes.length);
+    worldInput.set(worldBytes);
+    const pascalWorldLoadResult = Number(fs.readFileSync(worldLoadResultPath, 'ascii').trim());
+    if (pascalWorldLoadResult !== 1) throw new Error(`Compiled Pascal ZZT WorldLoad returned ${pascalWorldLoadResult}; expected true/success`);
+    const productionWorldLoadCall = instance.exports.integrated_gameplay_reload_f08_world_from_pascal(worldBytes.length);
+    const productionWorldLoadResult = instance.exports.integrated_gameplay_reload_result();
+    if (productionWorldLoadCall !== 0 || productionWorldLoadResult !== 0) {
+      throw new Error(`Production ZZT zoo_world_load failed: call=${productionWorldLoadCall}, result=${productionWorldLoadResult}`);
+    }
   }
   const roundtripCall = instance.exports.integrated_gameplay_finish_roundtrip();
   if (roundtripCall !== 0) throw new Error(`Production round-trip save returned ${roundtripCall}`);
@@ -482,7 +510,10 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     const fieldCount = expectedSnapshots[row].fieldCount;
     const actualCount = snapshotLengths[row];
     if (actualCount !== fieldCount || actualCount > snapshotStride) {
-      throw new Error(`First divergence at ${spec.name}: field count Pascal=${fieldCount}, production=${actualCount}, stride=${snapshotStride}`);
+      const actual = new Int32Array(instance.exports.memory.buffer,
+        actualBase + row * snapshotStride * Int32Array.BYTES_PER_ELEMENT, Math.min(actualCount, snapshotStride));
+      const expected = expectedSnapshots[row].values;
+      throw new Error(`First divergence at ${spec.name}: field count Pascal=${fieldCount}, production=${actualCount}, stride=${snapshotStride}; Pascal board/player/statCount=${expected[3]}/${expected[13]},${expected[14]}/${expected[11]}, production=${actual[3]}/${actual[13]},${actual[14]}/${actual[11]}`);
     }
     const expected = expectedSnapshots[row].values;
     const actual = new Int32Array(instance.exports.memory.buffer,
@@ -491,7 +522,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     for (let field = 0; field < fieldCount; field++) {
       // Cell-write totals are checked against the captured event stream below,
       // where a one-write drift can be reported with its exact cell/context.
-      if (scenario === 'board-neighbors-passages' && field >= fieldCount - 2) continue;
+      if (['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario)
+          && field >= fieldCount - 2) continue;
       const expectedValue = expected[field];
       const observed = actual[field];
       if (observed !== expectedValue) {
@@ -672,6 +704,34 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       throw new Error(`F07 coverage assertion failed: expected healthy resumed final player at (7,5), observed health=${final[2]}, player=(${playerX(final)},${playerY(final)}), paused=${final[schedulerStartFor(final) + 5]}`);
     }
   }
+  if (scenario === 'save-restore-world-reload-board-change') {
+    const checkpoint = name => {
+      const index = checkpointSpecs.findIndex(spec => spec.name === name);
+      if (index < 0) throw new Error(`F08 coverage assertion failed: missing ${name} checkpoint`);
+      return expectedSnapshots[index].values;
+    };
+    const statField = (values, statId, field) => values[scalarNames.length + statId * statFieldCount + field];
+    const postGameplay = checkpoint('post-gameplay save');
+    const mutated = checkpoint('mutated live state');
+    const restoredSave = checkpoint('restored SAV state');
+    const reloadedWorld = checkpoint('reloaded ZZT world');
+    const final = expectedSnapshots.at(-1).values;
+    const matches = (values, board, x, y, health, ammo) => values[3] === board
+      && statField(values, 0, 0) === x && statField(values, 0, 1) === y
+      && values[2] === health && values[0] === ammo;
+    if (!matches(postGameplay, 2, 23, 17, 100, 0)) {
+      throw new Error(`F08 coverage assertion failed at post-gameplay T2: expected board 2 player (23,17), health 100, ammo 0; observed board=${postGameplay[3]}, player=(${statField(postGameplay, 0, 0)},${statField(postGameplay, 0, 1)}), health=${postGameplay[2]}, ammo=${postGameplay[0]}`);
+    }
+    if (!matches(mutated, 0, 1, 5, 77, 42)) {
+      throw new Error(`F08 coverage assertion failed at live-mutation T3: expected board 0 player (1,5), health 77, ammo 42; observed board=${mutated[3]}, player=(${statField(mutated, 0, 0)},${statField(mutated, 0, 1)}), health=${mutated[2]}, ammo=${mutated[0]}`);
+    }
+    if (!matches(restoredSave, 2, 23, 17, 100, 0)) {
+      throw new Error(`F08 coverage assertion failed at SAV-restore T4: expected board 2 player (23,17), health 100, ammo 0; observed board=${restoredSave[3]}, player=(${statField(restoredSave, 0, 0)},${statField(restoredSave, 0, 1)}), health=${restoredSave[2]}, ammo=${restoredSave[0]}`);
+    }
+    if (!matches(reloadedWorld, 0, 2, 5, 100, 0) || !matches(final, 0, 2, 5, 100, 0)) {
+      throw new Error(`F08 coverage assertion failed at ZZT reload T5/final F0: expected baseline board 0 player (2,5), health 100, ammo 0; T5 board=${reloadedWorld[3]}, player=(${statField(reloadedWorld, 0, 0)},${statField(reloadedWorld, 0, 1)}), health=${reloadedWorld[2]}, ammo=${reloadedWorld[0]}, F0 board=${final[3]}, player=(${statField(final, 0, 0)},${statField(final, 0, 1)}), health=${final[2]}, ammo=${final[0]}`);
+    }
+  }
   const expectedSound = parseSoundEvents(soundPath);
   if (expectedSound.overflow !== 0) throw new Error('Pascal integrated sound-event capture overflowed its fixed 64-event buffer');
   const actualSoundCount = instance.exports.integrated_gameplay_sound_event_count();
@@ -807,8 +867,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     .map(([field, count]) => `${field} (${count} differing byte${count === 1 ? '' : 's'})`)
     .join('; ') || 'none';
   const generatedLabel = loadedFromFile ? 'DEMO-derived SAV' : 'fresh-world SAV';
-  const cellWriteSummary = ['board-neighbors-passages', 'dark-room-torch-energizer-timers-death'].includes(scenario)
+  const cellWriteSummary = ['board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'save-restore-world-reload-board-change'].includes(scenario)
     ? `${expectedCells.count} playfield cell changes matched (${cellComparedFields} event fields); ${expectedCells.idempotentWriteCount} Pascal and ${actualIdempotentWriteCount} production identical-value redraws were reported separately`
     : `${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields)`;
-  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary}; generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
+  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary}; generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0${scenario === 'save-restore-world-reload-board-change' ? ' for both SAV restore and ZZT world reload' : ''}; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
