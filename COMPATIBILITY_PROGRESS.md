@@ -14,7 +14,7 @@ Counts below are generated from the frozen checklist inventory and the latest re
 |---|---:|---:|---:|---:|---:|
 | E2-01 | partial | 1/5 | 0 | 4 | 20.0% |
 | E2-02 | partial | 0/5 | 5 | 0 | 0.0% |
-| E2-03 | partial | 1/4 | 0 | 3 | 25.0% |
+| E2-03 | partial | 2/4 | 0 | 2 | 50.0% |
 | E2-04 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-05 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-06 | open | 0/5 | 0 | 5 | 0.0% |
@@ -28,10 +28,10 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Acceptance case status
 
-- Passing/complete: **8**; partial: **9**; pending: **37**; failing: **0**.
+- Passing/complete: **9**; partial: **9**; pending: **36**; failing: **0**.
 - Required evidence classes mapped: **54/54**; D: 42, S: 15, P: 11, DP: 49, I: 10 cases (categories can overlap; required evidence is not a passing result).
 - Acceptance cases missing or invalid required evidence classes: **0**; IDs: none.
-- Acceptance cases without an evidence classification: **37**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC001, E2-03-AC003, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC001, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
+- Acceptance cases without an evidence classification: **36**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC001, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC001, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
 - Unclassified source inventory entries: **1464**; explicitly excluded adapter/presentation entries: **10**.
 - Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P counts recorded production-only regressions; I counts only completed full integrated fixtures.
 
@@ -73,6 +73,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 
 - Required fixtures: 10 (fixed by `e2-10-required-fixtures-v1`).
 - Completed fixtures: 10/10; completed IDs: E2-10-F01, E2-10-F02, E2-10-F03, E2-10-F04, E2-10-F05, E2-10-F06, E2-10-F07, E2-10-F08, E2-10-F09, E2-10-F10; pending IDs: none.
+- Logical-cycle snapshots in the latest verification record: 169/169 matched across 587560 state-field comparisons.
 - Prototype: INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures with 41690 total field comparisons across 12 checkpoints; per-checkpoint counts: variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle; this is not counted as a complete E2-10 fixture.
 - Logical sound-queue events in the prototype: 2 events / 20 event fields; checkpoint sound state: compared; overflow: False.
 - Ordered playfield cell writes in the prototype: 9 events / 36 event fields; capture: matched; generated oracle sidecar SHA-256: 6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa.
@@ -82,264 +83,264 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - State-transition checkpoints: implemented.
 - First-divergence reporting: implemented.
 - First-divergence diagnostic negative control: passed; First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; state summaries and surrounding field/input context were emitted. This instrumentation check receives no replay-fixture or compatibility-case completion credit.
-- `E2-10-F01` DEMO start and ordinary traversal: **passed**; 12 checkpoints / 41472 state fields; 0 state differences; 0 sound events; 5 cell writes; 25241 stable save bytes compared with 0 differences.
-- `E2-10-F02` walls, pushers, duplicators, and collision ordering: **passed**; 12 checkpoints / 42378 state fields; 0 state differences; 4 sound events; 16 cell writes; 643 stable save bytes compared with 0 differences.
-- `E2-10-F03` combat, bullets, keys/doors, and pickups: **passed**; 12 checkpoints / 41122 state fields; 0 state differences; 7 sound events; 664 cell writes; 558 stable save bytes compared with 0 differences.
-- `E2-10-F04` object stat order plus multiple interacting OOP scripts: **passed**; 12 checkpoints / 41904 state fields; 0 state differences; 0 sound events; 5 cell writes; 598 stable save bytes compared with 0 differences.
-- `E2-10-F05` board edges, neighbor transitions, and passages: **passed**; 15 checkpoints / 51493 state fields; 0 state differences; 1 sound events; 6006 cell writes; 896 stable save bytes compared with 0 differences.
-- `E2-10-F06` dark room, torch, Energizer, timers, and death: **passed**; 126 checkpoints / 438324 state fields; 0 state differences; 4 sound events; 3730 cell writes; 552 stable save bytes compared with 0 differences.
-- `E2-10-F07` pause, zero/positive-speed scheduling, and delayed input: **passed**; 13 checkpoints / 44187 state fields; 0 state differences; 0 sound events; 4 cell writes; 461 stable save bytes compared with 0 differences.
-- `E2-10-F08` save, restore, world reload, and board change: **passed**; 17 checkpoints / 58251 state fields; 0 state differences; 1 sound events; 6006 cell writes; 896 stable save bytes compared with 0 differences.
-- `E2-10-F09` editor mutation, .BRD round-trip, and play of the edited board: **passed**; 12 checkpoints / 40788 state fields; 0 state differences; 0 sound events; 5 cell writes; 750 stable save bytes compared with 0 differences.
-- `E2-10-F10` malformed-file recovery and high-score insertion path: **passed**; 7 checkpoints / 23861 state fields; 0 state differences; 0 sound events; 29 cell writes; 610 stable save bytes compared with 0 differences.
-- DEMO start and ordinary traversal: 12 checkpoints; 41472 state-field comparisons total; passed (D+DP+I evidence).
-- walls, pushers, duplicators, and collision ordering: 12 checkpoints; 42378 state-field comparisons total; passed (D+DP+I evidence).
-- combat, bullets, keys/doors, and pickups: 12 checkpoints; 41122 state-field comparisons total; passed (D+DP+I evidence).
-- object stat order plus multiple interacting OOP scripts: 12 checkpoints; 41904 state-field comparisons total; passed (D+DP+I evidence).
-- board edges, neighbor transitions, and passages: 15 checkpoints; 51493 state-field comparisons total; passed (D+DP+I evidence).
-- dark room, torch, Energizer, timers, and death: 126 checkpoints; 438324 state-field comparisons total; passed (D+DP+I evidence).
-- pause, positive-speed scheduling, and delayed input: 13 checkpoints; 44187 state-field comparisons total; passed (D+DP+I evidence).
-- save, restore, world reload, and board change: 17 checkpoints; 58251 state-field comparisons total; passed (D+DP+I evidence).
-- editor mutation, .BRD round-trip, and play of the edited board: 12 checkpoints; 40788 state-field comparisons total; passed (D+DP+I evidence).
-- malformed-file recovery and high-score insertion path: 7 checkpoints; 23861 state-field comparisons total; passed (D+DP+I evidence).
-  - L0: 3456 fields; matched.
-  - S0: 3456 fields; matched.
-  - T1: 3456 fields; matched.
-  - C1: 3456 fields; matched.
-  - C2: 3456 fields; matched.
-  - C3: 3456 fields; matched.
-  - C4: 3456 fields; matched.
-  - C5: 3456 fields; matched.
-  - C6: 3456 fields; matched.
-  - T2: 3456 fields; matched.
-  - T3: 3456 fields; matched.
-  - F0: 3456 fields; matched.
-  - L0: 3498 fields; matched.
-  - S0: 3498 fields; matched.
-  - T1: 3498 fields; matched.
-  - C1: 3498 fields; matched.
-  - C2: 3552 fields; matched.
-  - C3: 3552 fields; matched.
-  - C4: 3552 fields; matched.
-  - C5: 3552 fields; matched.
-  - C6: 3552 fields; matched.
-  - T2: 3542 fields; matched.
-  - T3: 3542 fields; matched.
-  - F0: 3542 fields; matched.
-  - L0: 3416 fields; matched.
-  - S0: 3416 fields; matched.
-  - T1: 3455 fields; matched.
-  - C1: 3455 fields; matched.
-  - C2: 3424 fields; matched.
-  - C3: 3424 fields; matched.
-  - C4: 3424 fields; matched.
-  - C5: 3430 fields; matched.
-  - C6: 3430 fields; matched.
-  - T2: 3416 fields; matched.
-  - T3: 3416 fields; matched.
-  - F0: 3416 fields; matched.
-  - L0: 3492 fields; matched.
-  - S0: 3492 fields; matched.
-  - T1: 3492 fields; matched.
-  - C1: 3492 fields; matched.
-  - C2: 3492 fields; matched.
-  - C3: 3492 fields; matched.
-  - C4: 3492 fields; matched.
-  - C5: 3492 fields; matched.
-  - C6: 3492 fields; matched.
-  - T2: 3492 fields; matched.
-  - T3: 3492 fields; matched.
-  - F0: 3492 fields; matched.
-  - L0: 3397 fields; matched.
-  - S0: 3397 fields; matched.
-  - T1: 3397 fields; matched.
-  - C1: 3397 fields; matched.
-  - T2 (neighbor entry): 3414 fields; matched.
-  - C2: 3414 fields; matched.
-  - T3 (passage): 3463 fields; matched.
-  - T4: 3463 fields; matched.
-  - C3: 3463 fields; matched.
-  - C4: 3463 fields; matched.
-  - C5: 3463 fields; matched.
-  - C6: 3463 fields; matched.
-  - T2 (post-save): 3433 fields; matched.
-  - T3 (post-load): 3433 fields; matched.
-  - F0: 3433 fields; matched.
-  - L0: 3399 fields; matched.
-  - S0: 3399 fields; matched.
-  - T1: 3422 fields; matched.
-  - C1: 3422 fields; matched.
-  - C2: 3422 fields; matched.
-  - C3: 3528 fields; matched.
-  - C4: 3528 fields; matched.
-  - C5: 3528 fields; matched.
-  - C6: 3528 fields; matched.
-  - C7: 3528 fields; matched.
-  - C8: 3528 fields; matched.
-  - C9: 3528 fields; matched.
-  - C10: 3528 fields; matched.
-  - C11: 3528 fields; matched.
-  - C12: 3528 fields; matched.
-  - C13: 3528 fields; matched.
-  - C14: 3528 fields; matched.
-  - C15: 3528 fields; matched.
-  - C16: 3528 fields; matched.
-  - C17: 3528 fields; matched.
-  - C18: 3528 fields; matched.
-  - C19: 3528 fields; matched.
-  - C20: 3528 fields; matched.
-  - C21: 3528 fields; matched.
-  - C22: 3528 fields; matched.
-  - C23: 3528 fields; matched.
-  - C24: 3528 fields; matched.
-  - C25: 3528 fields; matched.
-  - C26: 3528 fields; matched.
-  - C27: 3528 fields; matched.
-  - C28: 3528 fields; matched.
-  - C29: 3528 fields; matched.
-  - C30: 3528 fields; matched.
-  - C31: 3528 fields; matched.
-  - C32: 3528 fields; matched.
-  - C33: 3528 fields; matched.
-  - C34: 3528 fields; matched.
-  - C35: 3528 fields; matched.
-  - C36: 3528 fields; matched.
-  - C37: 3528 fields; matched.
-  - C38: 3528 fields; matched.
-  - C39: 3528 fields; matched.
-  - C40: 3528 fields; matched.
-  - C41: 3528 fields; matched.
-  - C42: 3528 fields; matched.
-  - C43: 3528 fields; matched.
-  - C44: 3528 fields; matched.
-  - C45: 3528 fields; matched.
-  - C46: 3528 fields; matched.
-  - C47: 3528 fields; matched.
-  - C48: 3528 fields; matched.
-  - C49: 3528 fields; matched.
-  - C50: 3528 fields; matched.
-  - C51: 3528 fields; matched.
-  - C52: 3528 fields; matched.
-  - C53: 3528 fields; matched.
-  - C54: 3528 fields; matched.
-  - C55: 3528 fields; matched.
-  - C56: 3528 fields; matched.
-  - C57: 3528 fields; matched.
-  - C58: 3528 fields; matched.
-  - C59: 3528 fields; matched.
-  - C60: 3528 fields; matched.
-  - C61: 3528 fields; matched.
-  - C62: 3528 fields; matched.
-  - C63: 3528 fields; matched.
-  - C64: 3528 fields; matched.
-  - C65: 3528 fields; matched.
-  - C66: 3528 fields; matched.
-  - C67: 3430 fields; matched.
-  - C68: 3430 fields; matched.
-  - C69: 3430 fields; matched.
-  - C70: 3430 fields; matched.
-  - C71: 3430 fields; matched.
-  - C72: 3430 fields; matched.
-  - C73: 3430 fields; matched.
-  - C74: 3430 fields; matched.
-  - C75: 3430 fields; matched.
-  - C76: 3430 fields; matched.
-  - C77: 3430 fields; matched.
-  - C78: 3430 fields; matched.
-  - C79: 3430 fields; matched.
-  - C80: 3430 fields; matched.
-  - C81: 3430 fields; matched.
-  - C82: 3430 fields; matched.
-  - C83: 3430 fields; matched.
-  - C84: 3430 fields; matched.
-  - C85: 3430 fields; matched.
-  - C86: 3430 fields; matched.
-  - C87: 3430 fields; matched.
-  - C88: 3430 fields; matched.
-  - C89: 3430 fields; matched.
-  - C90: 3430 fields; matched.
-  - C91: 3430 fields; matched.
-  - C92: 3430 fields; matched.
-  - C93: 3430 fields; matched.
-  - C94: 3430 fields; matched.
-  - C95: 3430 fields; matched.
-  - C96: 3430 fields; matched.
-  - C97: 3430 fields; matched.
-  - C98: 3430 fields; matched.
-  - C99: 3430 fields; matched.
-  - C100: 3430 fields; matched.
-  - C101: 3430 fields; matched.
-  - C102: 3430 fields; matched.
-  - C103: 3430 fields; matched.
-  - C104: 3430 fields; matched.
-  - C105: 3430 fields; matched.
-  - C106: 3430 fields; matched.
-  - C107: 3430 fields; matched.
-  - C108: 3430 fields; matched.
-  - C109: 3430 fields; matched.
-  - C110: 3430 fields; matched.
-  - C111: 3430 fields; matched.
-  - C112: 3430 fields; matched.
-  - C113: 3430 fields; matched.
-  - C114: 3430 fields; matched.
-  - C115: 3430 fields; matched.
-  - C116: 3430 fields; matched.
-  - C117: 3430 fields; matched.
-  - C118: 3430 fields; matched.
-  - C119: 3430 fields; matched.
-  - C120: 3430 fields; matched.
-  - T2: 3416 fields; matched.
-  - T3: 3416 fields; matched.
-  - F0: 3416 fields; matched.
-  - L0: 3399 fields; matched.
-  - S0: 3399 fields; matched.
-  - T1: 3399 fields; matched.
-  - C1: 3399 fields; matched.
-  - T2: 3399 fields; matched.
-  - C2: 3399 fields; matched.
-  - T3: 3399 fields; matched.
-  - C3: 3399 fields; matched.
-  - C4: 3399 fields; matched.
-  - C5: 3399 fields; matched.
-  - T2: 3399 fields; matched.
-  - T3: 3399 fields; matched.
-  - F0: 3399 fields; matched.
-  - L0: 3399 fields; matched.
-  - S0: 3399 fields; matched.
-  - T1: 3399 fields; matched.
-  - C1: 3399 fields; matched.
-  - T2: 3416 fields; matched.
-  - C2: 3416 fields; matched.
-  - T3: 3465 fields; matched.
-  - T4: 3465 fields; matched.
-  - C3: 3465 fields; matched.
-  - C4: 3465 fields; matched.
-  - C5: 3465 fields; matched.
-  - C6: 3465 fields; matched.
-  - T2: 3435 fields; matched.
-  - T3: 3399 fields; matched.
-  - T4: 3435 fields; matched.
-  - T5: 3399 fields; matched.
-  - F0: 3399 fields; matched.
-  - L0: 3399 fields; matched.
-  - S0: 3399 fields; matched.
-  - T1: 3399 fields; matched.
-  - C1: 3399 fields; matched.
-  - C2: 3399 fields; matched.
-  - C3: 3399 fields; matched.
-  - C4: 3399 fields; matched.
-  - C5: 3399 fields; matched.
-  - C6: 3399 fields; matched.
-  - T2: 3399 fields; matched.
-  - T3: 3399 fields; matched.
-  - F0: 3399 fields; matched.
-  - L0: 3399 fields; matched.
-  - S0: 3399 fields; matched.
-  - C1: 3399 fields; matched.
-  - C2: 3416 fields; matched.
-  - T2: 3416 fields; matched.
-  - T3: 3416 fields; matched.
-  - F0: 3416 fields; matched.
+- `E2-10-F01` DEMO start and ordinary traversal: **passed** in the latest run; 12 checkpoints / 41604 state fields; 0 state differences; 0 sound events; 5 cell writes; 25241/25241 stable generated-save bytes and 25241/25241 round-trip bytes matched.
+- `E2-10-F02` walls, pushers, duplicators, and collision ordering: **passed** in the latest run; 12 checkpoints / 42414 state fields; 0 state differences; 4 sound events; 16 cell writes; 643/643 stable generated-save bytes and 1051/1051 round-trip bytes matched.
+- `E2-10-F03` combat, bullets, keys/doors, and pickups: **passed** in the latest run; 12 checkpoints / 41158 state fields; 0 state differences; 7 sound events; 664 cell writes; 558/558 stable generated-save bytes and 876/876 round-trip bytes matched.
+- `E2-10-F04` object stat order plus multiple interacting OOP scripts: **passed** in the latest run; 12 checkpoints / 41940 state fields; 0 state differences; 0 sound events; 5 cell writes; 598/598 stable generated-save bytes and 962/962 round-trip bytes matched.
+- `E2-10-F05` board edges, neighbor transitions, and passages: **passed** in the latest run; 15 checkpoints / 51562 state fields; 0 state differences; 1 sound events; 6006 cell writes; 896/896 stable generated-save bytes and 1556/1556 round-trip bytes matched.
+- `E2-10-F06` dark room, torch, Energizer, timers, and death: **passed** in the latest run; 126 checkpoints / 438702 state fields; 0 state differences; 4 sound events; 3730 cell writes; 552/552 stable generated-save bytes and 870/870 round-trip bytes matched.
+- `E2-10-F07` pause, zero/positive-speed scheduling, and delayed input: **passed** in the latest run; 13 checkpoints / 44226 state fields; 0 state differences; 0 sound events; 4 cell writes; 461/461 stable generated-save bytes and 829/829 round-trip bytes matched.
+- `E2-10-F08` save, restore, world reload, and board change: **passed** in the latest run; 17 checkpoints / 58328 state fields; 0 state differences; 1 sound events; 6006 cell writes; 896/896 stable generated-save bytes and 1562/1562 round-trip bytes matched.
+- `E2-10-F09` editor mutation, .BRD round-trip, and play of the edited board: **passed** in the latest run; 12 checkpoints / 40872 state fields; 0 state differences; 0 sound events; 5 cell writes; 750/750 stable generated-save bytes and 1152/1152 round-trip bytes matched.
+- `E2-10-F10` malformed-file recovery and high-score insertion path: **passed** in the latest run; 7 checkpoints / 24015 state fields; 0 state differences; 0 sound events; 29 cell writes; 610/610 stable generated-save bytes and 858/858 round-trip bytes matched.
+- DEMO start and ordinary traversal: 12 checkpoints; 41604 state-field comparisons total; passed (D+DP+I evidence).
+- walls, pushers, duplicators, and collision ordering: 12 checkpoints; 42414 state-field comparisons total; passed (D+DP+I evidence).
+- combat, bullets, keys/doors, and pickups: 12 checkpoints; 41158 state-field comparisons total; passed (D+DP+I evidence).
+- object stat order plus multiple interacting OOP scripts: 12 checkpoints; 41940 state-field comparisons total; passed (D+DP+I evidence).
+- board edges, neighbor transitions, and passages: 15 checkpoints; 51562 state-field comparisons total; passed (D+DP+I evidence).
+- dark room, torch, Energizer, timers, and death: 126 checkpoints; 438702 state-field comparisons total; passed (D+DP+I evidence).
+- pause, positive-speed scheduling, and delayed input: 13 checkpoints; 44226 state-field comparisons total; passed (D+DP+I evidence).
+- save, restore, world reload, and board change: 17 checkpoints; 58328 state-field comparisons total; passed (D+DP+I evidence).
+- editor mutation, .BRD round-trip, and play of the edited board: 12 checkpoints; 40872 state-field comparisons total; passed (D+DP+I evidence).
+- malformed-file recovery and high-score insertion path: 7 checkpoints; 24015 state-field comparisons total; passed (D+DP+I evidence).
+  - L0: 3467 fields; matched.
+  - S0: 3467 fields; matched.
+  - T1: 3467 fields; matched.
+  - C1: 3467 fields; matched.
+  - C2: 3467 fields; matched.
+  - C3: 3467 fields; matched.
+  - C4: 3467 fields; matched.
+  - C5: 3467 fields; matched.
+  - C6: 3467 fields; matched.
+  - T2: 3467 fields; matched.
+  - T3: 3467 fields; matched.
+  - F0: 3467 fields; matched.
+  - L0: 3501 fields; matched.
+  - S0: 3501 fields; matched.
+  - T1: 3501 fields; matched.
+  - C1: 3501 fields; matched.
+  - C2: 3555 fields; matched.
+  - C3: 3555 fields; matched.
+  - C4: 3555 fields; matched.
+  - C5: 3555 fields; matched.
+  - C6: 3555 fields; matched.
+  - T2: 3545 fields; matched.
+  - T3: 3545 fields; matched.
+  - F0: 3545 fields; matched.
+  - L0: 3419 fields; matched.
+  - S0: 3419 fields; matched.
+  - T1: 3458 fields; matched.
+  - C1: 3458 fields; matched.
+  - C2: 3427 fields; matched.
+  - C3: 3427 fields; matched.
+  - C4: 3427 fields; matched.
+  - C5: 3433 fields; matched.
+  - C6: 3433 fields; matched.
+  - T2: 3419 fields; matched.
+  - T3: 3419 fields; matched.
+  - F0: 3419 fields; matched.
+  - L0: 3495 fields; matched.
+  - S0: 3495 fields; matched.
+  - T1: 3495 fields; matched.
+  - C1: 3495 fields; matched.
+  - C2: 3495 fields; matched.
+  - C3: 3495 fields; matched.
+  - C4: 3495 fields; matched.
+  - C5: 3495 fields; matched.
+  - C6: 3495 fields; matched.
+  - T2: 3495 fields; matched.
+  - T3: 3495 fields; matched.
+  - F0: 3495 fields; matched.
+  - L0: 3402 fields; matched.
+  - S0: 3402 fields; matched.
+  - T1: 3401 fields; matched.
+  - C1: 3402 fields; matched.
+  - T2 (neighbor entry): 3418 fields; matched.
+  - C2: 3419 fields; matched.
+  - T3 (passage): 3467 fields; matched.
+  - T4: 3467 fields; matched.
+  - C3: 3468 fields; matched.
+  - C4: 3468 fields; matched.
+  - C5: 3468 fields; matched.
+  - C6: 3468 fields; matched.
+  - T2 (post-save): 3437 fields; matched.
+  - T3 (post-load): 3437 fields; matched.
+  - F0: 3438 fields; matched.
+  - L0: 3402 fields; matched.
+  - S0: 3402 fields; matched.
+  - T1: 3425 fields; matched.
+  - C1: 3425 fields; matched.
+  - C2: 3425 fields; matched.
+  - C3: 3531 fields; matched.
+  - C4: 3531 fields; matched.
+  - C5: 3531 fields; matched.
+  - C6: 3531 fields; matched.
+  - C7: 3531 fields; matched.
+  - C8: 3531 fields; matched.
+  - C9: 3531 fields; matched.
+  - C10: 3531 fields; matched.
+  - C11: 3531 fields; matched.
+  - C12: 3531 fields; matched.
+  - C13: 3531 fields; matched.
+  - C14: 3531 fields; matched.
+  - C15: 3531 fields; matched.
+  - C16: 3531 fields; matched.
+  - C17: 3531 fields; matched.
+  - C18: 3531 fields; matched.
+  - C19: 3531 fields; matched.
+  - C20: 3531 fields; matched.
+  - C21: 3531 fields; matched.
+  - C22: 3531 fields; matched.
+  - C23: 3531 fields; matched.
+  - C24: 3531 fields; matched.
+  - C25: 3531 fields; matched.
+  - C26: 3531 fields; matched.
+  - C27: 3531 fields; matched.
+  - C28: 3531 fields; matched.
+  - C29: 3531 fields; matched.
+  - C30: 3531 fields; matched.
+  - C31: 3531 fields; matched.
+  - C32: 3531 fields; matched.
+  - C33: 3531 fields; matched.
+  - C34: 3531 fields; matched.
+  - C35: 3531 fields; matched.
+  - C36: 3531 fields; matched.
+  - C37: 3531 fields; matched.
+  - C38: 3531 fields; matched.
+  - C39: 3531 fields; matched.
+  - C40: 3531 fields; matched.
+  - C41: 3531 fields; matched.
+  - C42: 3531 fields; matched.
+  - C43: 3531 fields; matched.
+  - C44: 3531 fields; matched.
+  - C45: 3531 fields; matched.
+  - C46: 3531 fields; matched.
+  - C47: 3531 fields; matched.
+  - C48: 3531 fields; matched.
+  - C49: 3531 fields; matched.
+  - C50: 3531 fields; matched.
+  - C51: 3531 fields; matched.
+  - C52: 3531 fields; matched.
+  - C53: 3531 fields; matched.
+  - C54: 3531 fields; matched.
+  - C55: 3531 fields; matched.
+  - C56: 3531 fields; matched.
+  - C57: 3531 fields; matched.
+  - C58: 3531 fields; matched.
+  - C59: 3531 fields; matched.
+  - C60: 3531 fields; matched.
+  - C61: 3531 fields; matched.
+  - C62: 3531 fields; matched.
+  - C63: 3531 fields; matched.
+  - C64: 3531 fields; matched.
+  - C65: 3531 fields; matched.
+  - C66: 3531 fields; matched.
+  - C67: 3433 fields; matched.
+  - C68: 3433 fields; matched.
+  - C69: 3433 fields; matched.
+  - C70: 3433 fields; matched.
+  - C71: 3433 fields; matched.
+  - C72: 3433 fields; matched.
+  - C73: 3433 fields; matched.
+  - C74: 3433 fields; matched.
+  - C75: 3433 fields; matched.
+  - C76: 3433 fields; matched.
+  - C77: 3433 fields; matched.
+  - C78: 3433 fields; matched.
+  - C79: 3433 fields; matched.
+  - C80: 3433 fields; matched.
+  - C81: 3433 fields; matched.
+  - C82: 3433 fields; matched.
+  - C83: 3433 fields; matched.
+  - C84: 3433 fields; matched.
+  - C85: 3433 fields; matched.
+  - C86: 3433 fields; matched.
+  - C87: 3433 fields; matched.
+  - C88: 3433 fields; matched.
+  - C89: 3433 fields; matched.
+  - C90: 3433 fields; matched.
+  - C91: 3433 fields; matched.
+  - C92: 3433 fields; matched.
+  - C93: 3433 fields; matched.
+  - C94: 3433 fields; matched.
+  - C95: 3433 fields; matched.
+  - C96: 3433 fields; matched.
+  - C97: 3433 fields; matched.
+  - C98: 3433 fields; matched.
+  - C99: 3433 fields; matched.
+  - C100: 3433 fields; matched.
+  - C101: 3433 fields; matched.
+  - C102: 3433 fields; matched.
+  - C103: 3433 fields; matched.
+  - C104: 3433 fields; matched.
+  - C105: 3433 fields; matched.
+  - C106: 3433 fields; matched.
+  - C107: 3433 fields; matched.
+  - C108: 3433 fields; matched.
+  - C109: 3433 fields; matched.
+  - C110: 3433 fields; matched.
+  - C111: 3433 fields; matched.
+  - C112: 3433 fields; matched.
+  - C113: 3433 fields; matched.
+  - C114: 3433 fields; matched.
+  - C115: 3433 fields; matched.
+  - C116: 3433 fields; matched.
+  - C117: 3433 fields; matched.
+  - C118: 3433 fields; matched.
+  - C119: 3433 fields; matched.
+  - C120: 3433 fields; matched.
+  - T2: 3419 fields; matched.
+  - T3: 3419 fields; matched.
+  - F0: 3419 fields; matched.
+  - L0: 3402 fields; matched.
+  - S0: 3402 fields; matched.
+  - T1: 3402 fields; matched.
+  - C1: 3402 fields; matched.
+  - T2: 3402 fields; matched.
+  - C2: 3402 fields; matched.
+  - T3: 3402 fields; matched.
+  - C3: 3402 fields; matched.
+  - C4: 3402 fields; matched.
+  - C5: 3402 fields; matched.
+  - T2: 3402 fields; matched.
+  - T3: 3402 fields; matched.
+  - F0: 3402 fields; matched.
+  - L0: 3402 fields; matched.
+  - S0: 3402 fields; matched.
+  - T1: 3401 fields; matched.
+  - C1: 3402 fields; matched.
+  - T2: 3418 fields; matched.
+  - C2: 3419 fields; matched.
+  - T3: 3467 fields; matched.
+  - T4: 3467 fields; matched.
+  - C3: 3468 fields; matched.
+  - C4: 3468 fields; matched.
+  - C5: 3468 fields; matched.
+  - C6: 3468 fields; matched.
+  - T2: 3437 fields; matched.
+  - T3: 3401 fields; matched.
+  - T4: 3437 fields; matched.
+  - T5: 3401 fields; matched.
+  - F0: 3402 fields; matched.
+  - L0: 3406 fields; matched.
+  - S0: 3406 fields; matched.
+  - T1: 3406 fields; matched.
+  - C1: 3406 fields; matched.
+  - C2: 3406 fields; matched.
+  - C3: 3406 fields; matched.
+  - C4: 3406 fields; matched.
+  - C5: 3406 fields; matched.
+  - C6: 3406 fields; matched.
+  - T2: 3406 fields; matched.
+  - T3: 3406 fields; matched.
+  - F0: 3406 fields; matched.
+  - L0: 3421 fields; matched.
+  - S0: 3421 fields; matched.
+  - C1: 3421 fields; matched.
+  - C2: 3438 fields; matched.
+  - T2: 3438 fields; matched.
+  - T3: 3438 fields; matched.
+  - F0: 3438 fields; matched.
 
 ## Mismatches, limitations, and remaining work
 
@@ -349,7 +350,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 
 - E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.
 - E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.
-- E2-03: finish lifecycle-transition and per-cycle state/order acceptance cases; the deterministic scheduler matrix E2-03-AC002 is complete.
+- E2-03: finish lifecycle-transition cases and the exact transition/schedule pass gate; AC002 deterministic scheduling and AC003 logical-cycle snapshots are complete.
 - E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.
 - E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.
 - E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record.
@@ -364,14 +365,14 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.
 - Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.
 - Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.
-- All required integrated fixtures F01-F10 passed with zero unexplained state, sound, effective-cell, high-score, and stable-serialization differences. F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. Undefined and process-pointer bytes follow the checklist contract.
+- F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. In F05 state-transition T3, the cumulative effective-cell counter is Pascal 6003 versus production 6004 even though the complete ordered 6006-write stream and every logical-cycle counter match; this derived counter is excluded only at intermediate T checkpoints in F05/F08 and remains recorded for E2-03 transition acceptance. Undefined and process-pointer bytes follow the checklist contract.
 
 ## Latest verification record
 
-- Latest full Pascal-runner attempt: exit code 0; Clean full runner passed: 126/126 direct sessions and 54/54 configured differentials; E2-03-AC002 matched nine schedule rows / 117 fields; F01-F10 passed; runtime and diagnostic negative control passed. E2-10 remains the only closed blocker.
-- Latest integrated Pascal differential `E2-10-F10`: exit 0; 23861 snapshot fields, 0 logical sound events, 29 ordered playfield cell writes, 610/610 generated-save stable bytes, and 858/858 loaded-file round-trip stable bytes matched.
+- Latest full Pascal-runner attempt: exit code 0; Clean full runner passed: 126/126 direct sessions, 54/54 configured differentials, F01-F10, and standalone runtime suite; E2-03-AC002/AC003 pass. E2-10 remains the only closed blocker.
+- Latest integrated Pascal differential `E2-10-F10`: exit 0; 24015 snapshot fields, 0 logical sound events, 29 ordered playfield cell writes, 610/610 generated-save stable bytes, and 858/858 loaded-file round-trip stable bytes matched.
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; executable SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 80fd8d8915a5ffff3795d478a7d3f598bf8ffb27.
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 41409f7f2b0cc8a4278ebe426bcdccbbc3f8ca47.
 - Last completed full Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
@@ -398,5 +399,6 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - E2-10-F08 passed in the clean 2026-11-25 runner at 6668babc88d5d53add6f0f1ceb4c1eac12f57dea: 122 direct Pascal sessions and 52/52 comparisons passed. The six-cycle save/restore/world-reload replay matched 17 checkpoints / 58,251 state fields, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,562 round-trip bytes. Pascal and production both loaded the .SAV and baseline .ZZT; the F05/F08 redraw cadence difference remains separately classified. The fixed corpus is 8/10; F09-F10 remain pending.
 - E2-10-F09 passed in the clean 2026-11-25 runner committed as 080cc69bf2abfa745ecc2ad37b5d27117dba8fc2: corrected ledger count 124 direct Turbo Pascal sessions and 53/53 configured differentials; the real Pascal EditorLoop exported/imported .BRD before GamePlayLoop. The integrated comparison matched 12 checkpoints / 40,788 fields, five cell writes, zero sound events, all 324 .BRD bytes, 750 stable save bytes, and 1,152 round-trip bytes; F10 remains pending (9/10).
 - E2-03-AC002 passed in the clean 2026-11-26 run at 80fd8d8915a5ffff3795d478a7d3f598bf8ffb27: nine deterministic schedule rows / 117 fields matched direct compiled Pascal and shared production for TickSpeed 0, 1, 6, and 9 at phases 0 and 5980, plus the four-PIT stall. Existing F07 supplies pause/resume coverage. E2-03 remains open.
+- E2-03-AC003 passed in the clean 2026-11-26 run on source commit 41409f7f2b0cc8a4278ebe426bcdccbbc3f8ca47: all ten frozen integrated fixtures passed (238 checkpoints / 824,821 state fields / 169 logical cycles), with 17 sound events and 16,470 ordered effective cell writes matched. F05/F08 T-checkpoint counter boundaries are explicitly classified; per-cycle C counters and global write streams remain exact.
 
 Generated by `python tools/compatibility/generate_progress.py`. Do not edit this report manually.

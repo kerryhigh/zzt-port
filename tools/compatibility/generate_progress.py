@@ -31,20 +31,27 @@ def main() -> None:
     )
     integrated_fixtures = integrated_fixture_manifest.get("fixtures", [])
     required_fixture_count = integrated_fixture_manifest.get("required_fixture_count", 0)
+    runner = run.get("verification", {})
+    integrated = runner.get("integrated_replay", {})
+    current_fixture_results = {
+        item.get("fixture_id"): item
+        for item in integrated.get("per_cycle_results", [])
+        if item.get("fixture_id")
+    }
     fixture_ids = [item.get("id") for item in integrated_fixtures]
     if len(integrated_fixtures) != required_fixture_count or len(set(fixture_ids)) != len(fixture_ids):
         raise ValueError("The frozen integrated replay manifest must contain exactly its declared number of unique fixture IDs")
 
     def fixture_has_completion_evidence(item: dict) -> bool:
-        result = item.get("verification", {})
+        result = current_fixture_results.get(item.get("id"), {})
         return (
             item.get("status") == "complete"
-            and {"D", "DP", "I"}.issubset(set(item.get("evidence_classes", [])))
+            and {"D", "DP", "I"}.issubset(set(result.get("evidence_class", "").split("+")))
             and result.get("result") == "passed"
-            and result.get("clean_runner_exit_code") == 0
             and result.get("state_field_differences") == 0
             and result.get("cell_write_differences") == 0
-            and result.get("save_round_trip", {}).get("stable_serialized_byte_differences") == 0
+            and result.get("stable_save_byte_differences") == 0
+            and result.get("roundtrip_stable_byte_differences") == 0
         )
 
     completed_integrated_fixtures = [
@@ -101,6 +108,14 @@ def main() -> None:
         item for item in integrated.get("per_cycle_results", [])
         if item.get("result") == "passed"
     ]
+    logical_cycle_results = [
+        checkpoint
+        for item in integrated.get("per_cycle_results", [])
+        for checkpoint in item.get("checkpoint_results", [])
+        if checkpoint.get("checkpoint", "").startswith("C")
+    ]
+    logical_cycle_matches = sum(1 for item in logical_cycle_results if item.get("result") == "matched")
+    logical_cycle_fields = sum(item.get("fields_compared", 0) for item in logical_cycle_results)
     if completed_fixture_results:
         latest_fixture = completed_fixture_results[-1]
         latest_integrated = {
@@ -141,6 +156,21 @@ def main() -> None:
     remaining = runner.get("remaining_mandatory_work", [])
     pascal_boardclose = runner.get("latest_attempt", {}).get("pascal_boardclose_brd", {})
     pascal_boardclose_worldsave = runner.get("latest_attempt", {}).get("pascal_boardclose_worldsave", {})
+    fixture_summary_lines = []
+    for fixture in integrated_fixtures:
+        result = current_fixture_results.get(fixture.get("id"))
+        if result:
+            save_matched = result.get("stable_save_bytes_matched", "not recorded")
+            save_differences = result.get("stable_save_byte_differences", "not recorded")
+            roundtrip_matched = result.get("roundtrip_stable_bytes_matched", "not recorded")
+            roundtrip_differences = result.get("roundtrip_stable_byte_differences", "not recorded")
+            save_total = save_matched + save_differences if isinstance(save_matched, int) and isinstance(save_differences, int) else "not recorded"
+            roundtrip_total = roundtrip_matched + roundtrip_differences if isinstance(roundtrip_matched, int) and isinstance(roundtrip_differences, int) else "not recorded"
+            fixture_summary_lines.append(
+                f"- `{fixture['id']}` {fixture['scenario']}: **{result.get('result', 'unclassified')}** in the latest run; {result.get('checkpoints', 'not recorded')} checkpoints / {result.get('field_comparisons', 'not recorded')} state fields; {result.get('state_field_differences', 'not recorded')} state differences; {result.get('logical_sound_events', 'not recorded')} sound events; {result.get('ordered_cell_writes', 'not recorded')} cell writes; {save_matched}/{save_total} stable generated-save bytes and {roundtrip_matched}/{roundtrip_total} round-trip bytes matched."
+            )
+        else:
+            fixture_summary_lines.append(f"- `{fixture['id']}` {fixture['scenario']}: no result in the latest verification record.")
 
     lines = [
         "# Engine 2.0 compatibility progress",
@@ -216,6 +246,7 @@ def main() -> None:
         "",
         f"- Required fixtures: {required_fixture_count} (fixed by `{integrated_fixture_manifest.get('schema_revision', 'unversioned')}`).",
         f"- Completed fixtures: {len(completed_integrated_fixtures)}/{required_fixture_count}; completed IDs: {', '.join(item['id'] for item in completed_integrated_fixtures) or 'none'}; pending IDs: {', '.join(item['id'] for item in pending_integrated_fixtures) or 'none'}.",
+        f"- Logical-cycle snapshots in the latest verification record: {logical_cycle_matches}/{len(logical_cycle_results)} matched across {logical_cycle_fields} state-field comparisons.",
         f"- Prototype: {integrated.get('prototype_name', 'not recorded')} with {integrated.get('prototype_field_comparisons', 'not recorded')} total field comparisons across {integrated.get('prototype_checkpoint_count', 'not recorded')} checkpoints; per-checkpoint counts: {integrated.get('prototype_fields_compared', 'not recorded')}; this is not counted as a complete E2-10 fixture.",
         f"- Logical sound-queue events in the prototype: {integrated.get('sound_events_compared', 'not recorded')} events / {integrated.get('sound_event_fields_compared', 'not recorded')} event fields; checkpoint sound state: {'compared' if integrated.get('sound_checkpoint_state_compared') else 'outstanding'}; overflow: {integrated.get('sound_event_overflow', 'not recorded')}.",
         f"- Ordered playfield cell writes in the prototype: {integrated.get('cell_writes_compared', 'not recorded')} events / {integrated.get('cell_write_fields_compared', 'not recorded')} event fields; capture: {'matched' if integrated.get('logical_cell_write_capture') and not integrated.get('cell_event_overflow') else 'outstanding or overflowed'}; generated oracle sidecar SHA-256: {integrated.get('cell_oracle_output_sha256', 'not recorded')}.",
@@ -225,10 +256,7 @@ def main() -> None:
         f"- State-transition checkpoints: {'implemented' if integrated.get('state_transition_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
         f"- First-divergence diagnostic negative control: {integrated_diagnostic.get('result', 'not recorded')}; {integrated_diagnostic.get('report', 'no controlled mismatch report recorded').rstrip().rstrip('.')}. This instrumentation check receives no replay-fixture or compatibility-case completion credit.",
-        *([
-            f"- `{item['id']}` {item['scenario']}: **{item.get('verification', {}).get('result', 'unclassified')}**; {item.get('verification', {}).get('checkpoint_count', 'not recorded')} checkpoints / {item.get('verification', {}).get('state_field_comparisons', 'not recorded')} state fields; {item.get('verification', {}).get('state_field_differences', 'not recorded')} state differences; {item.get('verification', {}).get('logical_sound_events', 'not recorded')} sound events; {item.get('verification', {}).get('ordered_playfield_cell_writes', 'not recorded')} cell writes; {item.get('verification', {}).get('save_round_trip', {}).get('stable_serialized_bytes_compared', 'not recorded')} stable save bytes compared with {item.get('verification', {}).get('save_round_trip', {}).get('stable_serialized_byte_differences', 'not recorded')} differences."
-            for item in integrated_fixtures
-        ] if integrated_fixtures else ["- No frozen integrated fixture inventory is recorded."]),
+        *(fixture_summary_lines if integrated_fixtures else ["- No frozen integrated fixture inventory is recorded."]),
         *([
             f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints; {item.get('field_comparisons', 'not recorded')} state-field comparisons total; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
             for item in integrated.get("per_cycle_results", [])

@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-26",
-    "root_revision": "80fd8d8915a5ffff3795d478a7d3f598bf8ffb27",
+    "root_revision": "41409f7f2b0cc8a4278ebe426bcdccbbc3f8ca47",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26: 126/126 direct Turbo Pascal 5.5 sessions (54 standard programs and 72 standalone sessions) and 54/54 configured Pascal-to-production differential invocations. E2-03-AC002 passed all nine deterministic schedule rows (117 fields), including both phases for TickSpeed 0, 1, 6, and 9 and the four-PIT stall; the existing F07 pause/resume fixture also passed. F01-F10 passed; F10 matched seven checkpoints / 23,861 fields and all 1,590 .HI bytes. Runtime verification and the diagnostic negative control passed. E2-10 is closed; E2-01 through E2-09 and E2-11 remain open.",
+    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26: 126/126 direct Turbo Pascal 5.5 sessions and 54/54 configured differentials. E2-03-AC002 and AC003 passed; F01-F10 passed with 238 checkpoints, 824,821 state-field comparisons, and 169/169 logical-cycle snapshots. The standalone runtime suite and first-divergence negative control passed. E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -117,69 +117,81 @@
           "fixture_id": "E2-10-F01",
           "fixture": "DEMO start and ordinary traversal",
           "checkpoints": 12,
-          "field_comparisons": 41472,
+          "field_comparisons": 41604,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3456,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "player_traversal": "board 1 from (30,12) to (32,12); two right moves by C2",
@@ -196,75 +208,94 @@
           "pascal_world_load_result": true,
           "production_world_load_result": 0,
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-demo-traversal.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-demo-traversal.md",
+          "logical_sound_event_fields": 0,
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 20802,
+          "logical_cycle_differences": 0,
+          "roundtrip_stable_byte_differences": 0,
+          "roundtrip_stable_bytes_matched": 25241
         },
         {
           "fixture_id": "E2-10-F02",
           "fixture": "walls, pushers, duplicators, and collision ordering",
           "checkpoints": 12,
-          "field_comparisons": 42378,
+          "field_comparisons": 42414,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3498,
-              "result": "matched"
+              "fields_compared": 3501,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3498,
-              "result": "matched"
+              "fields_compared": 3501,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3498,
-              "result": "matched"
+              "fields_compared": 3501,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3498,
-              "result": "matched"
+              "fields_compared": 3501,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3552,
-              "result": "matched"
+              "fields_compared": 3555,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3552,
-              "result": "matched"
+              "fields_compared": 3555,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3552,
-              "result": "matched"
+              "fields_compared": 3555,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3552,
-              "result": "matched"
+              "fields_compared": 3555,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3552,
-              "result": "matched"
+              "fields_compared": 3555,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3542,
-              "result": "matched"
+              "fields_compared": 3545,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3542,
-              "result": "matched"
+              "fields_compared": 3545,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3542,
-              "result": "matched"
+              "fields_compared": 3545,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -288,75 +319,93 @@
           "pusher_chain_path": "pushers x=10 and x=11 move Boulder from x=12 to x=13 against Solid x=14 and stop",
           "duplicator_path": "Duplicator at x=20 clones source object from x=21 to x=19; source and clone scripts execute",
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-walls-pushers-duplicators.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-walls-pushers-duplicators.md",
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 21276,
+          "logical_cycle_differences": 0,
+          "roundtrip_stable_byte_differences": 0,
+          "roundtrip_stable_bytes_matched": 1051
         },
         {
           "fixture_id": "E2-10-F03",
           "fixture": "combat, bullets, keys/doors, and pickups",
           "checkpoints": 12,
-          "field_comparisons": 41122,
+          "field_comparisons": 41158,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3455,
-              "result": "matched"
+              "fields_compared": 3458,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3455,
-              "result": "matched"
+              "fields_compared": 3458,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3424,
-              "result": "matched"
+              "fields_compared": 3427,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3424,
-              "result": "matched"
+              "fields_compared": 3427,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3424,
-              "result": "matched"
+              "fields_compared": 3427,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -378,75 +427,93 @@
           "production_world_load_result": 0,
           "combat_key_pickup_path": "RFRRRRR: collect red key, fire through the Lion, pass the matching red door, collect Gem and Ammo; finish at x=10/y=5 with ammo=5, gems=1, health=101, score=10, and the player as the only remaining stat.",
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-combat-keys-pickups.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-combat-keys-pickups.md",
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 20605,
+          "logical_cycle_differences": 0,
+          "roundtrip_stable_byte_differences": 0,
+          "roundtrip_stable_bytes_matched": 876
         },
         {
           "fixture_id": "E2-10-F04",
           "fixture": "object stat order plus multiple interacting OOP scripts",
           "checkpoints": 12,
-          "field_comparisons": 41904,
+          "field_comparisons": 41940,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3492,
-              "result": "matched"
+              "fields_compared": 3495,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -469,90 +536,111 @@
           "first_script_active_cycle": "C2",
           "stat_1_sets_flag_seen_by_stat_2_same_cycle": true,
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-object-stat-order.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-object-stat-order.md",
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 20970,
+          "logical_cycle_differences": 0,
+          "roundtrip_stable_byte_differences": 0,
+          "roundtrip_stable_bytes_matched": 962
         },
         {
           "fixture_id": "E2-10-F05",
           "fixture": "board edges, neighbor transitions, and passages",
           "checkpoints": 15,
-          "field_comparisons": 51493,
+          "field_comparisons": 51562,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3397,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3397,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3397,
-              "result": "matched"
+              "fields_compared": 3401,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3397,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2 (neighbor entry)",
-              "fields_compared": 3414,
-              "result": "matched"
+              "fields_compared": 3418,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3414,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3 (passage)",
-              "fields_compared": 3463,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "T4",
-              "fields_compared": 3463,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3463,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3463,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3463,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3463,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2 (post-save)",
-              "fields_compared": 3433,
-              "result": "matched"
+              "fields_compared": 3437,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "T3 (post-load)",
-              "fields_compared": 3433,
-              "result": "matched"
+              "fields_compared": 3437,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3433,
-              "result": "matched"
+              "fields_compared": 3438,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -579,645 +667,778 @@
           "production_world_load_result": 0,
           "board_transitions": "west-neighbor board 1 at (60,5); matching passage to board 2 at last match (22,17); resume to (23,17)",
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md",
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 20693,
+          "logical_cycle_differences": 0,
+          "transition_cell_counter_note": "C-cycle counters and the global ordered cell stream match. Intermediate T-checkpoint cumulative counter is excluded per the E2-03 boundary note.",
+          "roundtrip_stable_byte_differences": 0,
+          "roundtrip_stable_bytes_matched": 1556
         },
         {
           "fixture_id": "E2-10-F06",
           "fixture": "dark room, torch, Energizer, timers, and death",
           "checkpoints": 126,
-          "field_comparisons": 438324,
+          "field_comparisons": 438702,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3422,
-              "result": "matched"
+              "fields_compared": 3425,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3422,
-              "result": "matched"
+              "fields_compared": 3425,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3422,
-              "result": "matched"
+              "fields_compared": 3425,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C7",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C8",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C9",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C10",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C11",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C12",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C13",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C14",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C15",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C16",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C17",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C18",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C19",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C20",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C21",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C22",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C23",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C24",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C25",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C26",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C27",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C28",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C29",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C30",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C31",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C32",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C33",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C34",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C35",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C36",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C37",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C38",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C39",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C40",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C41",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C42",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C43",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C44",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C45",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C46",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C47",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C48",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C49",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C50",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C51",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C52",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C53",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C54",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C55",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C56",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C57",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C58",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C59",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C60",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C61",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C62",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C63",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C64",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C65",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C66",
-              "fields_compared": 3528,
-              "result": "matched"
+              "fields_compared": 3531,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C67",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C68",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C69",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C70",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C71",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C72",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C73",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C74",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C75",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C76",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C77",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C78",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C79",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C80",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C81",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C82",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C83",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C84",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C85",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C86",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C87",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C88",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C89",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C90",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C91",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C92",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C93",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C94",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C95",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C96",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C97",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C98",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C99",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C100",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C101",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C102",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C103",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C104",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C105",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C106",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C107",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C108",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C109",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C110",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C111",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C112",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C113",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C114",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C115",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C116",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C117",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C118",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C119",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C120",
-              "fields_compared": 3430,
-              "result": "matched"
+              "fields_compared": 3433,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "per_cycle_checkpoints": 120,
@@ -1261,80 +1482,97 @@
           "pascal_world_load_result": true,
           "production_world_load_result": 0,
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md",
+          "logical_cycle_checkpoints": 120,
+          "logical_cycle_checkpoints_matched": 120,
+          "logical_cycle_field_comparisons": 418216,
+          "logical_cycle_differences": 0
         },
         {
           "fixture_id": "E2-10-F07",
           "fixture": "pause, positive-speed scheduling, and delayed input",
           "checkpoints": 13,
-          "field_comparisons": 44187,
+          "field_comparisons": 44226,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "per_cycle_checkpoints": 5,
@@ -1370,100 +1608,121 @@
           "normalized_input_tape": "RPNNRNNN",
           "scheduler": "TickSpeed=6; TickTimeDuration=12; deterministic logical-clock increment 5.4924578 hundredths per poll",
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md",
+          "logical_cycle_checkpoints": 5,
+          "logical_cycle_checkpoints_matched": 5,
+          "logical_cycle_field_comparisons": 17010,
+          "logical_cycle_differences": 0
         },
         {
           "fixture_id": "E2-10-F08",
           "fixture": "save, restore, world reload, and board change",
           "checkpoints": 17,
-          "field_comparisons": 58251,
+          "field_comparisons": 58328,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3401,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3418,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3419,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3465,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "T4",
-              "fields_compared": 3465,
-              "result": "matched"
+              "fields_compared": 3467,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3465,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3465,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3465,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3465,
-              "result": "matched"
+              "fields_compared": 3468,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3435,
-              "result": "matched"
+              "fields_compared": 3437,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3401,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "T4",
-              "fields_compared": 3435,
-              "result": "matched"
+              "fields_compared": 3437,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "T5",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3401,
+              "result": "matched",
+              "transition_cell_counter_compared": false
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3402,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -1483,75 +1742,92 @@
           "pascal_world_reload_result": true,
           "production_world_reload_result": 0,
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-save-restore-world-reload.md"
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-save-restore-world-reload.md",
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 20693,
+          "logical_cycle_differences": 0,
+          "transition_cell_counter_note": "C-cycle counters and the global ordered cell stream match. Intermediate T-checkpoint cumulative counter is excluded per the E2-03 boundary note."
         },
         {
           "fixture_id": "E2-10-F09",
           "fixture": "editor mutation, .BRD round-trip, and play of the edited board",
           "checkpoints": 12,
-          "field_comparisons": 40788,
+          "field_comparisons": 40872,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C3",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C4",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C5",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C6",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3406,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -1622,50 +1898,61 @@
               "size_bytes": 1160,
               "sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea"
             }
-          ]
+          ],
+          "logical_cycle_checkpoints": 6,
+          "logical_cycle_checkpoints_matched": 6,
+          "logical_cycle_field_comparisons": 20436,
+          "logical_cycle_differences": 0
         },
         {
           "fixture_id": "E2-10-F10",
           "fixture": "malformed-file recovery and high-score insertion path",
           "checkpoints": 7,
-          "field_comparisons": 23861,
+          "field_comparisons": 24015,
           "result": "passed",
           "evidence_class": "D+DP+I",
           "checkpoint_results": [
             {
               "checkpoint": "L0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3421,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "S0",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3421,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C1",
-              "fields_compared": 3399,
-              "result": "matched"
+              "fields_compared": 3421,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "C2",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3438,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T2",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3438,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "T3",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3438,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             },
             {
               "checkpoint": "F0",
-              "fields_compared": 3416,
-              "result": "matched"
+              "fields_compared": 3438,
+              "result": "matched",
+              "transition_cell_counter_compared": true
             }
           ],
           "state_field_differences": 0,
@@ -1687,7 +1974,11 @@
           "roundtrip_stable_byte_differences": 0,
           "classified_roundtrip_pointer_positions": 8,
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md"
+          "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md",
+          "logical_cycle_checkpoints": 2,
+          "logical_cycle_checkpoints_matched": 2,
+          "logical_cycle_field_comparisons": 6859,
+          "logical_cycle_differences": 0
         }
       ],
       "schema_revision": "e2-10-replay-r10-demo-world",
@@ -1788,12 +2079,12 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "All required integrated fixtures F01-F10 passed with zero unexplained state, sound, effective-cell, high-score, and stable-serialization differences. F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. Undefined and process-pointer bytes follow the checklist contract."
+      "F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. In F05 state-transition T3, the cumulative effective-cell counter is Pascal 6003 versus production 6004 even though the complete ordered 6006-write stream and every logical-cycle counter match; this derived counter is excluded only at intermediate T checkpoints in F05/F08 and remains recorded for E2-03 transition acceptance. Undefined and process-pointer bytes follow the checklist contract."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
-      "E2-03: finish lifecycle-transition and per-cycle state/order acceptance cases; the deterministic scheduler matrix E2-03-AC002 is complete.",
+      "E2-03: finish lifecycle-transition cases and the exact transition/schedule pass gate; AC002 deterministic scheduling and AC003 logical-cycle snapshots are complete.",
       "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
@@ -1823,7 +2114,8 @@
       "E2-10-F07 passed in the clean 2026-11-25 runner at 2adbf0bb4021533f0477217003164749921d819f: 121 direct Pascal sessions and 51/51 configured comparisons passed; the positive-speed pause/delayed-input replay matched 13 checkpoints / 44,187 state fields, zero sound events, four effective cell changes, 461 stable fresh-save bytes, and 829 round-trip bytes. Same-value redraw counts matched 3/3. The frozen corpus is 7/10; F08-F10 remain open.",
       "E2-10-F08 passed in the clean 2026-11-25 runner at 6668babc88d5d53add6f0f1ceb4c1eac12f57dea: 122 direct Pascal sessions and 52/52 comparisons passed. The six-cycle save/restore/world-reload replay matched 17 checkpoints / 58,251 state fields, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,562 round-trip bytes. Pascal and production both loaded the .SAV and baseline .ZZT; the F05/F08 redraw cadence difference remains separately classified. The fixed corpus is 8/10; F09-F10 remain pending.",
       "E2-10-F09 passed in the clean 2026-11-25 runner committed as 080cc69bf2abfa745ecc2ad37b5d27117dba8fc2: corrected ledger count 124 direct Turbo Pascal sessions and 53/53 configured differentials; the real Pascal EditorLoop exported/imported .BRD before GamePlayLoop. The integrated comparison matched 12 checkpoints / 40,788 fields, five cell writes, zero sound events, all 324 .BRD bytes, 750 stable save bytes, and 1,152 round-trip bytes; F10 remains pending (9/10).",
-      "E2-03-AC002 passed in the clean 2026-11-26 run at 80fd8d8915a5ffff3795d478a7d3f598bf8ffb27: nine deterministic schedule rows / 117 fields matched direct compiled Pascal and shared production for TickSpeed 0, 1, 6, and 9 at phases 0 and 5980, plus the four-PIT stall. Existing F07 supplies pause/resume coverage. E2-03 remains open."
+      "E2-03-AC002 passed in the clean 2026-11-26 run at 80fd8d8915a5ffff3795d478a7d3f598bf8ffb27: nine deterministic schedule rows / 117 fields matched direct compiled Pascal and shared production for TickSpeed 0, 1, 6, and 9 at phases 0 and 5980, plus the four-PIT stall. Existing F07 supplies pause/resume coverage. E2-03 remains open.",
+      "E2-03-AC003 passed in the clean 2026-11-26 run on source commit 41409f7f2b0cc8a4278ebe426bcdccbbc3f8ca47: all ten frozen integrated fixtures passed (238 checkpoints / 824,821 state fields / 169 logical cycles), with 17 sound events and 16,470 ordered effective cell writes matched. F05/F08 T-checkpoint counter boundaries are explicitly classified; per-cycle C counters and global write streams remain exact."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -1852,7 +2144,7 @@
     "latest_attempt": {
       "date": "2026-11-26",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "80fd8d8915a5ffff3795d478a7d3f598bf8ffb27",
+      "source_revision": "41409f7f2b0cc8a4278ebe426bcdccbbc3f8ca47",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 126,
       "configured_differentials_passed": 54,
@@ -1864,10 +2156,10 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean full runner passed: 126/126 direct sessions and 54/54 configured differentials; E2-03-AC002 matched nine schedule rows / 117 fields; F01-F10 passed; runtime and diagnostic negative control passed. E2-10 remains the only closed blocker.",
+      "status": "Clean full runner passed: 126/126 direct sessions, 54/54 configured differentials, F01-F10, and standalone runtime suite; E2-03-AC002/AC003 pass. E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path; it records the observed version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
-      "integrated_state_fields_compared": 23861,
+      "integrated_state_fields_compared": 24015,
       "integrated_sound_event_fields_compared": 0,
       "integrated_cell_write_fields_compared": 116,
       "integrated_save_deterministic_bytes_matched": 610,
@@ -1910,7 +2202,7 @@
         "fixture_id": "E2-10-F01",
         "result": "passed",
         "checkpoint_count": 12,
-        "state_fields_compared": 41472,
+        "state_fields_compared": 41604,
         "state_field_differences": 0,
         "cell_writes_compared": 5,
         "cell_write_fields_compared": 20,
@@ -1924,7 +2216,7 @@
         "fixture_id": "E2-10-F02",
         "result": "passed",
         "checkpoint_count": 12,
-        "state_fields_compared": 42378,
+        "state_fields_compared": 42414,
         "state_field_differences": 0,
         "sound_events": 4,
         "sound_event_fields": 56,
@@ -1942,7 +2234,7 @@
       },
       "integrated_replay_summary": {
         "fixture_id": "E2-10-F10",
-        "state_fields_compared": 23861,
+        "state_fields_compared": 24015,
         "sound_events": 0,
         "cell_writes": 29,
         "stable_save_bytes_matched": 610,
@@ -1957,7 +2249,7 @@
         "fixture_id": "E2-10-F04",
         "result": "passed",
         "checkpoint_count": 12,
-        "state_fields_compared": 41904,
+        "state_fields_compared": 41940,
         "state_field_differences": 0,
         "sound_events": 0,
         "cell_writes": 5,
@@ -1975,7 +2267,7 @@
         "fixture_id": "E2-10-F05",
         "result": "passed",
         "checkpoint_count": 15,
-        "state_fields_compared": 51493,
+        "state_fields_compared": 51562,
         "state_field_differences": 0,
         "sound_events": 1,
         "sound_event_fields": 66,
@@ -1993,21 +2285,14 @@
         "classified_roundtrip_pointer_positions": 24,
         "world_load_result_pascal": true,
         "world_load_result_production": 0,
-        "oracle_output_hashes": {
-          "INTEGPR.OUT": "ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4",
-          "INTEGSND.OUT": "54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20",
-          "INTEGCEL.OUT": "f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070",
-          "INTEGSAV.SAV": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de",
-          "INTEGLOD.OUT": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
-          "INTEG2SV.SAV": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de"
-        },
-        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md",
+        "transition_cell_counter_note": "The documented T-checkpoint cumulative counter boundary is excluded; C-cycle counters and global ordered cell writes matched."
       },
       "integrated_f06_fixture": {
         "fixture_id": "E2-10-F06",
         "result": "passed",
         "checkpoint_count": 126,
-        "state_fields_compared": 438324,
+        "state_fields_compared": 438702,
         "state_field_differences": 0,
         "sound_events": 4,
         "sound_event_fields": 328,
@@ -2025,45 +2310,13 @@
         "world_load_result_pascal": true,
         "world_load_result_production": 0,
         "unexplained_differences": 0,
-        "oracle_outputs": [
-          {
-            "path": "build/pascal-compat-verification/INTEGPR.OUT",
-            "size_bytes": 927772,
-            "sha256": "b338a11b65610bd878aa95c300ae547fb974a12a74ec58e255c1deab98488f5c"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGSND.OUT",
-            "size_bytes": 830,
-            "sha256": "4297c0005e505cf22cc31af6be74f8874f957e087808f32ef5e2157a63d1ebb9"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
-            "size_bytes": 49483,
-            "sha256": "f8a80659f8fa47f05e35056b695a3fea09239d8d2290be49bc312e722a1a21d4"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
-            "size_bytes": 878,
-            "sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
-            "size_bytes": 3,
-            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
-            "size_bytes": 878,
-            "sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f"
-          }
-        ],
         "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md"
       },
       "integrated_f07_fixture": {
         "fixture_id": "E2-10-F07",
         "result": "passed",
         "checkpoint_count": 13,
-        "state_fields_compared": 44187,
+        "state_fields_compared": 44226,
         "state_field_differences": 0,
         "sound_events": 0,
         "sound_event_fields": 0,
@@ -2084,39 +2337,7 @@
         "normalized_input_tape": "RPNNRNNN",
         "tick_speed": 6,
         "tick_time_duration": 12,
-        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md",
-        "oracle_outputs": [
-          {
-            "path": "build/pascal-compat-verification/INTEGPR.OUT",
-            "size_bytes": 93020,
-            "sha256": "b428274a4cdf8011b2d2c7e65e621ce5d4069b42bff2a10390dbfec6b15603e7"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGSND.OUT",
-            "size_bytes": 5,
-            "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
-            "size_bytes": 49,
-            "sha256": "7ec1f5425ab34de63e7132b83f8554b34df5542c0b2aadac8b95675e79f1e9b8"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
-            "size_bytes": 833,
-            "sha256": "faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
-            "size_bytes": 3,
-            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
-            "size_bytes": 833,
-            "sha256": "faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7"
-          }
-        ]
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md"
       },
       "integrated_world_reload_result_pascal": true,
       "integrated_world_reload_result_production": 0,
@@ -2124,7 +2345,7 @@
         "fixture_id": "E2-10-F08",
         "result": "passed",
         "checkpoint_count": 17,
-        "state_fields_compared": 58251,
+        "state_fields_compared": 58328,
         "state_field_differences": 0,
         "per_cycle_checkpoints": 6,
         "sound_events": 1,
@@ -2144,13 +2365,14 @@
         "pascal_world_reload_result": true,
         "production_world_reload_result": 0,
         "unexplained_differences": 0,
-        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-save-restore-world-reload.md"
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-save-restore-world-reload.md",
+        "transition_cell_counter_note": "The documented T-checkpoint cumulative counter boundary is excluded; C-cycle counters and global ordered cell writes matched."
       },
       "integrated_f09_fixture": {
         "fixture_id": "E2-10-F09",
         "fixture": "editor mutation, .BRD round-trip, and play of the edited board",
         "checkpoints": 12,
-        "field_comparisons": 40788,
+        "field_comparisons": 40872,
         "result": "passed",
         "evidence_class": "D+DP+I",
         "checkpoint_results": [
@@ -2246,53 +2468,19 @@
           "TimerTicks is fixed and the existing cycle-clock hook advances deterministic gameplay cycles; six normalized 8-key bytes exercise unpause and upward movement.",
           "The production replay seeds the equivalent edited text tile at (31,12), uses the shared zoo_editor_brd serializer and transfer/import APIs, then invokes zoo_board_enter and the real zoo_tick loop.",
           "Physical sound output is disabled while logical sound events are captured; Turbo Pascal compile and probe execution use separate fresh DOSBox-X sessions to control inherited allocator history."
-        ],
-        "oracle_outputs": [
-          {
-            "path": "build/pascal-compat-verification/ABCGH.BRD",
-            "size_bytes": 324,
-            "sha256": "354bc950f710944f8f1d6420c2b33fe883c167a50bdc26a36c8bbb3d011a7675"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGPR.OUT",
-            "size_bytes": 85896,
-            "sha256": "0c7d48648b671f2867d046f416240c15008df1b8e708b07700f1a1889f913cb5"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGSND.OUT",
-            "size_bytes": 5,
-            "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
-            "size_bytes": 67,
-            "sha256": "306698cfe9ccf8ac9d785838e243f33bd6c8657e64ba740898310ea4eabcd0ba"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
-            "size_bytes": 1160,
-            "sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
-            "size_bytes": 3,
-            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
-          },
-          {
-            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
-            "size_bytes": 1160,
-            "sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea"
-          }
         ]
       },
       "integrated_scenario": "malformed-load-high-score-insertion",
       "malformed_pascal_world_load_result": false,
-      "malformed_production_world_load_result": -3,
+      "malformed_production_world_load_result": "WRONGVER",
       "high_score_bytes_matched": 1590,
       "high_score_byte_differences": 0,
       "scheduler_matrix_rows_passed": 9,
       "scheduler_matrix_fields_compared": 117,
-      "scheduler_matrix_differences": 0
+      "scheduler_matrix_differences": 0,
+      "integrated_cycle_checkpoint_count": 169,
+      "integrated_cycle_checkpoint_differences": 0,
+      "integrated_cycle_state_fields_compared": 587560
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
