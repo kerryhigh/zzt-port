@@ -37,8 +37,8 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Evidence inventory
 
-- Direct compiled-Pascal probe sessions in the last completed full suite: **119** (54 standard programs; 65 standalone sessions).
-- Direct Pascal-to-production differential invocations in the last completed full suite: **49/49** passed; failed: **0**; last complete result: **49/49 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01-F05; zero unexplained state, effective-cell, sound, or stable-serialization mismatches. F05 reported the one-count same-value redraw cadence difference separately.**.
+- Direct compiled-Pascal probe sessions in the last completed full suite: **120** (54 standard programs; 66 standalone sessions).
+- Direct Pascal-to-production differential invocations in the last completed full suite: **50/50** passed; failed: **0**; last complete result: **50/50 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01-F06; zero unexplained state, effective-cell, sound, or stable-serialization mismatches. F05's one-count identical-value redraw cadence difference is classified separately**.
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **16/16** passed (1 save, 8 load/reset, 7 insertion cases); source-model rows: **256**.
 - Direct Pascal `.BRD` `BoardClose` record: **289/289** payload bytes matched through shared LibZoo import/export; external file: 291 bytes; SHA-256 `e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd`.
 - Direct Pascal `BoardClose`/`WorldSave` differential: **25928/25928** full `.ZZT` bytes matched production serialization; SHA-256 `5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa`; unexplained mismatches: 0.
@@ -49,7 +49,7 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
   - `.HI`: 1590/1590 bytes; SHA-256 `419fceab58ebf6880d90ba7d87b3584f08ac8af63564eab0d86276e7544da09c`; pass (DP).
 - Source-derived expectation cases: **256**; these are separate from compiled-Pascal probes.
 - Production-only regression cases: **1**; these remain separate from direct Pascal probes and differentials.
-- Integrated replay fixtures: **5/10** complete from [`integrated_replay_fixture_manifest.json`](tools/compatibility/integrated_replay_fixture_manifest.json). Prototype comparisons: 41690 fields across 12 checkpoints; per-cycle checkpoints: present.
+- Integrated replay fixtures: **6/10** complete from [`integrated_replay_fixture_manifest.json`](tools/compatibility/integrated_replay_fixture_manifest.json). Prototype comparisons: 41690 fields across 12 checkpoints; per-cycle checkpoints: present.
 - Integrated generated save: **565/565** deterministic byte positions match; 396 positions are classified as uninitialized Pascal padding or process-specific pointers; differing classified values: 327; production result: 0.
 - Integrated save reload: compiled Pascal WorldLoad=True; production zoo_world_load=0; round-trip save preserved 949/949 bytes; 12 process-pointer positions classified.
 - Other suite results: serializer=passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record also matched through shared .BRD import/export; short-payload DP and short-header safe-reopen P cases passed; runtime=passed; tools/runtime-compat/verify.ps1 rebuilt the updated integrated WebAssembly harness and exited 0; the clean full Pascal/production run also passed its integrated runtime and differential gates; Android CP437/key bridge=passed; tools/android-compat/verify.ps1 exit 0; Android build=passed fresh offline on 2026-11-24: .\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64; Windows CTest=passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly.
@@ -72,7 +72,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 ## Per-cycle integrated replay
 
 - Required fixtures: 10 (fixed by `e2-10-required-fixtures-v1`).
-- Completed fixtures: 5/10; completed IDs: E2-10-F01, E2-10-F02, E2-10-F03, E2-10-F04, E2-10-F05; pending IDs: E2-10-F06, E2-10-F07, E2-10-F08, E2-10-F09, E2-10-F10.
+- Completed fixtures: 6/10; completed IDs: E2-10-F01, E2-10-F02, E2-10-F03, E2-10-F04, E2-10-F05, E2-10-F06; pending IDs: E2-10-F07, E2-10-F08, E2-10-F09, E2-10-F10.
 - Prototype: INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures with 41690 total field comparisons across 12 checkpoints; per-checkpoint counts: variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle; this is not counted as a complete E2-10 fixture.
 - Logical sound-queue events in the prototype: 2 events / 20 event fields; checkpoint sound state: compared; overflow: False.
 - Ordered playfield cell writes in the prototype: 9 events / 36 event fields; capture: matched; generated oracle sidecar SHA-256: 6f153a1c437a476912a973144f6ee3e8e483b6478dbc16b9039e58bad0d246fa.
@@ -81,13 +81,13 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - Per-cycle checkpoint comparisons: implemented.
 - State-transition checkpoints: implemented.
 - First-divergence reporting: implemented.
-- First-divergence diagnostic negative control: passed; First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; context=[ammo:1->0, gems:0->0, health:100->100]. This instrumentation check receives no replay-fixture or compatibility-case completion credit.
+- First-divergence diagnostic negative control: passed; First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; state summaries and surrounding field/input context were emitted. This instrumentation check receives no replay-fixture or compatibility-case completion credit.
 - `E2-10-F01` DEMO start and ordinary traversal: **passed**; 12 checkpoints / 41472 state fields; 0 state differences; 0 sound events; 5 cell writes; 25241 stable save bytes compared with 0 differences.
 - `E2-10-F02` walls, pushers, duplicators, and collision ordering: **passed**; 12 checkpoints / 42378 state fields; 0 state differences; 4 sound events; 16 cell writes; 643 stable save bytes compared with 0 differences.
 - `E2-10-F03` combat, bullets, keys/doors, and pickups: **passed**; 12 checkpoints / 41122 state fields; 0 state differences; 7 sound events; 664 cell writes; 558 stable save bytes compared with 0 differences.
 - `E2-10-F04` object stat order plus multiple interacting OOP scripts: **passed**; 12 checkpoints / 41904 state fields; 0 state differences; 0 sound events; 5 cell writes; 598 stable save bytes compared with 0 differences.
 - `E2-10-F05` board edges, neighbor transitions, and passages: **passed**; 15 checkpoints / 51493 state fields; 0 state differences; 1 sound events; 6006 cell writes; 896 stable save bytes compared with 0 differences.
-- `E2-10-F06` dark room, torch, Energizer, timers, and death: **pending**; not recorded checkpoints / not recorded state fields; not recorded state differences; not recorded sound events; not recorded cell writes; not recorded stable save bytes compared with not recorded differences.
+- `E2-10-F06` dark room, torch, Energizer, timers, and death: **passed**; 126 checkpoints / 438324 state fields; 0 state differences; 4 sound events; 3730 cell writes; 552 stable save bytes compared with 0 differences.
 - `E2-10-F07` pause, zero/positive-speed scheduling, and delayed input: **pending**; not recorded checkpoints / not recorded state fields; not recorded state differences; not recorded sound events; not recorded cell writes; not recorded stable save bytes compared with not recorded differences.
 - `E2-10-F08` save, restore, world reload, and board change: **pending**; not recorded checkpoints / not recorded state fields; not recorded state differences; not recorded sound events; not recorded cell writes; not recorded stable save bytes compared with not recorded differences.
 - `E2-10-F09` editor mutation, .BRD round-trip, and play of the edited board: **pending**; not recorded checkpoints / not recorded state fields; not recorded state differences; not recorded sound events; not recorded cell writes; not recorded stable save bytes compared with not recorded differences.
@@ -97,6 +97,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - combat, bullets, keys/doors, and pickups: 12 checkpoints; 41122 state-field comparisons total; passed (D+DP+I evidence).
 - object stat order plus multiple interacting OOP scripts: 12 checkpoints; 41904 state-field comparisons total; passed (D+DP+I evidence).
 - board edges, neighbor transitions, and passages: 15 checkpoints; 51493 state-field comparisons total; passed (D+DP+I evidence).
+- dark room, torch, Energizer, timers, and death: 126 checkpoints; 438324 state-field comparisons total; passed (D+DP+I evidence).
   - L0: 3456 fields; matched.
   - S0: 3456 fields; matched.
   - T1: 3456 fields; matched.
@@ -160,6 +161,132 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
   - T2 (post-save): 3433 fields; matched.
   - T3 (post-load): 3433 fields; matched.
   - F0: 3433 fields; matched.
+  - L0: 3399 fields; matched.
+  - S0: 3399 fields; matched.
+  - T1: 3422 fields; matched.
+  - C1: 3422 fields; matched.
+  - C2: 3422 fields; matched.
+  - C3: 3528 fields; matched.
+  - C4: 3528 fields; matched.
+  - C5: 3528 fields; matched.
+  - C6: 3528 fields; matched.
+  - C7: 3528 fields; matched.
+  - C8: 3528 fields; matched.
+  - C9: 3528 fields; matched.
+  - C10: 3528 fields; matched.
+  - C11: 3528 fields; matched.
+  - C12: 3528 fields; matched.
+  - C13: 3528 fields; matched.
+  - C14: 3528 fields; matched.
+  - C15: 3528 fields; matched.
+  - C16: 3528 fields; matched.
+  - C17: 3528 fields; matched.
+  - C18: 3528 fields; matched.
+  - C19: 3528 fields; matched.
+  - C20: 3528 fields; matched.
+  - C21: 3528 fields; matched.
+  - C22: 3528 fields; matched.
+  - C23: 3528 fields; matched.
+  - C24: 3528 fields; matched.
+  - C25: 3528 fields; matched.
+  - C26: 3528 fields; matched.
+  - C27: 3528 fields; matched.
+  - C28: 3528 fields; matched.
+  - C29: 3528 fields; matched.
+  - C30: 3528 fields; matched.
+  - C31: 3528 fields; matched.
+  - C32: 3528 fields; matched.
+  - C33: 3528 fields; matched.
+  - C34: 3528 fields; matched.
+  - C35: 3528 fields; matched.
+  - C36: 3528 fields; matched.
+  - C37: 3528 fields; matched.
+  - C38: 3528 fields; matched.
+  - C39: 3528 fields; matched.
+  - C40: 3528 fields; matched.
+  - C41: 3528 fields; matched.
+  - C42: 3528 fields; matched.
+  - C43: 3528 fields; matched.
+  - C44: 3528 fields; matched.
+  - C45: 3528 fields; matched.
+  - C46: 3528 fields; matched.
+  - C47: 3528 fields; matched.
+  - C48: 3528 fields; matched.
+  - C49: 3528 fields; matched.
+  - C50: 3528 fields; matched.
+  - C51: 3528 fields; matched.
+  - C52: 3528 fields; matched.
+  - C53: 3528 fields; matched.
+  - C54: 3528 fields; matched.
+  - C55: 3528 fields; matched.
+  - C56: 3528 fields; matched.
+  - C57: 3528 fields; matched.
+  - C58: 3528 fields; matched.
+  - C59: 3528 fields; matched.
+  - C60: 3528 fields; matched.
+  - C61: 3528 fields; matched.
+  - C62: 3528 fields; matched.
+  - C63: 3528 fields; matched.
+  - C64: 3528 fields; matched.
+  - C65: 3528 fields; matched.
+  - C66: 3528 fields; matched.
+  - C67: 3430 fields; matched.
+  - C68: 3430 fields; matched.
+  - C69: 3430 fields; matched.
+  - C70: 3430 fields; matched.
+  - C71: 3430 fields; matched.
+  - C72: 3430 fields; matched.
+  - C73: 3430 fields; matched.
+  - C74: 3430 fields; matched.
+  - C75: 3430 fields; matched.
+  - C76: 3430 fields; matched.
+  - C77: 3430 fields; matched.
+  - C78: 3430 fields; matched.
+  - C79: 3430 fields; matched.
+  - C80: 3430 fields; matched.
+  - C81: 3430 fields; matched.
+  - C82: 3430 fields; matched.
+  - C83: 3430 fields; matched.
+  - C84: 3430 fields; matched.
+  - C85: 3430 fields; matched.
+  - C86: 3430 fields; matched.
+  - C87: 3430 fields; matched.
+  - C88: 3430 fields; matched.
+  - C89: 3430 fields; matched.
+  - C90: 3430 fields; matched.
+  - C91: 3430 fields; matched.
+  - C92: 3430 fields; matched.
+  - C93: 3430 fields; matched.
+  - C94: 3430 fields; matched.
+  - C95: 3430 fields; matched.
+  - C96: 3430 fields; matched.
+  - C97: 3430 fields; matched.
+  - C98: 3430 fields; matched.
+  - C99: 3430 fields; matched.
+  - C100: 3430 fields; matched.
+  - C101: 3430 fields; matched.
+  - C102: 3430 fields; matched.
+  - C103: 3430 fields; matched.
+  - C104: 3430 fields; matched.
+  - C105: 3430 fields; matched.
+  - C106: 3430 fields; matched.
+  - C107: 3430 fields; matched.
+  - C108: 3430 fields; matched.
+  - C109: 3430 fields; matched.
+  - C110: 3430 fields; matched.
+  - C111: 3430 fields; matched.
+  - C112: 3430 fields; matched.
+  - C113: 3430 fields; matched.
+  - C114: 3430 fields; matched.
+  - C115: 3430 fields; matched.
+  - C116: 3430 fields; matched.
+  - C117: 3430 fields; matched.
+  - C118: 3430 fields; matched.
+  - C119: 3430 fields; matched.
+  - C120: 3430 fields; matched.
+  - T2: 3416 fields; matched.
+  - T3: 3416 fields; matched.
+  - F0: 3416 fields; matched.
 
 ## Mismatches, limitations, and remaining work
 
@@ -171,7 +298,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.
 - E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.
 - E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.
-- E2-10: complete the five remaining frozen integrated replay fixtures F06-F10; extend return/error and all required state/event/save comparisons across those scenarios; require zero unexplained differences.
+- E2-10: complete the four remaining frozen integrated replay fixtures F07-F10; extend return/error and all required state/event/save comparisons across those scenarios; require zero unexplained differences.
 - E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record.
 
 ### Non-blocking limitations and optional investigations
@@ -184,14 +311,14 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.
 - Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.
 - Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.
-- The synthetic integrated prototype and required fixtures F01-F05 pass their recorded state, sound, effective-cell, and save/load comparisons. F05 counted 834 Pascal and 835 production identical-value redraws; all effective cell changes and engine fields matched. This one redundant write is classified under the existing environment-dependent poll/render cadence rule. Required fixtures F06-F10 and Pascal WorldSave failure-path outcomes remain open; undefined/pointer positions follow the checklist contract.
+- The synthetic integrated prototype and required fixtures F01-F06 pass their recorded state, sound, effective-cell, and save/load comparisons. F05 counted 834 Pascal and 835 production identical-value redraws; F06 counted 169 on both. The F05 one-count difference is classified under the existing environment-dependent poll/render cadence rule. Required fixtures F07-F10 and Pascal WorldSave failure-path outcomes remain open; undefined/pointer positions follow the checklist contract.
 
 ## Latest verification record
 
-- Latest full Pascal-runner attempt: exit code 0; Complete clean runner; 119/119 direct sessions and 49/49 configured comparisons passed; F01-F05 integrated replays matched with zero unexplained state, effective-cell, sound, or stable-save differences; one same-value redraw count difference is classified under the cadence rule; E2-10 remains partial at 5/10 fixtures.
-- Latest integrated Pascal differential `E2-10-F05`: exit 0; 51493 snapshot fields, 1 logical sound events, 6006 ordered playfield cell writes, 896/896 generated-save stable bytes, and 1556/1556 loaded-file round-trip stable bytes matched.
-- Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; executable SHA-256 072c1944635ccc545a816e128625e3405feab559021e4ef60b2d512f97f754c0; external tool, not redistributed.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: af5929bf67fc32c1600d90582a98792db4452bcf.
+- Latest full Pascal-runner attempt: exit code 0; Clean full runner passed: 120/120 direct sessions and 50/50 configured comparisons; integrated fixtures F01-F06 passed with zero unexplained state, effective-cell, sound, or stable-save differences. F05's identical-value redraw cadence difference remains separately classified; E2-10 is 6/10.
+- Latest integrated Pascal differential `E2-10-F06`: exit 0; 438324 snapshot fields, 4 logical sound events, 3730 ordered playfield cell writes, 552/552 generated-save stable bytes, and 870/870 loaded-file round-trip stable bytes matched.
+- Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; executable SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 1c39252ba592d90760fdab1acc2a37c46fa0307f.
 - Last completed full Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
@@ -213,5 +340,6 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - F03 matched 41,122 state fields, seven sound events / 186 fields, 664 cell writes / 2,656 fields, 558 stable fresh-save bytes, and 876 stable round-trip bytes; runtime verification passed after harness cleanup.
 - F04 completed in the clean 2026-11-25 run at ca271c7: 88 direct Pascal sessions and 48/48 configured differentials passed; the stat-order fixture matched 41,904 fields across 12 checkpoints, five cell writes, 598 stable save bytes, and 962 round-trip bytes. F01-F04 are now 4/10; F05-F10 remain open.
 - E2-10-F05 completed in the clean 2026-11-25 run at af5929bf67fc32c1600d90582a98792db4452bcf: 119 direct Pascal sessions and 49/49 configured differentials passed; the neighbor/passage replay matched 51,493 fields across 15 checkpoints, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,556 round-trip bytes. The 834/835 same-value redraw count is separately classified under the existing clock/poll cadence contract. The frozen corpus is 5/10; F06-F10 remain open.
+- E2-10-F06 passed in a post-fix clean 2026-11-25 runner at 1c39252ba592d90760fdab1acc2a37c46fa0307f: 120 direct Pascal sessions and 50/50 configured differentials passed; the dark-room/torch/Energizer/time-limit death replay matched 126 checkpoints/438,324 fields, four sound events, 3,730 effective cell changes, and all stable save/load bytes. The first-divergence negative control passed in the same run. The frozen corpus is 6/10.
 
 Generated by `python tools/compatibility/generate_progress.py`. Do not edit this report manually.

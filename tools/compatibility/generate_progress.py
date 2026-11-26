@@ -97,7 +97,30 @@ def main() -> None:
     probes = runner.get("direct_pascal", {})
     differential = runner.get("direct_differential_comparisons", {})
     integrated = runner.get("integrated_replay", {})
-    latest_integrated = runner.get("latest_attempt", {}).get("integrated_replay_summary", {})
+    completed_fixture_results = [
+        item for item in integrated.get("per_cycle_results", [])
+        if item.get("result") == "passed"
+    ]
+    if completed_fixture_results:
+        latest_fixture = completed_fixture_results[-1]
+        latest_integrated = {
+            "fixture_id": latest_fixture.get("fixture_id"),
+            "state_fields_compared": latest_fixture.get("field_comparisons"),
+            "sound_events": latest_fixture.get("logical_sound_events"),
+            "cell_writes": latest_fixture.get("ordered_cell_writes"),
+            "generated_save_stable_bytes_matched": latest_fixture.get("stable_save_bytes_matched"),
+            "generated_save_stable_bytes_total": (
+                latest_fixture.get("stable_save_bytes_matched", 0)
+                + latest_fixture.get("stable_save_byte_differences", 0)
+            ),
+            "roundtrip_stable_bytes_matched": latest_fixture.get("roundtrip_stable_bytes_matched"),
+            "roundtrip_stable_bytes_total": (
+                latest_fixture.get("roundtrip_stable_bytes_matched", 0)
+                + latest_fixture.get("roundtrip_stable_byte_differences", 0)
+            ),
+        }
+    else:
+        latest_integrated = runner.get("latest_attempt", {}).get("integrated_replay_summary", {})
     integrated_diagnostic = integrated.get("diagnostic_negative_control", {})
     integrated_save = integrated.get("generated_save_comparison", {})
     integrated_roundtrip = integrated.get("generated_roundtrip_comparison", {})
@@ -150,7 +173,7 @@ def main() -> None:
         "## Evidence inventory",
         "",
         f"- Direct compiled-Pascal probe sessions in the last completed full suite: **{probes.get('sessions', 'not recorded')}** ({probes.get('standard_programs', 'not recorded')} standard programs; {probes.get('standalone_sessions', 'not recorded')} standalone sessions).",
-        f"- Direct Pascal-to-production differential invocations in the last completed full suite: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; last complete result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded'))}**.",
+        f"- Direct Pascal-to-production differential invocations in the last completed full suite: **{differential.get('passed', 'not recorded')}/{differential.get('configured', len(compare_calls))}** passed; failed: **{differential.get('failed', 'not recorded')}**; last complete result: **{differential.get('result', runner.get('pascal_suite_result', 'not recorded')).rstrip().rstrip('.')}**.",
         f"- Direct `.HI` Pascal-to-shared-engine byte comparisons: **{high_score.get('passed', 'not recorded')}/{high_score.get('configured', 'not recorded')}** passed ({high_score.get('save_cases', 'not recorded')} save, {high_score.get('load_reset_cases', 'not recorded')} load/reset, {high_score.get('add_cases', 'not recorded')} insertion cases); source-model rows: **{high_score.get('source_derived_model_rows', 'not recorded')}**.",
         f"- Direct Pascal `.BRD` `BoardClose` record: **{pascal_boardclose.get('record_bytes_matched', 'not recorded')}/{pascal_boardclose.get('record_size_bytes', 'not recorded')}** payload bytes matched through shared LibZoo import/export; external file: {pascal_boardclose.get('fixture_size_bytes', 'not recorded')} bytes; SHA-256 `{pascal_boardclose.get('sha256', 'not recorded')}`.",
         f"- Direct Pascal `BoardClose`/`WorldSave` differential: **{pascal_boardclose_worldsave.get('bytes_matched', 'not recorded')}/{pascal_boardclose_worldsave.get('world_size_bytes', 'not recorded')}** full `.ZZT` bytes matched production serialization; SHA-256 `{pascal_boardclose_worldsave.get('sha256', 'not recorded')}`; unexplained mismatches: {pascal_boardclose_worldsave.get('byte_differences', 'not recorded')}.",
@@ -201,7 +224,7 @@ def main() -> None:
         f"- Per-cycle checkpoint comparisons: {'implemented' if integrated.get('per_cycle_checkpoints') else 'outstanding'}.",
         f"- State-transition checkpoints: {'implemented' if integrated.get('state_transition_checkpoints') else 'outstanding'}.",
         f"- First-divergence reporting: {'implemented' if integrated.get('first_divergence_reporting') else 'outstanding'}.",
-        f"- First-divergence diagnostic negative control: {integrated_diagnostic.get('result', 'not recorded')}; {integrated_diagnostic.get('report', 'no controlled mismatch report recorded')}. This instrumentation check receives no replay-fixture or compatibility-case completion credit.",
+        f"- First-divergence diagnostic negative control: {integrated_diagnostic.get('result', 'not recorded')}; {integrated_diagnostic.get('report', 'no controlled mismatch report recorded').rstrip().rstrip('.')}. This instrumentation check receives no replay-fixture or compatibility-case completion credit.",
         *([
             f"- `{item['id']}` {item['scenario']}: **{item.get('verification', {}).get('result', 'unclassified')}**; {item.get('verification', {}).get('checkpoint_count', 'not recorded')} checkpoints / {item.get('verification', {}).get('state_field_comparisons', 'not recorded')} state fields; {item.get('verification', {}).get('state_field_differences', 'not recorded')} state differences; {item.get('verification', {}).get('logical_sound_events', 'not recorded')} sound events; {item.get('verification', {}).get('ordered_playfield_cell_writes', 'not recorded')} cell writes; {item.get('verification', {}).get('save_round_trip', {}).get('stable_serialized_bytes_compared', 'not recorded')} stable save bytes compared with {item.get('verification', {}).get('save_round_trip', {}).get('stable_serialized_byte_differences', 'not recorded')} differences."
             for item in integrated_fixtures
@@ -245,7 +268,7 @@ def main() -> None:
         "",
         "## Latest verification record",
         "",
-        f"- Latest full Pascal-runner attempt: exit code {runner.get('latest_attempt', {}).get('full_pascal_runner_exit_code', 'not recorded')}; {runner.get('latest_attempt', {}).get('status', 'not recorded')}"
+        f"- Latest full Pascal-runner attempt: exit code {runner.get('latest_attempt', {}).get('full_pascal_runner_exit_code', 'not recorded')}; {runner.get('latest_attempt', {}).get('status', 'not recorded').rstrip().rstrip('.')}"
         + (f". {runner['latest_attempt']['failure']}" if runner.get('latest_attempt', {}).get('failure') else "."),
         f"- Latest integrated Pascal differential `{latest_integrated.get('fixture_id', 'not recorded')}`: exit {runner.get('latest_attempt', {}).get('integrated_differential_exit_code', 'not recorded')}; {latest_integrated.get('state_fields_compared', 'not recorded')} snapshot fields, {latest_integrated.get('sound_events', 'not recorded')} logical sound events, {latest_integrated.get('cell_writes', 'not recorded')} ordered playfield cell writes, {latest_integrated.get('generated_save_stable_bytes_matched', 'not recorded')}/{latest_integrated.get('generated_save_stable_bytes_total', 'not recorded')} generated-save stable bytes, and {latest_integrated.get('roundtrip_stable_bytes_matched', 'not recorded')}/{latest_integrated.get('roundtrip_stable_bytes_total', 'not recorded')} loaded-file round-trip stable bytes matched.",
         f"- Toolchain: {runner.get('toolchain', {}).get('pascal', 'not recorded')}; {runner.get('toolchain', {}).get('dosbox_x', 'DOSBox-X version not recorded')}.",

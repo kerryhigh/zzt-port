@@ -928,7 +928,7 @@
     {
       "id": "E2-10-F06",
       "scenario": "dark room, torch, Energizer, timers, and death",
-      "status": "pending",
+      "status": "complete",
       "evidence_classes": [
         "D",
         "DP",
@@ -942,12 +942,871 @@
         "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick",
         "third_party/libzoo/src/libzoo/zoo_elements.c:torch,energizer,damage,and death callbacks"
       ],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "test_fixture": "tools/pascal-compat/DARKIN.PAS (purpose-built 120-cycle dark-room replay)",
+      "oracle_probe": "tools/pascal-compat/DARKIN.PAS (compiled with the reconstructed Pascal gameplay source)",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
       "verification": {
-        "result": "pending",
-        "fixture_completion_credit": 0
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "1c39252ba592d90760fdab1acc2a37c46fa0307f",
+        "clean_runner_exit_code": 0,
+        "fixture_execution_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 120,
+        "pascal_to_production_differential_invocations_in_clean_run": "50/50",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "T1",
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "C5",
+          "C6",
+          "C7",
+          "C8",
+          "C9",
+          "C10",
+          "C11",
+          "C12",
+          "C13",
+          "C14",
+          "C15",
+          "C16",
+          "C17",
+          "C18",
+          "C19",
+          "C20",
+          "C21",
+          "C22",
+          "C23",
+          "C24",
+          "C25",
+          "C26",
+          "C27",
+          "C28",
+          "C29",
+          "C30",
+          "C31",
+          "C32",
+          "C33",
+          "C34",
+          "C35",
+          "C36",
+          "C37",
+          "C38",
+          "C39",
+          "C40",
+          "C41",
+          "C42",
+          "C43",
+          "C44",
+          "C45",
+          "C46",
+          "C47",
+          "C48",
+          "C49",
+          "C50",
+          "C51",
+          "C52",
+          "C53",
+          "C54",
+          "C55",
+          "C56",
+          "C57",
+          "C58",
+          "C59",
+          "C60",
+          "C61",
+          "C62",
+          "C63",
+          "C64",
+          "C65",
+          "C66",
+          "C67",
+          "C68",
+          "C69",
+          "C70",
+          "C71",
+          "C72",
+          "C73",
+          "C74",
+          "C75",
+          "C76",
+          "C77",
+          "C78",
+          "C79",
+          "C80",
+          "C81",
+          "C82",
+          "C83",
+          "C84",
+          "C85",
+          "C86",
+          "C87",
+          "C88",
+          "C89",
+          "C90",
+          "C91",
+          "C92",
+          "C93",
+          "C94",
+          "C95",
+          "C96",
+          "C97",
+          "C98",
+          "C99",
+          "C100",
+          "C101",
+          "C102",
+          "C103",
+          "C104",
+          "C105",
+          "C106",
+          "C107",
+          "C108",
+          "C109",
+          "C110",
+          "C111",
+          "C112",
+          "C113",
+          "C114",
+          "C115",
+          "C116",
+          "C117",
+          "C118",
+          "C119",
+          "C120",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 126,
+        "fields_compared_by_checkpoint": [
+          {
+            "checkpoint": "L0",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "S0",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T1",
+            "fields_compared": 3422,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C1",
+            "fields_compared": 3422,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C2",
+            "fields_compared": 3422,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C3",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C4",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C5",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C6",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C7",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C8",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C9",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C10",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C11",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C12",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C13",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C14",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C15",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C16",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C17",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C18",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C19",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C20",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C21",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C22",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C23",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C24",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C25",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C26",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C27",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C28",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C29",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C30",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C31",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C32",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C33",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C34",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C35",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C36",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C37",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C38",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C39",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C40",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C41",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C42",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C43",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C44",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C45",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C46",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C47",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C48",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C49",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C50",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C51",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C52",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C53",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C54",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C55",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C56",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C57",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C58",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C59",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C60",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C61",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C62",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C63",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C64",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C65",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C66",
+            "fields_compared": 3528,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C67",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C68",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C69",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C70",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C71",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C72",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C73",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C74",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C75",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C76",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C77",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C78",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C79",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C80",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C81",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C82",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C83",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C84",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C85",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C86",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C87",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C88",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C89",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C90",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C91",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C92",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C93",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C94",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C95",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C96",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C97",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C98",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C99",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C100",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C101",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C102",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C103",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C104",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C105",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C106",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C107",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C108",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C109",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C110",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C111",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C112",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C113",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C114",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C115",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C116",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C117",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C118",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C119",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C120",
+            "fields_compared": 3430,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2",
+            "fields_compared": 3416,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3",
+            "fields_compared": 3416,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "F0",
+            "fields_compared": 3416,
+            "result": "matched"
+          }
+        ],
+        "per_cycle_checkpoint_count": 120,
+        "per_cycle_checkpoint_field_totals": [
+          {
+            "cycles": "C1-C2",
+            "checkpoints": 2,
+            "fields_per_checkpoint": 3422
+          },
+          {
+            "cycles": "C3-C66",
+            "checkpoints": 64,
+            "fields_per_checkpoint": 3528
+          },
+          {
+            "cycles": "C67-C120",
+            "checkpoints": 54,
+            "fields_per_checkpoint": 3430
+          }
+        ],
+        "state_field_comparisons": 438324,
+        "state_field_differences": 0,
+        "logical_sound_events": 4,
+        "logical_sound_event_fields": 328,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 3730,
+        "ordered_playfield_cell_write_fields": 14920,
+        "cell_write_differences": 0,
+        "effective_cell_changes": 3730,
+        "effective_cell_change_differences": 0,
+        "identical_value_redraws": {
+          "pascal": 169,
+          "production": 169,
+          "classification": "identical character and attribute writes reported separately from effective cell changes"
+        },
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 878,
+          "generated_save_sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f",
+          "stable_serialized_bytes_compared": 552,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 326,
+          "classified_pointer_positions_differing": 0,
+          "round_trip_save_size_bytes": 878,
+          "round_trip_save_sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f",
+          "round_trip_stable_serialized_bytes_compared": 870,
+          "round_trip_stable_serialized_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 8
+        },
+        "unexplained_differences": 0,
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 927772,
+            "sha256": "b338a11b65610bd878aa95c300ae547fb974a12a74ec58e255c1deab98488f5c"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 830,
+            "sha256": "4297c0005e505cf22cc31af6be74f8874f957e087808f32ef5e2157a63d1ebb9"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 49483,
+            "sha256": "f8a80659f8fa47f05e35056b695a3fea09239d8d2290be49bc312e722a1a21d4"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 878,
+            "sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 878,
+            "sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f"
+          }
+        ],
+        "fixture_completion_credit": 1,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md",
+        "interventions": [
+          "RandSeed=0; GenerateTransitionTable before WorldCreate to mirror ZZT startup order.",
+          "World.Info.unk1=0 because WorldCreate leaves it undefined while the production test fixture uses initialized storage.",
+          "The verification-only staged hook seeds undefined GamePlayLoop pauseBlink.",
+          "A normalized RTRN tape supplies deterministic right, torch-key, right, and neutral input.",
+          "Wall-clock reads are disabled for this fixture; a verification-only staged clock hook sets TimerTicks to two PIT ticks per completed cycle.",
+          "Physical sound output is disabled; original SoundQueue calls and logical queue state are captured.",
+          "VideoWriteText is observed for cell changes while original GamePlayLoop and element callbacks remain in control.",
+          "Compile and run in separate fresh DOSBox-X sessions to control compiler-inherited allocation history."
+        ]
       }
     },
     {

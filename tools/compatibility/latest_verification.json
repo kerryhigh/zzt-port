@@ -2,10 +2,10 @@
   "closed_blockers": [],
   "verification": {
     "date": "2026-11-25",
-    "root_revision": "af5929bf67fc32c1600d90582a98792db4452bcf",
+    "root_revision": "1c39252ba592d90760fdab1acc2a37c46fa0307f",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full Pascal runner passed on 2026-11-25: 119/119 direct Turbo Pascal 5.5 sessions and 49/49 configured Pascal-to-production comparisons. Required integrated fixtures F01-F05 passed. F05 matched 51,493 state fields, one logical sound event, 6,006 effective cell changes, and all stable save/load bytes; its 834/835 identical-value redraw count is separately classified under the documented clock/poll cadence contract. The runtime verifier passed; five required fixtures remain open and there are no unexplained differences in configured cases.",
+    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-25: 120/120 direct Turbo Pascal 5.5 sessions and 50/50 configured Pascal-to-production comparisons. Required integrated fixtures F01-F06 passed. F06 matched 126 checkpoints/438,324 state fields, four logical sound events, 3,730 effective cell changes, and stable save/load bytes. F05's one-count same-value redraw cadence difference remains classified separately. The runtime verifier and integrated diagnostic negative control passed; E2-10 remains partial at 6/10.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -50,22 +50,22 @@
     },
     "toolchain": {
       "pascal": "Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository)",
-      "dosbox_x": "DOSBox-X 2026.10.01; executable SHA-256 072c1944635ccc545a816e128625e3405feab559021e4ef60b2d512f97f754c0; external tool, not redistributed",
+      "dosbox_x": "DOSBox-X 2026.10.01; executable SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed",
       "node": "v22.19.0",
       "python": "3.13.7",
       "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
-      "sessions": 119,
+      "sessions": 120,
       "standard_programs": 54,
-      "standalone_sessions": 65,
-      "session_result": "119/119 configured direct Pascal sessions passed in the latest clean runner, including integrated fixtures DEMOINT, MOTIONIN, COMBATIN, STATORD, and BOARDPASSIN."
+      "standalone_sessions": 66,
+      "session_result": "120/120 configured direct Pascal sessions passed in the latest clean runner, including integrated fixtures DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, and DARKIN."
     },
     "direct_differential_comparisons": {
-      "configured": 49,
-      "passed": 49,
+      "configured": 50,
+      "passed": 50,
       "failed": 0,
-      "result": "49/49 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01-F05; zero unexplained state, effective-cell, sound, or stable-serialization mismatches. F05 reported the one-count same-value redraw cadence difference separately."
+      "result": "50/50 configured comparison invocations passed in the latest clean full runner, including required integrated fixtures F01-F06; zero unexplained state, effective-cell, sound, or stable-serialization mismatches. F05's one-count identical-value redraw cadence difference is classified separately."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -73,7 +73,7 @@
     },
     "integrated_replay": {
       "required_fixtures": 10,
-      "completed_fixtures": 5,
+      "completed_fixtures": 6,
       "prototype_name": "INTEGPRB: six zero-speed cycles with L0/S0/T1/C1-C6/T2-save/T3-reload/F0 checkpoints; same-Pascal-file load and round-trip save; not one of the ten fixtures",
       "prototype_fields_compared": "variable: 3,473 at L0/S0/T2/T3/F0; 3,475 at T1 and each cycle",
       "prototype_field_comparisons": 41690,
@@ -101,10 +101,10 @@
         "verification_date": "2026-11-25",
         "in_full_clean_runner": true,
         "full_clean_runner_exit_code": 0,
-        "verification_root_revision": "ae4b50128dcffe9d414ce49570491915a1106f4c",
+        "verification_root_revision": "1c39252ba592d90760fdab1acc2a37c46fa0307f",
         "classification": "verification-tooling negative control; not D, S, P, DP, or I compatibility evidence",
         "mutation": "A disposable copy of INTEGPR.OUT had only C1 field 0 (ammo) incremented; the compiled-Pascal oracle output was not edited.",
-        "report": "First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; context=[ammo:1->0, gems:0->0, health:100->100]",
+        "report": "First divergence at cycle 1, field 0 (ammo): Pascal=1, production=0; state summaries and surrounding field/input context were emitted.",
         "comparator_child_exit_code": 1,
         "original_pascal_output_sha256_before_and_after": "e302935a10fbcbabdc7d39ba44c99e2bcc9a6e05bdf7951b26c6833059f10efe",
         "counted_as_required_fixture": false,
@@ -578,6 +578,688 @@
           "board_transitions": "west-neighbor board 1 at (60,5); matching passage to board 2 at last match (22,17); resume to (23,17)",
           "fixture_completion_credit": 1,
           "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
+        },
+        {
+          "fixture_id": "E2-10-F06",
+          "fixture": "dark room, torch, Energizer, timers, and death",
+          "checkpoints": 126,
+          "field_comparisons": 438324,
+          "result": "passed",
+          "evidence_class": "D+DP+I",
+          "checkpoint_results": [
+            {
+              "checkpoint": "L0",
+              "fields_compared": 3399,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "S0",
+              "fields_compared": 3399,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T1",
+              "fields_compared": 3422,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C1",
+              "fields_compared": 3422,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C2",
+              "fields_compared": 3422,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C3",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C4",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C5",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C6",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C7",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C8",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C9",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C10",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C11",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C12",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C13",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C14",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C15",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C16",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C17",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C18",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C19",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C20",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C21",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C22",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C23",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C24",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C25",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C26",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C27",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C28",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C29",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C30",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C31",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C32",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C33",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C34",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C35",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C36",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C37",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C38",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C39",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C40",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C41",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C42",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C43",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C44",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C45",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C46",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C47",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C48",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C49",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C50",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C51",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C52",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C53",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C54",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C55",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C56",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C57",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C58",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C59",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C60",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C61",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C62",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C63",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C64",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C65",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C66",
+              "fields_compared": 3528,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C67",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C68",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C69",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C70",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C71",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C72",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C73",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C74",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C75",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C76",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C77",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C78",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C79",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C80",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C81",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C82",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C83",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C84",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C85",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C86",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C87",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C88",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C89",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C90",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C91",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C92",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C93",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C94",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C95",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C96",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C97",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C98",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C99",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C100",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C101",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C102",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C103",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C104",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C105",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C106",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C107",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C108",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C109",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C110",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C111",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C112",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C113",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C114",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C115",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C116",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C117",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C118",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C119",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "C120",
+              "fields_compared": 3430,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T2",
+              "fields_compared": 3416,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "T3",
+              "fields_compared": 3416,
+              "result": "matched"
+            },
+            {
+              "checkpoint": "F0",
+              "fields_compared": 3416,
+              "result": "matched"
+            }
+          ],
+          "per_cycle_checkpoints": 120,
+          "per_cycle_checkpoint_field_totals": [
+            {
+              "cycles": "C1-C2",
+              "checkpoints": 2,
+              "fields_per_checkpoint": 3422
+            },
+            {
+              "cycles": "C3-C66",
+              "checkpoints": 64,
+              "fields_per_checkpoint": 3528
+            },
+            {
+              "cycles": "C67-C120",
+              "checkpoints": 54,
+              "fields_per_checkpoint": 3430
+            }
+          ],
+          "state_field_differences": 0,
+          "logical_sound_events": 4,
+          "logical_sound_event_fields": 328,
+          "logical_sound_event_differences": 0,
+          "ordered_cell_writes": 3730,
+          "ordered_cell_write_fields": 14920,
+          "cell_write_differences": 0,
+          "identical_value_redraws": {
+            "pascal": 169,
+            "production": 169,
+            "classification": "identical character and attribute writes reported separately from effective cell changes"
+          },
+          "save_size_bytes": 878,
+          "stable_save_bytes_matched": 552,
+          "stable_save_byte_differences": 0,
+          "classified_process_pointer_positions": 326,
+          "classified_pointer_differences": 0,
+          "roundtrip_stable_bytes_matched": 870,
+          "roundtrip_stable_byte_differences": 0,
+          "roundtrip_classified_process_pointer_positions": 8,
+          "pascal_world_load_result": true,
+          "production_world_load_result": 0,
+          "fixture_completion_credit": 1,
+          "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md"
         }
       ],
       "schema_revision": "e2-10-replay-r10-demo-world",
@@ -678,14 +1360,14 @@
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "The synthetic integrated prototype and required fixtures F01-F05 pass their recorded state, sound, effective-cell, and save/load comparisons. F05 counted 834 Pascal and 835 production identical-value redraws; all effective cell changes and engine fields matched. This one redundant write is classified under the existing environment-dependent poll/render cadence rule. Required fixtures F06-F10 and Pascal WorldSave failure-path outcomes remain open; undefined/pointer positions follow the checklist contract."
+      "The synthetic integrated prototype and required fixtures F01-F06 pass their recorded state, sound, effective-cell, and save/load comparisons. F05 counted 834 Pascal and 835 production identical-value redraws; F06 counted 169 on both. The F05 one-count difference is classified under the existing environment-dependent poll/render cadence rule. Required fixtures F07-F10 and Pascal WorldSave failure-path outcomes remain open; undefined/pointer positions follow the checklist contract."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
       "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and verified.",
-      "E2-10: complete the five remaining frozen integrated replay fixtures F06-F10; extend return/error and all required state/event/save comparisons across those scenarios; require zero unexplained differences.",
+      "E2-10: complete the four remaining frozen integrated replay fixtures F07-F10; extend return/error and all required state/event/save comparisons across those scenarios; require zero unexplained differences.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
     "non_blocking_limitations": [
@@ -708,7 +1390,8 @@
       "Clean Pascal verification on ae4b501 passed 87 direct sessions and 47/47 configured differentials; F01-F03 now pass 12-checkpoint integrated comparisons with no unexplained differences.",
       "F03 matched 41,122 state fields, seven sound events / 186 fields, 664 cell writes / 2,656 fields, 558 stable fresh-save bytes, and 876 stable round-trip bytes; runtime verification passed after harness cleanup.",
       "F04 completed in the clean 2026-11-25 run at ca271c7: 88 direct Pascal sessions and 48/48 configured differentials passed; the stat-order fixture matched 41,904 fields across 12 checkpoints, five cell writes, 598 stable save bytes, and 962 round-trip bytes. F01-F04 are now 4/10; F05-F10 remain open.",
-      "E2-10-F05 completed in the clean 2026-11-25 run at af5929bf67fc32c1600d90582a98792db4452bcf: 119 direct Pascal sessions and 49/49 configured differentials passed; the neighbor/passage replay matched 51,493 fields across 15 checkpoints, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,556 round-trip bytes. The 834/835 same-value redraw count is separately classified under the existing clock/poll cadence contract. The frozen corpus is 5/10; F06-F10 remain open."
+      "E2-10-F05 completed in the clean 2026-11-25 run at af5929bf67fc32c1600d90582a98792db4452bcf: 119 direct Pascal sessions and 49/49 configured differentials passed; the neighbor/passage replay matched 51,493 fields across 15 checkpoints, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,556 round-trip bytes. The 834/835 same-value redraw count is separately classified under the existing clock/poll cadence contract. The frozen corpus is 5/10; F06-F10 remain open.",
+      "E2-10-F06 passed in a post-fix clean 2026-11-25 runner at 1c39252ba592d90760fdab1acc2a37c46fa0307f: 120 direct Pascal sessions and 50/50 configured differentials passed; the dark-room/torch/Energizer/time-limit death replay matched 126 checkpoints/438,324 fields, four sound events, 3,730 effective cell changes, and all stable save/load bytes. The first-divergence negative control passed in the same run. The frozen corpus is 6/10."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -737,20 +1420,20 @@
     "latest_attempt": {
       "date": "2026-11-25",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "af5929bf67fc32c1600d90582a98792db4452bcf",
+      "source_revision": "1c39252ba592d90760fdab1acc2a37c46fa0307f",
       "full_pascal_runner_exit_code": 0,
-      "direct_pascal_sessions_passed": 119,
-      "configured_differentials_passed": 49,
+      "direct_pascal_sessions_passed": 120,
+      "configured_differentials_passed": 50,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "For BRDXFER only, staged GAME.PAS replaces TextWindowSelect at the DisplayIOError acknowledgement boundary with TextWindowRejected := true; InputKeyPressed := #0. This skips the blocking modal interaction; the short-payload file reads, IOResult checks, DisplayIOError return, BoardCreate, and editor cleanup run in reconstructed Pascal.",
-      "integrated_pascal_probe": "Compiled INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, and BOARDPASSIN in the clean Pascal runner; required fixtures F01-F05 generated named checkpoint, sound, effective-cell, save/load-result, and round-trip captures.",
-      "integrated_differential_command": "Run compare-integrated-gameplay.js for INTEGPRB and required fixtures DEMOINT, MOTIONIN, COMBATIN, STATORD, and BOARDPASSIN against production replays.",
+      "integrated_pascal_probe": "Compiled INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, and DARKIN in the clean runner; required fixtures F01-F06 generated named initial, transition, per-cycle, sound, cell, save/load, and round-trip captures.",
+      "integrated_differential_command": "Run compare-integrated-gameplay.js for INTEGPRB and required fixtures DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, and DARKIN against shared production replays.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Complete clean runner; 119/119 direct sessions and 49/49 configured comparisons passed; F01-F05 integrated replays matched with zero unexplained state, effective-cell, sound, or stable-save differences; one same-value redraw count difference is classified under the cadence rule; E2-10 remains partial at 5/10 fixtures",
-      "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits the user-specific absolute path; identify the executable by version and SHA-256 in toolchain.",
+      "status": "Clean full runner passed: 120/120 direct sessions and 50/50 configured comparisons; integrated fixtures F01-F06 passed with zero unexplained state, effective-cell, sound, or stable-save differences. F05's identical-value redraw cadence difference remains separately classified; E2-10 is 6/10.",
+      "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path; it records the observed version and executable SHA-256.",
       "integrated_checkpoint_count": 15,
       "integrated_state_fields_compared": 51493,
       "integrated_sound_event_fields_compared": 66,
@@ -891,6 +1574,62 @@
           "INTEG2SV.SAV": "c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de"
         },
         "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md"
+      },
+      "integrated_f06_fixture": {
+        "fixture_id": "E2-10-F06",
+        "result": "passed",
+        "checkpoint_count": 126,
+        "state_fields_compared": 438324,
+        "state_field_differences": 0,
+        "sound_events": 4,
+        "sound_event_fields": 328,
+        "sound_event_differences": 0,
+        "effective_cell_changes": 3730,
+        "effective_cell_change_fields": 14920,
+        "effective_cell_change_differences": 0,
+        "generated_save_stable_bytes_matched": 552,
+        "generated_save_stable_bytes_total": 552,
+        "classified_save_positions": 326,
+        "classified_save_differences": 0,
+        "roundtrip_stable_bytes_matched": 870,
+        "roundtrip_stable_bytes_total": 870,
+        "classified_roundtrip_pointer_positions": 8,
+        "world_load_result_pascal": true,
+        "world_load_result_production": 0,
+        "unexplained_differences": 0,
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 927772,
+            "sha256": "b338a11b65610bd878aa95c300ae547fb974a12a74ec58e255c1deab98488f5c"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 830,
+            "sha256": "4297c0005e505cf22cc31af6be74f8874f957e087808f32ef5e2157a63d1ebb9"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 49483,
+            "sha256": "f8a80659f8fa47f05e35056b695a3fea09239d8d2290be49bc312e722a1a21d4"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 878,
+            "sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 878,
+            "sha256": "4c0e967163621b0a0ee7784b903674ec277219d37ca8738e404e328300c6898f"
+          }
+        ],
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md"
       }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain."
