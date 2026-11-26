@@ -2251,26 +2251,125 @@
     {
       "id": "E2-10-F09",
       "scenario": "editor mutation, .BRD round-trip, and play of the edited board",
-      "status": "pending",
+      "status": "complete",
       "evidence_classes": [
         "D",
         "DP",
         "I"
       ],
       "source_locations": [
-        "third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:EditorLoop,BoardImport,BoardExport",
-        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:GamePlayLoop"
+        "third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:EditorLoop/EditorTransferBoard",
+        "third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:EditorPlaceTile",
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:BoardEnter,GamePlayLoop"
       ],
       "production_implementation": [
-        "third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_editor_brd_import_record,zoo_editor_brd_serialize",
-        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick"
+        "third_party/libzoo/src/libzoo/zoo_editor_brd.c:zoo_editor_brd_serialize,zoo_editor_brd_transfer,zoo_editor_brd_import_record",
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_board_enter,zoo_tick",
+        "tools/runtime-compat/oop_movement.c:run_integrated_editor_brd_roundtrip_checks"
       ],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "test_fixture": "tools/pascal-compat/EDITORIN.PAS",
+      "oracle_probe": "tools/pascal-compat/EDITORIN.PAS",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
       "verification": {
-        "result": "pending",
-        "fixture_completion_credit": 0
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "080cc69bf2abfa745ecc2ad37b5d27117dba8fc2",
+        "clean_runner_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 124,
+        "pascal_to_production_differential_invocations_in_clean_run": "53/53",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "T1",
+          "C1",
+          "C2",
+          "C3",
+          "C4",
+          "C5",
+          "C6",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 12,
+        "fields_compared_per_checkpoint": 3399,
+        "state_field_comparisons": 40788,
+        "state_field_differences": 0,
+        "logical_sound_events": 0,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 5,
+        "ordered_playfield_cell_write_fields": 20,
+        "cell_write_differences": 0,
+        "board_export": {
+          "path": "build/pascal-compat-verification/ABCGH.BRD",
+          "format": ".BRD",
+          "size_bytes": 324,
+          "sha256": "354bc950f710944f8f1d6420c2b33fe883c167a50bdc26a36c8bbb3d011a7675",
+          "bytes_matched": 324,
+          "byte_differences": 0
+        },
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 1160,
+          "generated_save_sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea",
+          "stable_serialized_bytes_compared": 750,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 410,
+          "round_trip_size_bytes": 1160,
+          "round_trip_sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea",
+          "preserved_bytes_matched": 1152,
+          "preserved_byte_differences": 0,
+          "classified_roundtrip_process_pointer_positions": 8
+        },
+        "unexplained_differences": 0,
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/ABCGH.BRD",
+            "size_bytes": 324,
+            "sha256": "354bc950f710944f8f1d6420c2b33fe883c167a50bdc26a36c8bbb3d011a7675"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 85896,
+            "sha256": "0c7d48648b671f2867d046f416240c15008df1b8e708b07700f1a1889f913cb5"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 5,
+            "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 67,
+            "sha256": "306698cfe9ccf8ac9d785838e243f33bd6c8657e64ba740898310ea4eabcd0ba"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 1160,
+            "sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 1160,
+            "sha256": "f324882f7266af58513f37fb7e2db8f1ee79d81b866ecf7b43b02d8b5e7dadea"
+          }
+        ],
+        "fixture_completion_credit": 1,
+        "interventions": [
+          "The compiled Pascal probe scripts the existing EditorLoop input path to place a CP437 text tile, export and import ABCGH.BRD, then enter the edited board and run the original GamePlayLoop for six deterministic cycles.",
+          "The staged editor key tape is enabled only during EditorLoop and disabled before gameplay; VideoWriteText and SoundQueue outputs are captured without replacing gameplay routines.",
+          "RandSeed=0; the transition-table shuffle precedes WorldCreate; World.Info.unk1 is set to zero because the Pascal source leaves it undefined while the controlled production fixture is zero-initialized.",
+          "TimerTicks is fixed and the existing cycle-clock hook advances deterministic gameplay cycles; six normalized 8-key bytes exercise unpause and upward movement.",
+          "The production replay seeds the equivalent edited text tile at (31,12), uses the shared zoo_editor_brd serializer and transfer/import APIs, then invokes zoo_board_enter and the real zoo_tick loop.",
+          "Physical sound output is disabled while logical sound events are captured; Turbo Pascal compile and probe execution use separate fresh DOSBox-X sessions to control inherited allocator history."
+        ],
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-editor-brd-roundtrip.md"
       }
     },
     {
