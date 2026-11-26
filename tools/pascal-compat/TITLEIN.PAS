@@ -4,7 +4,7 @@ uses Crt, Video, GameVars, Elements, Sounds, Game, Input;
 
 var
 	output: text;
-	restoreScenario, generateRestoreSave, badRestoreScenario: boolean;
+	restoreScenario, generateRestoreSave, badRestoreScenario, cancelRetryScenario: boolean;
 	fixtureFile: file;
 	malformedHeader: array[1..512] of byte;
 	malformedVersion: integer;
@@ -14,6 +14,7 @@ begin
 	restoreScenario := (ParamCount > 0) and (ParamStr(1) = 'R');
 	generateRestoreSave := (ParamCount > 0) and (ParamStr(1) = 'G');
 	badRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'B');
+	cancelRetryScenario := (ParamCount > 0) and (ParamStr(1) = 'C');
 	New(IoTmpBuf);
 	RandSeed := 0;
 	WorldCreate;
@@ -28,7 +29,7 @@ begin
 		BlockWrite(fixtureFile, malformedHeader, SizeOf(malformedHeader));
 		Close(fixtureFile);
 	end;
-	if restoreScenario or generateRestoreSave then begin
+	if restoreScenario or generateRestoreSave or cancelRetryScenario then begin
 		if not WorldLoad('DEMO', '.ZZT', true) then RunError(258);
 		World.Info.Name := 'RESTORE';
 		World.Info.IsSave := true;
@@ -46,15 +47,17 @@ begin
 	if generateRestoreSave then WorldSave('RESTORE', '.SAV');
 	if not generateRestoreSave then begin
 		{ The title monitor sees a deliberately different live state before R loads the saved game. }
-		if restoreScenario then begin
+		if restoreScenario or cancelRetryScenario then begin
 			World.Info.Health := 1;
 			World.Info.Ammo := 99;
 		end;
 	GameLoopProbeEnabled := true;
 	GameLoopProbeTitleLifecycleEnabled := true;
 	GameLoopProbeTitleLifecyclePlayerReturned := false;
-		GameLoopProbeTitleRestoreEnabled := restoreScenario or badRestoreScenario;
-		GameLoopProbeTitleRestoreFailureEnabled := badRestoreScenario;
+	GameLoopProbeTitleRestoreEnabled := restoreScenario or badRestoreScenario or cancelRetryScenario;
+	GameLoopProbeTitleRestoreFailureEnabled := badRestoreScenario;
+	GameLoopProbeTitleRestoreCancelOnceEnabled := cancelRetryScenario;
+	GameLoopProbeTitleRestoreCancelled := false;
 	GameLoopProbeSeedPauseBlink := true;
 	GameLoopProbeCycleClockEnabled := false;
 	GameLoopProbeStopAfter := 0;
@@ -63,7 +66,7 @@ begin
 	GameLoopProbeCellWriteCount := 0;
 	GameLoopProbeCellWriteOverflow := false;
 	GameLoopProbeCellWriteEvents := nil;
-	if not restoreScenario then
+	if not (restoreScenario or cancelRetryScenario) then
 		GetMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 	TickSpeed := 0;
 	TickTimeCounter := 0;
@@ -88,13 +91,17 @@ begin
 	Close(output);
 	if restoreScenario then
 		InputProbeSetKeyBuffer('RR')
+	else if cancelRetryScenario then
+		InputProbeSetKeyBuffer('R')
 	else if badRestoreScenario then
 		InputProbeSetKeyBuffer('R')
 	else
 		InputProbeSetKeyBuffer('PX');
 	SoundProbeSetSchedule(0, 0, 0);
 	GameTitleLoop;
-	if (restoreScenario or badRestoreScenario) and (InputProbeGetKeyBuffer <> '') then RunError(257);
+	if (restoreScenario or badRestoreScenario or cancelRetryScenario) and
+		(InputProbeGetKeyBuffer <> '') then RunError(257);
+	if cancelRetryScenario and not GameLoopProbeTitleRestoreCancelled then RunError(256);
 	if badRestoreScenario then begin
 		Assign(output, 'TITLFAIL.OUT');
 		Rewrite(output);

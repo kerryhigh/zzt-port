@@ -3,9 +3,10 @@ const fs = require('node:fs');
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
 const restoreFailureSavePath = process.argv[4] === '--restore-failure' ? process.argv[5] || null : null;
-const restoreSavePath = restoreFailureSavePath ? null : process.argv[4] || null;
+const restoreRetrySavePath = process.argv[4] === '--restore-retry' ? process.argv[5] || null : null;
+const restoreSavePath = restoreFailureSavePath || restoreRetrySavePath ? null : process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [restore.SAV|--restore-failure malformed.SAV]');
+  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [restore.SAV|--restore-failure malformed.SAV|--restore-retry restore.SAV]');
 }
 
 const scalarNames = [
@@ -22,7 +23,7 @@ const schedulerNames = [
   'paused', 'exit requested', 'input delta x', 'input delta y', 'key pressed', 'key buffer length',
 ];
 
-function parsePascalSnapshots(path) {
+function parsePascalSnapshots(path, includeCancel = false) {
   const rows = fs.readFileSync(path, 'ascii').trim().split(/\r?\n/).map((line, lineIndex) => {
     const fields = line.trim().split(/\s+/);
     if (fields.length < 3) throw new Error(`Malformed Pascal snapshot at line ${lineIndex + 1}`);
@@ -39,10 +40,14 @@ function parsePascalSnapshots(path) {
   const playerStart = rows.find(row => row.kind === 'P' && row.id === 0);
   const playerCycle = rows.find(row => row.kind === 'C' && row.id === 1 && row.values[12] === 1);
   const titleReturn = rows.find(row => row.kind === 'T' && row.id === 0);
+  const titleCancel = rows.find(row => row.kind === 'X' && row.id === 0);
   if (!playerStart || !playerCycle || !titleReturn) {
     throw new Error(`Title lifecycle capture missing checkpoints: P=${Boolean(playerStart)}, player C1=${Boolean(playerCycle)}, T=${Boolean(titleReturn)}`);
   }
-  return [playerStart, playerCycle, titleReturn];
+  if (includeCancel && !titleCancel) throw new Error('Title restore retry capture is missing the X/0 post-cancel checkpoint.');
+  return includeCancel
+    ? [titleCancel, playerStart, playerCycle, titleReturn]
+    : [playerStart, playerCycle, titleReturn];
 }
 
 function parsePascalRestoreFailure(path) {
@@ -96,10 +101,10 @@ function describeField(index, values) {
   return `snapshot field ${index}`;
 }
 
-function readProductionSnapshots(instance) {
+function readProductionSnapshots(instance, expectedCount) {
   const exports = instance.exports;
   const count = exports.integrated_gameplay_snapshot_count();
-  if (count !== 3) throw new Error(`Production lifecycle emitted ${count} snapshots; expected 3`);
+  if (count !== expectedCount) throw new Error(`Production lifecycle emitted ${count} snapshots; expected ${expectedCount}`);
   const memory = exports.memory.buffer;
   const headers = new Int16Array(memory, exports.integrated_gameplay_checkpoint_headers_ptr(), count * 2);
   const lengths = new Int32Array(memory, exports.integrated_gameplay_snapshot_lengths_ptr(), count);
@@ -115,7 +120,7 @@ function readProductionSnapshots(instance) {
 (async () => {
   const expected = restoreFailureSavePath
     ? parsePascalRestoreFailure(pascalPath)
-    : parsePascalSnapshots(pascalPath);
+    : parsePascalSnapshots(pascalPath, Boolean(restoreRetrySavePath));
   const module = await WebAssembly.compile(fs.readFileSync(wasmPath));
   let instance;
   let heapTop = 8 * 1024 * 1024;
@@ -194,7 +199,14 @@ function readProductionSnapshots(instance) {
     return;
   }
   let result;
-  if (restoreSavePath) {
+  if (restoreRetrySavePath) {
+    const save = fs.readFileSync(restoreRetrySavePath);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (save.length > capacity) throw new Error(`Restore fixture exceeds production harness capacity: ${save.length}/${capacity}`);
+    const pointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, pointer, save.length).set(save);
+    result = instance.exports.run_integrated_title_restore_retry_checks(save.length);
+  } else if (restoreSavePath) {
     const save = fs.readFileSync(restoreSavePath);
     const capacity = instance.exports.integrated_demo_world_bytes_capacity();
     if (save.length > capacity) throw new Error(`Restore fixture exceeds production harness capacity: ${save.length}/${capacity}`);
@@ -205,7 +217,7 @@ function readProductionSnapshots(instance) {
     result = instance.exports.run_integrated_title_lifecycle_checks();
   }
   if (result !== 0) throw new Error(`Production title lifecycle returned ${result}`);
-  const actual = readProductionSnapshots(instance);
+  const actual = readProductionSnapshots(instance, expected.length);
   let comparedFields = 0;
   for (let checkpoint = 0; checkpoint < expected.length; checkpoint++) {
     const want = expected[checkpoint];
@@ -229,7 +241,9 @@ function readProductionSnapshots(instance) {
       comparedFields++;
     }
   }
-  const scenario = restoreSavePath
+  const scenario = restoreRetrySavePath
+    ? 'R-to-cancel selection, retry R restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
+    : restoreSavePath
     ? 'R-to-restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
     : 'P-to-play, one real paused cycle, and return-to-title';
   console.log(`Title lifecycle replay: ${scenario} matched at ${expected.length} checkpoints (${comparedFields} state fields); first-divergence context includes neighboring fields.`);

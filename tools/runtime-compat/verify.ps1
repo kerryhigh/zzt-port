@@ -341,6 +341,7 @@ $integratedGameplayArgs = @(
 	'-Wl,--no-entry', '-Wl,--export=run_integrated_gameplay_checks',
 	'-Wl,--export=run_integrated_title_lifecycle_checks',
 	'-Wl,--export=run_integrated_title_restore_checks',
+	'-Wl,--export=run_integrated_title_restore_retry_checks',
 	'-Wl,--export=run_integrated_title_restore_failure_checks',
 	'-Wl,--export=integrated_title_restore_failure_fields_ptr',
 	'-Wl,--export=integrated_title_restore_failure_field_count',
