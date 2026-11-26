@@ -4088,6 +4088,7 @@ int32_t run_oop_production_movement_checks(void) {
 static int capture_integrated_gameplay_snapshot(int checkpoint_index, int16_t checkpoint_kind, int16_t checkpoint_id) {
 	int32_t *out;
 	int16_t stat_id, alias_id, ix, iy;
+	int16_t world_name_length, board_name_length;
 	int32_t stat_slots;
 	int32_t script_bytes = 0;
 	int32_t sound_fields;
@@ -4109,9 +4110,23 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index, int16_t ch
 		}
 	}
 	if (state.sound.buffer_len < 0 || state.sound.buffer_len > 255) return 0;
+	world_name_length = state.world.info.io_name_valid
+		? state.world.info.io_name_length : 0;
+	if (!state.world.info.io_name_valid) {
+		while (world_name_length < 20 && state.world.info.name[world_name_length] != '\0')
+			world_name_length++;
+	}
+	board_name_length = state.board.io_name_valid ? state.board.io_name_length : 0;
+	if (!state.board.io_name_valid) {
+		while (board_name_length < 50 && state.board.name[board_name_length] != '\0')
+			board_name_length++;
+	}
+	if (world_name_length < 0 || world_name_length > 20
+			|| board_name_length < 0 || board_name_length > 50) return 0;
 	sound_fields = 8 + state.sound.buffer_len;
 	if (13 + (14 * stat_slots) + 11 + (62 * 27 * 2) + 2
-			+ (stat_slots * stat_slots) + script_bytes + sound_fields + 2 > INTEGRATED_GAMEPLAY_MAX_FIELDS) {
+			+ (stat_slots * stat_slots) + script_bytes + sound_fields + 2 + 3
+			+ world_name_length + board_name_length > INTEGRATED_GAMEPLAY_MAX_FIELDS) {
 		return 0;
 	}
 
@@ -4199,6 +4214,19 @@ static int capture_integrated_gameplay_snapshot(int checkpoint_index, int16_t ch
 	}
 	*out++ = integrated_gameplay_cell_event_count_value;
 	*out++ = integrated_gameplay_cell_event_overflow_value;
+	*out++ = integrated_gameplay_sound_event_count_value;
+	*out++ = world_name_length;
+	for (script_index = 0; script_index < world_name_length; script_index++) {
+		*out++ = state.world.info.io_name_valid
+			? state.world.info.io_name_data[script_index]
+			: (uint8_t) state.world.info.name[script_index];
+	}
+	*out++ = board_name_length;
+	for (script_index = 0; script_index < board_name_length; script_index++) {
+		*out++ = state.board.io_name_valid
+			? state.board.io_name_data[script_index]
+			: (uint8_t) state.board.name[script_index];
+	}
 	integrated_gameplay_snapshot_lengths[checkpoint_index] = (int32_t) (out - integrated_gameplay_snapshots[checkpoint_index]);
 	if (integrated_gameplay_snapshot_lengths[checkpoint_index] > INTEGRATED_GAMEPLAY_MAX_FIELDS) return 0;
 	integrated_gameplay_snapshot_count_value++;

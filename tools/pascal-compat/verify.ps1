@@ -1042,6 +1042,7 @@ $stagedSound = $stagedSound.Replace(
         "`tprocedure SoundProbeSetSchedule(startHsecs, stallAfterPoll, stallExtraPits: integer);" + $newline +
         "`tprocedure SoundProbeQueueCapture(enabled: boolean);" + $newline +
         "`tprocedure SoundProbeWriteQueueEvents(filename: string);" + $newline +
+        "`tfunction SoundProbeGetQueueEventCount: integer;" + $newline +
         "`tfunction SoundProbeGetScheduleCycleCount: integer;" + $newline +
         "`tfunction SoundProbeGetScheduleCycleHsec(index: integer): integer;"
 )
@@ -1258,11 +1259,70 @@ begin
 	SoundTimerHandler;
 end;
 
+function SoundProbeGetQueueEventCount: integer;
+begin
+	SoundProbeGetQueueEventCount := SoundProbeQueueEventCount;
+end;
+
 '@
 $soundUninstallIndex = $stagedSound.LastIndexOf('procedure SoundUninstall;')
 if ($soundUninstallIndex -lt 0) { throw 'Could not locate the Sounds unit implementation insertion point.' }
 $stagedSound = $stagedSound.Insert($soundUninstallIndex, $soundProbeHelper)
 [IO.File]::WriteAllText($stagedSoundPath, $stagedSound, [Text.UTF8Encoding]::new($false))
+$snapshotExt = @'
+unit SnapExt;
+
+interface
+
+uses GameVars;
+
+procedure SnapshotExtWriteLifecycleTail(var output: text);
+
+implementation
+
+uses Sounds;
+
+procedure SnapshotExtWriteLifecycleTail(var output: text);
+var
+	byteIndex: integer;
+begin
+	Write(output, SoundProbeGetQueueEventCount, ' ', Length(World.Info.Name), ' ');
+	for byteIndex := 1 to Length(World.Info.Name) do
+		Write(output, Ord(World.Info.Name[byteIndex]), ' ');
+	Write(output, Length(Board.Name), ' ');
+	for byteIndex := 1 to Length(Board.Name) do
+		Write(output, Ord(Board.Name[byteIndex]), ' ');
+end;
+
+end.
+'@
+$snapshotExtPath = Join-Path $stageSource 'SNAPEXT.PAS'
+[IO.File]::WriteAllText($snapshotExtPath, $snapshotExt, [Text.UTF8Encoding]::new($false))
+$stagedGamePath = Join-Path $stageSource 'GAME.PAS'
+$stagedGame = [IO.File]::ReadAllText($stagedGamePath)
+$gameUsesAnchor = 'uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;'
+if ([regex]::Matches($stagedGame, [regex]::Escape($gameUsesAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the Game unit uses clause for the integrated snapshot extension.'
+}
+$stagedGame = $stagedGame.Replace($gameUsesAnchor, 'uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop, SnapExt;')
+$snapshotFieldCountAnchor = '(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer) + 2;'
+if ([regex]::Matches($stagedGame, [regex]::Escape($snapshotFieldCountAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the Game snapshot field-count expression.'
+}
+$stagedGame = $stagedGame.Replace(
+    $snapshotFieldCountAnchor,
+    '(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer) + 2 + 3 +' +
+        "`r`n`t`t`tLength(World.Info.Name) + Length(Board.Name);"
+)
+$snapshotTailAnchor = "Write(output, GameLoopProbeCellWriteCount, ' ', Ord(GameLoopProbeCellWriteOverflow), ' ');"
+if ([regex]::Matches($stagedGame, [regex]::Escape($snapshotTailAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the Game snapshot lifecycle-tail insertion point.'
+}
+$stagedGame = $stagedGame.Replace(
+    $snapshotTailAnchor,
+    $snapshotTailAnchor + "`r`n`t`tSnapshotExtWriteLifecycleTail(output);"
+)
+[IO.File]::WriteAllText($stagedGamePath, $stagedGame, [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDTIK.PAS') -Destination (Join-Path $stageRoot 'SOUNDTIK.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDCLK.PAS') -Destination (Join-Path $stageRoot 'SOUNDCLK.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'GAMESCHD.PAS') -Destination (Join-Path $stageRoot 'GAMESCHD.PAS')

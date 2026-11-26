@@ -12,6 +12,7 @@ const demoWorldPath = process.argv[10];
 const worldLoadResultPath = process.argv[11];
 const editorBrdPath = process.argv[10];
 const highScorePath = process.argv[12];
+const continueAfterSnapshotMismatch = process.env.ZZT_DIAGNOSTIC_CONTINUE_SNAPSHOT_MISMATCH === '1';
 if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death|pause-positive-scheduler-delayed-input|save-restore-world-reload-board-change [DEMO.ZZT] [INTEGWRL.OUT]]');
 if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input', 'save-restore-world-reload-board-change', 'editor-brd-roundtrip-play', 'malformed-load-high-score-insertion'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
@@ -161,6 +162,22 @@ function describeField(index, statCount, values) {
   if (soundField < soundNames.length + soundBufferLength) return `sound queue byte ${soundField - soundNames.length}`;
   if (soundField === soundNames.length + soundBufferLength) return 'captured playfield cell-write count';
   if (soundField === soundNames.length + soundBufferLength + 1) return 'playfield cell-write overflow';
+  const lifecycleStart = soundStart + soundNames.length + soundBufferLength + 2;
+  if (index === lifecycleStart) return 'cumulative logical sound-event count';
+  const worldNameLengthIndex = lifecycleStart + 1;
+  if (index === worldNameLengthIndex) return 'world identity name length';
+  const worldNameLength = values[worldNameLengthIndex] || 0;
+  const worldNameStart = worldNameLengthIndex + 1;
+  if (index >= worldNameStart && index < worldNameStart + worldNameLength) {
+    return `world identity name byte ${index - worldNameStart}`;
+  }
+  const boardNameLengthIndex = worldNameStart + worldNameLength;
+  if (index === boardNameLengthIndex) return 'board identity name length';
+  const boardNameLength = values[boardNameLengthIndex] || 0;
+  const boardNameStart = boardNameLengthIndex + 1;
+  if (index >= boardNameStart && index < boardNameStart + boardNameLength) {
+    return `board identity name byte ${index - boardNameStart}`;
+  }
   return `script byte ${scriptByteIndex} (unclassified)`;
 }
 
@@ -568,6 +585,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const snapshotLengths = new Int32Array(instance.exports.memory.buffer,
     instance.exports.integrated_gameplay_snapshot_lengths_ptr(), snapshotCount);
   let comparedFields = 0;
+  const snapshotMismatches = [];
+  let cellCountCheckpointMismatch = null;
   for (let row = 0; row < checkpointSpecs.length; row++) {
     const spec = checkpointSpecs[row];
     const expectedKind = spec.kind.charCodeAt(0);
@@ -589,10 +608,12 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       actualBase + row * snapshotStride * Int32Array.BYTES_PER_ELEMENT, actualCount);
     const statCount = expected[11];
     for (let field = 0; field < fieldCount; field++) {
-      // Cell-write totals are checked against the captured event stream below,
-      // where a one-write drift can be reported with its exact cell/context.
-      if (['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario)
-          && field >= fieldCount - 2) continue;
+      // These fixtures compare cell writes as an ordered stream below. Their
+      // intermediate state-transition checkpoint can fall on opposite sides
+      // of a draw within a logical cycle; per-cycle cell totals remain exact.
+      if (spec.kind === 'T'
+          && ['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario)
+          && describeField(field, statCount, expected) === 'captured playfield cell-write count') continue;
       const expectedValue = expected[field];
       const observed = actual[field];
       if (observed !== expectedValue) {
@@ -622,7 +643,15 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
             recentTrace.push(`${traceRow}:tick=${traceFields[2]} stat=${traceFields[0]}->${traceFields[1]} tape=${traceFields[9]} delta=${traceFields[10]},${traceFields[11]} downR=${traceFields[12]} heldR=${traceFields[13]} heldL=${traceFields[14]}`);
           }
         }
-        throw new Error(`First divergence at ${spec.name}, field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}; state Pascal=${JSON.stringify(snapshotSummary(expected))}, production=${JSON.stringify(snapshotSummary(actual))}; context=[${context.join(', ')}]; recent input trace=[${recentTrace.join('; ')}]`);
+        const mismatch = `First divergence at ${spec.name}, field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}; state Pascal=${JSON.stringify(snapshotSummary(expected))}, production=${JSON.stringify(snapshotSummary(actual))}; context=[${context.join(', ')}]; recent input trace=[${recentTrace.join('; ')}]`;
+        if (continueAfterSnapshotMismatch) {
+          snapshotMismatches.push(`${spec.name} field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}`);
+          if (describeField(field, statCount, expected) === 'captured playfield cell-write count') {
+            cellCountCheckpointMismatch = { checkpoint: spec.name, pascal: expectedValue, production: observed };
+          }
+          continue;
+        }
+        throw new Error(mismatch);
       }
       comparedFields++;
     }
@@ -883,6 +912,19 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     instance.exports.integrated_gameplay_cell_context_events_ptr(),
     Math.min(actualCellCount, expectedCells.count) * actualCellContextStride);
   const actualIdempotentWriteCount = instance.exports.integrated_gameplay_cell_idempotent_write_count();
+  if (cellCountCheckpointMismatch) {
+    const from = Math.max(0, Math.min(cellCountCheckpointMismatch.pascal, cellCountCheckpointMismatch.production) - 2);
+    const to = Math.min(expectedCells.count - 1, Math.max(cellCountCheckpointMismatch.pascal, cellCountCheckpointMismatch.production) + 2);
+    const nearbyWrites = [];
+    for (let eventIndex = from; eventIndex <= to; eventIndex++) {
+      const base = eventIndex * actualCellStride;
+      const context = eventIndex < actualCellCount
+        ? Array.from(actualCellContexts.slice(eventIndex * actualCellContextStride, (eventIndex + 1) * actualCellContextStride))
+        : null;
+      nearbyWrites.push({ index: eventIndex, pascal: expectedCells.events[eventIndex], production: Array.from(actualCells.slice(base, base + actualCellStride)), productionContext: context });
+    }
+    console.error(`Diagnostic cell-count boundary ${JSON.stringify(cellCountCheckpointMismatch)}; nearby global writes (indexes are zero-based): ${JSON.stringify(nearbyWrites)}`);
+  }
   const cellFieldNames = ['x', 'y', 'attribute', 'CP437 byte'];
   let cellComparedFields = 0;
   for (let eventIndex = 0; eventIndex < expectedCells.count; eventIndex++) {
@@ -939,5 +981,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const cellWriteSummary = ['board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'save-restore-world-reload-board-change'].includes(scenario)
     ? `${expectedCells.count} playfield cell changes matched (${cellComparedFields} event fields); ${expectedCells.idempotentWriteCount} Pascal and ${actualIdempotentWriteCount} production identical-value redraws were reported separately`
     : `${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields)`;
+  if (snapshotMismatches.length > 0) {
+    throw new Error(`Diagnostic continuation compared later replay events and serialized state; snapshot mismatches (${snapshotMismatches.length}): ${snapshotMismatches.join(' || ')}`);
+  }
   console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary};${scenario === 'editor-brd-roundtrip-play' ? ` exact ${comparedBrdBytes}-byte Pascal/production .BRD export matched;` : ''}${scenario === 'malformed-load-high-score-insertion' ? ` malformed startup .ZZT recovery returned Pascal=false/production=WRONGVER and ${comparedHighScoreBytes}-byte .HI insertion matched;` : ''} generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0${scenario === 'save-restore-world-reload-board-change' ? ' for both SAV restore and ZZT world reload' : ''}; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
