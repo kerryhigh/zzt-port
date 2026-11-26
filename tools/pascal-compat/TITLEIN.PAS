@@ -4,7 +4,8 @@ uses Crt, Video, GameVars, Elements, Sounds, Game, Input;
 
 var
 	output: text;
-	restoreScenario, generateRestoreSave, badRestoreScenario, cancelRetryScenario: boolean;
+	restoreScenario, generateRestoreSave, badRestoreScenario, cancelRetryScenario,
+	savedWorldPlayScenario: boolean;
 	fixtureFile: file;
 	malformedHeader: array[1..512] of byte;
 	malformedVersion: integer;
@@ -15,6 +16,7 @@ begin
 	generateRestoreSave := (ParamCount > 0) and (ParamStr(1) = 'G');
 	badRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'B');
 	cancelRetryScenario := (ParamCount > 0) and (ParamStr(1) = 'C');
+	savedWorldPlayScenario := (ParamCount > 0) and (ParamStr(1) = 'S');
 	New(IoTmpBuf);
 	RandSeed := 0;
 	WorldCreate;
@@ -29,25 +31,34 @@ begin
 		BlockWrite(fixtureFile, malformedHeader, SizeOf(malformedHeader));
 		Close(fixtureFile);
 	end;
-	if restoreScenario or generateRestoreSave or cancelRetryScenario then begin
+	if restoreScenario or generateRestoreSave or cancelRetryScenario or savedWorldPlayScenario then begin
 		if not WorldLoad('DEMO', '.ZZT', true) then RunError(258);
-		World.Info.Name := 'RESTORE';
+		if savedWorldPlayScenario then
+			World.Info.Name := 'DEMO'
+		else
+			World.Info.Name := 'RESTORE';
 		World.Info.IsSave := true;
-		World.Info.Health := 37;
-		World.Info.Ammo := 8;
-		World.Info.Gems := 4;
-		World.Info.Torches := 2;
-		World.Info.TorchTicks := 123;
-		World.Info.EnergizerTicks := 43;
-		World.Info.Score := 777;
-		World.Info.BoardTimeSec := 17;
-		World.Info.BoardTimeHsec := 23;
-		World.Info.Keys[1] := true;
+		if savedWorldPlayScenario then begin
+			{ Distinct live values prove that title-P reloads the original .ZZT header. }
+			World.Info.Health := 1;
+			World.Info.Ammo := 99;
+		end else begin
+			World.Info.Health := 37;
+			World.Info.Ammo := 8;
+			World.Info.Gems := 4;
+			World.Info.Torches := 2;
+			World.Info.TorchTicks := 123;
+			World.Info.EnergizerTicks := 43;
+			World.Info.Score := 777;
+			World.Info.BoardTimeSec := 17;
+			World.Info.BoardTimeHsec := 23;
+			World.Info.Keys[1] := true;
+		end;
 	end;
 	if generateRestoreSave then WorldSave('RESTORE', '.SAV');
 	if not generateRestoreSave then begin
 		{ The title monitor sees a deliberately different live state before R loads the saved game. }
-		if restoreScenario or cancelRetryScenario then begin
+		if restoreScenario or cancelRetryScenario or savedWorldPlayScenario then begin
 			World.Info.Health := 1;
 			World.Info.Ammo := 99;
 		end;

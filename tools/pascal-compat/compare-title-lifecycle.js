@@ -2,11 +2,14 @@ const fs = require('node:fs');
 
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
+const savedWorldPlayWorldPath = process.argv[4] === '--saved-world-play' ? process.argv[5] || null : null;
 const restoreFailureSavePath = process.argv[4] === '--restore-failure' ? process.argv[5] || null : null;
 const restoreRetrySavePath = process.argv[4] === '--restore-retry' ? process.argv[5] || null : null;
-const restoreSavePath = restoreFailureSavePath || restoreRetrySavePath ? null : process.argv[4] || null;
+const restoreSavePath = savedWorldPlayWorldPath || restoreFailureSavePath || restoreRetrySavePath
+  ? null
+  : process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [restore.SAV|--restore-failure malformed.SAV|--restore-retry restore.SAV]');
+  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [--saved-world-play world.ZZT|restore.SAV|--restore-failure malformed.SAV|--restore-retry restore.SAV]');
 }
 
 const scalarNames = [
@@ -154,6 +157,7 @@ function readProductionSnapshots(instance, expectedCount) {
     },
   });
   instance = await WebAssembly.instantiate(module, { env });
+  let result;
   if (restoreFailureSavePath) {
     const save = fs.readFileSync(restoreFailureSavePath);
     if (save.length !== 512) throw new Error(`Malformed restore fixture is ${save.length} bytes; expected the direct-Pascal 512-byte header.`);
@@ -198,8 +202,14 @@ function readProductionSnapshots(instance, expectedCount) {
     console.log(`Title R malformed-version refusal matched Pascal across ${comparedFields}/${count} comparable world/board/stat/tile fields; private board-buffer length was excluded from equality; LibZoo returned ZOO_ERROR_WRONGVER (-3).`);
     return;
   }
-  let result;
-  if (restoreRetrySavePath) {
+  if (savedWorldPlayWorldPath) {
+    const world = fs.readFileSync(savedWorldPlayWorldPath);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (world.length > capacity) throw new Error(`World fixture exceeds production harness capacity: ${world.length}/${capacity}`);
+    const pointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, pointer, world.length).set(world);
+    result = instance.exports.run_integrated_title_saved_world_play_checks(world.length);
+  } else if (restoreRetrySavePath) {
     const save = fs.readFileSync(restoreRetrySavePath);
     const capacity = instance.exports.integrated_demo_world_bytes_capacity();
     if (save.length > capacity) throw new Error(`Restore fixture exceeds production harness capacity: ${save.length}/${capacity}`);
@@ -245,6 +255,8 @@ function readProductionSnapshots(instance, expectedCount) {
     ? 'R-to-cancel selection, retry R restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
     : restoreSavePath
     ? 'R-to-restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
+    : savedWorldPlayWorldPath
+    ? 'title-P reload of the backing Pascal .ZZT, one real paused cycle, and return-to-title'
     : 'P-to-play, one real paused cycle, and return-to-title';
   console.log(`Title lifecycle replay: ${scenario} matched at ${expected.length} checkpoints (${comparedFields} state fields); first-divergence context includes neighboring fields.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

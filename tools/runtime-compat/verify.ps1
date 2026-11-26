@@ -344,6 +344,7 @@ $integratedGameplayArgs = @(
     '-I', $buildDir,
 	'-Wl,--no-entry', '-Wl,--export=run_integrated_gameplay_checks',
 	'-Wl,--export=run_integrated_title_lifecycle_checks',
+	'-Wl,--export=run_integrated_title_saved_world_play_checks',
 	'-Wl,--export=run_integrated_end_play_checks',
 	'-Wl,--export=integrated_end_play_output_ptr', '-Wl,--export=integrated_end_play_output_rows',
 	'-Wl,--export=run_integrated_title_quit_checks',

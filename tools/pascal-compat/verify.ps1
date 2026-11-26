@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 42304)
-Total output lines: 2813
-
 param(
     [string]$PascalToolchain = 'build\pascal-compat-run\Z',
     [string]$DosboxExecutable
@@ -999,7 +996,910 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'OBJTIK.EXE') -PathType Le
 # These direct ElementObjectTick calls do not consult the DOS clock.
 for ($caseId = 1; $caseId -le 4; $caseId++) {
     $caseName = 'OBJTIK{0:D2}' -f $caseId
-    Invoke-DosboxSession…12304 tokens truncated…-1',
+    Invoke-DosboxSession $caseName @(('BIN\OBJTIK.EXE {0}' -f $caseId)) 'max'
+}
+$objectTickRows = [Collections.Generic.List[string]]::new()
+for ($caseId = 1; $caseId -le 4; $caseId++) {
+    $caseOutputPath = Join-Path $stageRoot ('OBJTIK{0:D2}.OUT' -f $caseId)
+    if (-not (Test-Path -LiteralPath $caseOutputPath -PathType Leaf)) {
+        throw "Turbo Pascal ElementObjectTick case $caseId did not create its output file."
+    }
+    $caseOutput = [IO.File]::ReadAllLines($caseOutputPath)
+    if ($caseOutput.Count -ne 1 -or
+        $caseOutput[0] -notmatch ('^{0} -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ -?\d+ -?\d+$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal ElementObjectTick case $caseId output: $([string]::Join('; ', $caseOutput))"
+    }
+    $objectTickRows.Add($caseOutput[0])
+}
+[IO.File]::WriteAllLines((Join-Path $stageRoot 'OBJTIK.OUT'), $objectTickRows, [Text.Encoding]::ASCII)
+
+Write-Host 'Compiling and running direct Turbo Pascal Object TOUCH event cases: OBJTOUCHPRB'
+Invoke-DosboxSession 'OBJTOUCHPRB' @(
+    'TPC.EXE /B /EBIN /UBIN OBJTOUCH.PAS > OBJTOUCH.LOG',
+    'BIN\OBJTOUCH.EXE'
+)
+$objectTouchOutputPath = Join-Path $stageRoot 'OBJTOUCH.OUT'
+if (-not (Test-Path -LiteralPath $objectTouchOutputPath -PathType Leaf)) {
+    throw 'Turbo Pascal Object TOUCH probe did not create OBJTOUCH.OUT.'
+}
+$objectTouchRows = [IO.File]::ReadAllLines($objectTouchOutputPath)
+if ($objectTouchRows.Count -ne 4) {
+    throw "Turbo Pascal Object TOUCH probe should contain four cases; found $($objectTouchRows.Count)."
+}
+for ($caseId = 1; $caseId -le 4; $caseId++) {
+    if ($objectTouchRows[$caseId - 1] -notmatch ('^{0}(?:\s+-?\d+){{7}}$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal Object TOUCH case $caseId output: $($objectTouchRows[$caseId - 1])"
+    }
+}
+
+Write-Host 'Compiling and running direct Turbo Pascal OOP flow-control and movement cases: OOPFLOWPRB'
+Invoke-DosboxSession 'OOPFLOWPRB' @(
+    'TPC.EXE /B /EBIN /UBIN OOPFLOW.PAS > OOPFLOW.LOG',
+    'BIN\OOPFLOW.EXE'
+)
+$oopFlowOutputPath = Join-Path $stageRoot 'OOPFLOW.OUT'
+if (-not (Test-Path -LiteralPath $oopFlowOutputPath -PathType Leaf)) {
+    throw "Turbo Pascal OOP flow probe did not create OOPFLOW.OUT. See $stageRoot\OOPFLOW.LOG."
+}
+$oopFlowRows = [IO.File]::ReadAllLines($oopFlowOutputPath)
+if ($oopFlowRows.Count -ne 11) {
+    throw "Turbo Pascal OOP flow probe should contain 11 cases; found $($oopFlowRows.Count)."
+}
+for ($caseId = 1; $caseId -le 11; $caseId++) {
+    if ($oopFlowRows[$caseId - 1] -notmatch ('^{0}(?:\s+-?\d+){{10}}$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal OOP flow case $caseId output: $($oopFlowRows[$caseId - 1])"
+    }
+}
+
+Write-Host 'Compiling and running direct Turbo Pascal OOP parser and line-reader cases: OOPPARSEPRB'
+# The 2,837 direct parser/line-reader cases are clock-independent. Compile and
+# execute separately so the compiler's DOS allocation history cannot leave the
+# oracle process with an empty partial output file; use host speed for runtime.
+Invoke-DosboxSession 'OOPPARSE-COMPILE' @('TPC.EXE /B /EBIN /UBIN OOPPARSE.PAS > OOPPARSE.LOG') 'max'
+if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'OOPPARSE.EXE') -PathType Leaf)) {
+    throw "Turbo Pascal did not produce BIN\OOPPARSE.EXE. See $stageRoot\OOPPARSE.LOG and $stageRoot\OOPPARSE-COMPILE.LOG."
+}
+Invoke-DosboxSession 'OOPPARSEPRB' @('BIN\OOPPARSE.EXE') 'max'
+$oopParserOutputPath = Join-Path $stageRoot 'OOPPARSE.OUT'
+if (-not (Test-Path -LiteralPath $oopParserOutputPath -PathType Leaf)) {
+    throw "Turbo Pascal OOP parser probe did not create OOPPARSE.OUT. See $stageRoot\OOPPARSE.LOG."
+}
+$oopParserRows = [IO.File]::ReadAllLines($oopParserOutputPath)
+$oopWordCaseCount = 775
+$oopValueCaseCount = 524
+$oopLineCaseCount = 1538
+if ($oopParserRows.Count -ne ($oopWordCaseCount + $oopValueCaseCount + $oopLineCaseCount)) {
+    throw "Turbo Pascal OOP parser probe should contain $($oopWordCaseCount + $oopValueCaseCount + $oopLineCaseCount) rows; found $($oopParserRows.Count)."
+}
+for ($caseId = 1; $caseId -le $oopWordCaseCount; $caseId++) {
+    if ($oopParserRows[$caseId - 1] -notmatch ('^W {0} -?\d+ \d+(?: \d+)*$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal OOP word-parser output for case ${caseId}: $($oopParserRows[$caseId - 1])"
+    }
+}
+for ($caseId = 1; $caseId -le $oopValueCaseCount; $caseId++) {
+    $row = $oopParserRows[$oopWordCaseCount + $caseId - 1]
+    if ($row -notmatch ('^V {0} -?\d+ -?\d+$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal OOP value-parser output for case ${caseId}: $row"
+    }
+}
+for ($caseId = 1; $caseId -le $oopLineCaseCount; $caseId++) {
+    $row = $oopParserRows[$oopWordCaseCount + $oopValueCaseCount + $caseId - 1]
+    if ($row -notmatch ('^L {0} \d+ -?\d+(?: \d+)*$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal OOP line-reader output for case ${caseId}: $row"
+    }
+}
+
+Write-Host 'Compiling and running isolated direct Turbo Pascal OOP ANY element-name cases: OOPANYPRB'
+$oopAnyCommands = [Collections.Generic.List[string]]::new()
+$oopAnyCommands.Add('TPC.EXE /B /EBIN /UBIN OOPANYP.PAS > OOPANYP.LOG')
+for ($elementId = 0; $elementId -le 53; $elementId++) {
+    $oopAnyCommands.Add(('BIN\OOPANYP.EXE {0}' -f $elementId))
+}
+# All 54 named-element checks are clock-independent; keep the batch below the
+# bounded DOSBox-X session window without changing the tested Pascal routines.
+Invoke-DosboxSession 'OOPANYPRB' $oopAnyCommands.ToArray() 'max'
+$oopAnyRows = [Collections.Generic.List[string]]::new()
+$oopAnyNamedElementCount = 0
+for ($elementId = 0; $elementId -le 53; $elementId++) {
+    $caseOutputPath = Join-Path $stageRoot ('OOPANY{0:D2}.OUT' -f $elementId)
+    if (-not (Test-Path -LiteralPath $caseOutputPath -PathType Leaf)) {
+        throw "Turbo Pascal OOP ANY element case $elementId did not create its output file."
+    }
+    $caseOutput = [IO.File]::ReadAllLines($caseOutputPath)
+    if ($caseOutput.Count -ne 2 -or $caseOutput[0] -cne 'started') {
+        throw "Unexpected Turbo Pascal OOP ANY element case $elementId output: $([string]::Join('; ', $caseOutput))"
+    }
+    $fields = @($caseOutput[1] -split '\s+')
+    if ($fields.Count -eq 2 -and $fields[0] -eq "$elementId" -and $fields[1] -ceq 'SKIP') {
+        $oopAnyRows.Add("$elementId SKIP")
+        continue
+    }
+    if ($fields.Count -ne 4 -or $fields[0] -ne "$elementId" -or
+        $fields[1] -notmatch '^[A-Z0-9]{1,50}$' -or $fields[2] -cne '1' -or $fields[3] -cne '0') {
+        throw "Turbo Pascal OOP ANY element $elementId did not produce a true match and false miss: $([string]::Join('; ', $caseOutput))"
+    }
+    $oopAnyNamedElementCount++
+    $oopAnyRows.Add([string]::Join(' ', $fields))
+}
+if ($oopAnyNamedElementCount -ne 42) {
+    throw "Expected 42 named Pascal tile elements in IDs 0 through 53, found $oopAnyNamedElementCount."
+}
+[IO.File]::WriteAllLines((Join-Path $stageRoot 'OOPANY.OUT'), $oopAnyRows, [Text.Encoding]::ASCII)
+Write-Host "Turbo Pascal OOP ANY parsing: all $oopAnyNamedElementCount named tile elements match when present and miss when absent."
+
+# Compile a non-interrupt wrapper around the original sound timer body only
+# after the ordinary Pascal probes have run. This lets the SoundTick probe
+# step the actual handler deterministically without installing its DOS vector.
+$stagedSoundPath = Join-Path $stageSource 'SOUNDS.PAS'
+$stagedSound = [IO.File]::ReadAllText($stagedSoundPath)
+$newline = if ($stagedSound.Contains("`r`n")) { "`r`n" } else { "`n" }
+$soundInterfaceAnchor = "`tprocedure SoundQueue(priority: integer; pattern: string);"
+$soundTimeCallAnchor = 'GetTime(hour, minute, sec, hSec);'
+$soundHandlerAnchor = 'procedure SoundTimerHandler;' + $newline + "`tinterrupt;"
+$soundVectorAnchor = "`tSetIntVec(`$1C, SoundNewVector);"
+if ((-not $stagedSound.Contains($soundInterfaceAnchor)) -or
+    (-not $stagedSound.Contains($soundHandlerAnchor)) -or
+    (-not $stagedSound.Contains($soundVectorAnchor))) {
+    throw 'Could not locate the Sounds unit probe insertion points.'
+}
+$stagedSound = $stagedSound.Replace(
+    $soundInterfaceAnchor,
+    $soundInterfaceAnchor + $newline + "`tprocedure SoundProbeTick;" + $newline +
+        "`tprocedure SoundProbeSetTime(hour, minute, sec, hSec: word);" + $newline +
+        "`tprocedure SoundProbeSetSchedule(startHsecs, stallAfterPoll, stallExtraPits: integer);" + $newline +
+        "`tprocedure SoundProbeQueueCapture(enabled: boolean);" + $newline +
+        "`tprocedure SoundProbeWriteQueueEvents(filename: string);" + $newline +
+        "`tfunction SoundProbeGetQueueEventCount: integer;" + $newline +
+        "`tfunction SoundProbeGetScheduleCycleCount: integer;" + $newline +
+        "`tfunction SoundProbeGetScheduleCycleHsec(index: integer): integer;"
+)
+$soundProbeVarAnchor = 'uses Crt, Dos;'
+if (-not $stagedSound.Contains($soundProbeVarAnchor)) {
+    throw 'Could not locate the Sounds implementation declaration for clock probes.'
+}
+$soundProbeTimeVars = @'
+uses Crt, Dos;
+
+const
+    SoundProbeQueueEventCapacity = 64;
+
+type
+    TSoundProbeQueueEvent = record
+        RequestPriority, RequestLength: integer;
+        RequestBytes: array[1..255] of byte;
+        ResultPriority, ResultPosition, ResultLength, ResultPlaying: integer;
+        ResultBytes: array[1..255] of byte;
+    end;
+    TSoundProbeQueueEventArray = array[1..SoundProbeQueueEventCapacity] of TSoundProbeQueueEvent;
+    PSoundProbeQueueEventArray = ^TSoundProbeQueueEventArray;
+
+var
+    SoundProbeTimeEnabled: boolean;
+    SoundProbeScheduleEnabled: boolean;
+    SoundProbeQueueCaptureEnabled: boolean;
+    SoundProbeQueueEventCount: integer;
+    SoundProbeQueueEventOverflow: boolean;
+    SoundProbeQueueEvents: PSoundProbeQueueEventArray;
+    SoundProbeHour, SoundProbeMinute, SoundProbeSecond, SoundProbeHsec: word;
+    SoundProbeScheduleStartHsecs, SoundProbeScheduleCurrentHsecs,
+        SoundProbeScheduleStallAfterPoll,
+        SoundProbeScheduleStallExtraPits, SoundProbeSchedulePollCount,
+        SoundProbeScheduleCycleCount: integer;
+    SoundProbeScheduleElapsedNanos: longint;
+    SoundProbeScheduleCycleHsecs: array[0..4] of integer;
+
+procedure SoundProbeQueueCapture(enabled: boolean);
+begin
+    if enabled then begin
+        if SoundProbeQueueEvents = nil then
+            GetMem(SoundProbeQueueEvents, SizeOf(TSoundProbeQueueEventArray));
+        SoundProbeQueueEventCount := 0;
+        SoundProbeQueueEventOverflow := false;
+    end;
+    SoundProbeQueueCaptureEnabled := enabled;
+end;
+
+procedure SoundProbeCaptureQueue(priority: integer; pattern: string);
+var
+    i, eventIndex: integer;
+begin
+    if SoundProbeQueueCaptureEnabled then begin
+        if (SoundProbeQueueEventCount < SoundProbeQueueEventCapacity) and
+            (Length(pattern) <= 255) and (Length(SoundBuffer) <= 255) then begin
+            SoundProbeQueueEventCount := SoundProbeQueueEventCount + 1;
+            eventIndex := SoundProbeQueueEventCount;
+            with SoundProbeQueueEvents^[eventIndex] do begin
+                RequestPriority := priority;
+                RequestLength := Length(pattern);
+                for i := 1 to RequestLength do
+                    RequestBytes[i] := Ord(pattern[i]);
+                ResultPriority := SoundCurrentPriority;
+                ResultPosition := SoundBufferPos;
+                ResultLength := Length(SoundBuffer);
+                ResultPlaying := Ord(SoundIsPlaying);
+                for i := 1 to ResultLength do
+                    ResultBytes[i] := Ord(SoundBuffer[i]);
+            end;
+        end else
+            SoundProbeQueueEventOverflow := true;
+    end;
+end;
+
+procedure SoundProbeWriteQueueEvents(filename: string);
+var
+    output: text;
+    eventIndex, byteIndex: integer;
+begin
+    Assign(output, filename);
+    Rewrite(output);
+    WriteLn(output, SoundProbeQueueEventCount, ' ', Ord(SoundProbeQueueEventOverflow));
+    for eventIndex := 1 to SoundProbeQueueEventCount do begin
+        with SoundProbeQueueEvents^[eventIndex] do begin
+            Write(output, RequestPriority, ' ', RequestLength, ' ');
+            for byteIndex := 1 to RequestLength do Write(output, RequestBytes[byteIndex], ' ');
+            Write(output, ResultPriority, ' ', ResultPosition, ' ', ResultLength, ' ', ResultPlaying, ' ');
+            for byteIndex := 1 to ResultLength do Write(output, ResultBytes[byteIndex], ' ');
+            WriteLn(output);
+        end;
+    end;
+    Close(output);
+    if SoundProbeQueueEvents <> nil then begin
+        FreeMem(SoundProbeQueueEvents, SizeOf(TSoundProbeQueueEventArray));
+        SoundProbeQueueEvents := nil;
+    end;
+end;
+
+procedure SoundProbeSetTime(hour, minute, sec, hSec: word);
+begin
+    SoundProbeTimeEnabled := true;
+    SoundProbeScheduleEnabled := false;
+    SoundProbeHour := hour;
+    SoundProbeMinute := minute;
+    SoundProbeSecond := sec;
+    SoundProbeHsec := hSec;
+end;
+
+procedure SoundProbeSetSchedule(startHsecs, stallAfterPoll, stallExtraPits: integer);
+var
+    i, hSecs: integer;
+begin
+    SoundProbeTimeEnabled := true;
+    SoundProbeScheduleEnabled := true;
+    SoundProbeScheduleStartHsecs := startHsecs;
+    SoundProbeScheduleStallAfterPoll := stallAfterPoll;
+    SoundProbeScheduleStallExtraPits := stallExtraPits;
+    SoundProbeSchedulePollCount := 0;
+    SoundProbeScheduleCycleCount := 0;
+    SoundProbeScheduleElapsedNanos := 0;
+    for i := 0 to 4 do SoundProbeScheduleCycleHsecs[i] := 0;
+    hSecs := startHsecs mod 6000;
+    if hSecs < 0 then hSecs := hSecs + 6000;
+    SoundProbeScheduleStartHsecs := hSecs;
+    SoundProbeScheduleCurrentHsecs := hSecs;
+    SoundProbeHour := 0;
+    SoundProbeMinute := 0;
+    SoundProbeSecond := hSecs div 100;
+    SoundProbeHsec := hSecs mod 100;
+end;
+
+function SoundProbeGetScheduleCycleCount: integer;
+begin
+    SoundProbeGetScheduleCycleCount := SoundProbeScheduleCycleCount;
+end;
+
+function SoundProbeGetScheduleCycleHsec(index: integer): integer;
+begin
+    if (index >= 0) and (index <= 4) then
+        SoundProbeGetScheduleCycleHsec := SoundProbeScheduleCycleHsecs[index]
+    else
+        SoundProbeGetScheduleCycleHsec := 0;
+end;
+'@
+$stagedSound = $stagedSound.Replace($soundProbeVarAnchor, $soundProbeTimeVars.TrimEnd())
+$soundQueueImplementationStart = $stagedSound.LastIndexOf('procedure SoundQueue(priority: integer; pattern: string);', [StringComparison]::Ordinal)
+$soundQueueImplementationEnd = $stagedSound.IndexOf('procedure SoundClearQueue;', $soundQueueImplementationStart, [StringComparison]::Ordinal)
+if ($soundQueueImplementationStart -lt 0 -or $soundQueueImplementationEnd -lt 0) {
+    throw 'Could not isolate the staged SoundQueue implementation for logical event capture.'
+}
+$soundQueueImplementation = $stagedSound.Substring($soundQueueImplementationStart, $soundQueueImplementationEnd - $soundQueueImplementationStart)
+$soundQueueFinalEnd = $soundQueueImplementation.LastIndexOf('end;', [StringComparison]::Ordinal)
+if ($soundQueueFinalEnd -lt 0) { throw 'Could not locate the staged SoundQueue body end for logical event capture.' }
+$soundQueueImplementation = $soundQueueImplementation.Insert(
+    $soundQueueFinalEnd,
+    "`t`tif SoundProbeQueueCaptureEnabled then SoundProbeCaptureQueue(priority, pattern);" + $newline
+)
+$stagedSound = $stagedSound.Substring(0, $soundQueueImplementationStart) +
+    $soundQueueImplementation + $stagedSound.Substring($soundQueueImplementationEnd)
+$elapsedRoutineAnchor = 'function SoundHasTimeElapsed(var counter: integer; duration: integer): boolean;'
+$elapsedRoutineStart = $stagedSound.LastIndexOf($elapsedRoutineAnchor, [StringComparison]::Ordinal)
+if ($elapsedRoutineStart -lt 0) { throw 'Could not locate SoundHasTimeElapsed for deterministic clock injection.' }
+$elapsedGetTimeIndex = $stagedSound.IndexOf($soundTimeCallAnchor, $elapsedRoutineStart, [StringComparison]::Ordinal)
+if ($elapsedGetTimeIndex -lt 0) { throw 'Could not locate the elapsed-check GetTime call for deterministic injection.' }
+$soundProbeGetTime = @'
+if SoundProbeTimeEnabled then begin
+                hour := SoundProbeHour;
+                minute := SoundProbeMinute;
+                sec := SoundProbeSecond;
+                hSec := SoundProbeHsec;
+            end else GetTime(hour, minute, sec, hSec);
+'@
+$stagedSound = $stagedSound.Remove($elapsedGetTimeIndex, $soundTimeCallAnchor.Length).Insert(
+    $elapsedGetTimeIndex, $soundProbeGetTime.TrimEnd()
+)
+$soundTimerStart = $stagedSound.IndexOf('procedure SoundTimerHandler;', $elapsedRoutineStart, [StringComparison]::Ordinal)
+if ($soundTimerStart -lt 0) { throw 'Could not locate SoundTimerHandler after the elapsed-check routine.' }
+$elapsedRoutine = $stagedSound.Substring($elapsedRoutineStart, $soundTimerStart - $elapsedRoutineStart)
+$elapsedFinalEnd = $elapsedRoutine.LastIndexOf('end;', [StringComparison]::Ordinal)
+if ($elapsedFinalEnd -lt 0) { throw 'Could not locate the end of SoundHasTimeElapsed for schedule instrumentation.' }
+$elapsedHookLineStart = $elapsedRoutine.LastIndexOf($newline, $elapsedFinalEnd, [StringComparison]::Ordinal) + $newline.Length
+$soundScheduleHook = @'
+		if SoundProbeScheduleEnabled then begin
+			SoundProbeSchedulePollCount := SoundProbeSchedulePollCount + 1;
+			if hSecsDiff >= duration then begin
+				if SoundProbeScheduleCycleCount <= 4 then
+					SoundProbeScheduleCycleHsecs[SoundProbeScheduleCycleCount] := hSecsTotal;
+				SoundProbeScheduleCycleCount := SoundProbeScheduleCycleCount + 1;
+			end;
+			SoundProbeScheduleElapsedNanos := SoundProbeScheduleElapsedNanos + 54924578;
+			if (SoundProbeScheduleStallAfterPoll > 0) and
+				(SoundProbeSchedulePollCount = SoundProbeScheduleStallAfterPoll) then
+				SoundProbeScheduleElapsedNanos := SoundProbeScheduleElapsedNanos +
+					(54924578 * SoundProbeScheduleStallExtraPits);
+		SoundProbeScheduleCurrentHsecs :=
+			(SoundProbeScheduleStartHsecs + (SoundProbeScheduleElapsedNanos div 10000000)) mod 6000;
+		SoundProbeSecond := SoundProbeScheduleCurrentHsecs div 100;
+		SoundProbeHsec := SoundProbeScheduleCurrentHsecs mod 100;
+	end;
+'@
+$stagedSound = $stagedSound.Insert(
+    $elapsedRoutineStart + $elapsedHookLineStart,
+    $soundScheduleHook.TrimEnd() + $newline
+)
+$stagedSound = $stagedSound.Replace(
+    $soundHandlerAnchor,
+    'procedure SoundTimerHandler;'
+)
+$stagedSound = $stagedSound.Replace($soundVectorAnchor, '')
+$soundProbeHelper = @'
+procedure SoundProbeTick;
+begin
+	SoundTimerHandler;
+end;
+
+function SoundProbeGetQueueEventCount: integer;
+begin
+	SoundProbeGetQueueEventCount := SoundProbeQueueEventCount;
+end;
+
+'@
+$soundUninstallIndex = $stagedSound.LastIndexOf('procedure SoundUninstall;')
+if ($soundUninstallIndex -lt 0) { throw 'Could not locate the Sounds unit implementation insertion point.' }
+$stagedSound = $stagedSound.Insert($soundUninstallIndex, $soundProbeHelper)
+[IO.File]::WriteAllText($stagedSoundPath, $stagedSound, [Text.UTF8Encoding]::new($false))
+$snapshotExt = @'
+unit SnapExt;
+
+interface
+
+uses GameVars;
+
+procedure SnapshotExtWriteLifecycleTail(var output: text);
+
+implementation
+
+uses Sounds;
+
+procedure SnapshotExtWriteLifecycleTail(var output: text);
+var
+	byteIndex: integer;
+begin
+	Write(output, SoundProbeGetQueueEventCount, ' ', Length(World.Info.Name), ' ');
+	for byteIndex := 1 to Length(World.Info.Name) do
+		Write(output, Ord(World.Info.Name[byteIndex]), ' ');
+	Write(output, Length(Board.Name), ' ');
+	for byteIndex := 1 to Length(Board.Name) do
+		Write(output, Ord(Board.Name[byteIndex]), ' ');
+end;
+
+end.
+'@
+$snapshotExtPath = Join-Path $stageSource 'SNAPEXT.PAS'
+[IO.File]::WriteAllText($snapshotExtPath, $snapshotExt, [Text.UTF8Encoding]::new($false))
+$stagedGamePath = Join-Path $stageSource 'GAME.PAS'
+$stagedGame = [IO.File]::ReadAllText($stagedGamePath)
+$gameUsesAnchor = 'uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;'
+if ([regex]::Matches($stagedGame, [regex]::Escape($gameUsesAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the Game unit uses clause for the integrated snapshot extension.'
+}
+$stagedGame = $stagedGame.Replace($gameUsesAnchor, 'uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop, SnapExt;')
+$snapshotFieldCountAnchor = '(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer) + 2;'
+if ([regex]::Matches($stagedGame, [regex]::Escape($snapshotFieldCountAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the Game snapshot field-count expression.'
+}
+$stagedGame = $stagedGame.Replace(
+    $snapshotFieldCountAnchor,
+    '(liveStatCount * liveStatCount) + totalScriptBytes + 8 + Length(SoundBuffer) + 2 + 3 +' +
+        "`r`n`t`t`tLength(World.Info.Name) + Length(Board.Name);"
+)
+$snapshotTailAnchor = "Write(output, GameLoopProbeCellWriteCount, ' ', Ord(GameLoopProbeCellWriteOverflow), ' ');"
+if ([regex]::Matches($stagedGame, [regex]::Escape($snapshotTailAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the Game snapshot lifecycle-tail insertion point.'
+}
+$stagedGame = $stagedGame.Replace(
+    $snapshotTailAnchor,
+    $snapshotTailAnchor + "`r`n`t`tSnapshotExtWriteLifecycleTail(output);"
+)
+[IO.File]::WriteAllText($stagedGamePath, $stagedGame, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDTIK.PAS') -Destination (Join-Path $stageRoot 'SOUNDTIK.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDCLK.PAS') -Destination (Join-Path $stageRoot 'SOUNDCLK.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'GAMESCHD.PAS') -Destination (Join-Path $stageRoot 'GAMESCHD.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'INTEGPRB.PAS') -Destination (Join-Path $stageRoot 'INTEGPRB.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TITLEIN.PAS') -Destination (Join-Path $stageRoot 'TITLEIN.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DEMOINT.PAS') -Destination (Join-Path $stageRoot 'DEMOINT.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MOTIONIN.PAS') -Destination (Join-Path $stageRoot 'MOTIONIN.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'COMBATIN.PAS') -Destination (Join-Path $stageRoot 'COMBATIN.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'STATORD.PAS') -Destination (Join-Path $stageRoot 'STATORD.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BOARDPASSIN.PAS') -Destination (Join-Path $stageRoot 'BRDPASS.PAS')
+Write-Host 'Compiling and running direct Turbo Pascal sound-tick probe: SOUNDTIK'
+Invoke-DosboxSession 'SOUNDTIK' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC SOUNDTIK.PAS > SOUNDTIK.LOG',
+    'BIN\SOUNDTIK.EXE'
+)
+Write-Host 'Compiling and running the direct Turbo Pascal sound-clock probe: SOUNDCLK'
+Invoke-DosboxSession 'SOUNDCLK' @(
+    'TPC.EXE /EBIN /ISRC /USRC SOUNDCLK.PAS > SOUNDCLK.LOG',
+    'BIN\SOUNDCLK.EXE'
+)
+Write-Host 'Compiling and running direct Turbo Pascal game-scheduler probe: GAMESCHD'
+Invoke-DosboxSession 'GAMESCHD-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC GAMESCHD.PAS > GAMESCHD-COMPILE.LOG'
+)
+Invoke-DosboxSession 'GAMESCHD' @('BIN\GAMESCHD.EXE')
+Write-Host 'Compiling and running integrated Turbo Pascal gameplay probe: INTEGPRB'
+Invoke-DosboxSession 'INTEGPRB-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC INTEGPRB.PAS > INTEGPRB-COMPILE.LOG'
+)
+# Run the heap-sensitive replay in a fresh DOSBox session. Leaving Turbo Pascal's
+# compiler process in the same DOS session changes the inherited DOS allocator
+# history and makes the probe's post-loop capture intermittently terminate.
+Invoke-DosboxSession 'INTEGPRB' @('BIN\INTEGPRB.EXE')
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGPR.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGPR.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSND.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGSND.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGCEL.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGCEL.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGSAV.SAV') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGSAV.SAV. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGLOD.OUT') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEGLOD.OUT. See $stageRoot\INTEGPRB.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEG2SV.SAV') -PathType Leaf)) {
+    throw "Integrated Pascal gameplay probe did not write INTEG2SV.SAV after reloading INTEGSAV.SAV. See $stageRoot\INTEGPRB.LOG."
+}
+$syntheticReplayRoot = Join-Path $stageRoot 'integrated-synthetic'
+New-Item -ItemType Directory -Force -Path $syntheticReplayRoot | Out-Null
+foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+    Copy-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Destination (Join-Path $syntheticReplayRoot $fixtureOutput)
+}
+Write-Host 'Compiling the direct Pascal DEMO traversal replay: DEMOINT'
+Invoke-DosboxSession 'DEMOINT-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC DEMOINT.PAS > DEMOINT-COMPILE.LOG'
+)
+Write-Host 'Running the heap-sensitive Pascal DEMO traversal replay in a fresh DOSBox-X session'
+Invoke-DosboxSession 'DEMOINT' @('BIN\DEMOINT.EXE')
+foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+        throw "Pascal DEMO traversal replay did not write $fixtureOutput. See $stageRoot\DEMOINT.LOG."
+    }
+}
+$demoReplayRoot = Join-Path $stageRoot 'integrated-demo'
+New-Item -ItemType Directory -Force -Path $demoReplayRoot | Out-Null
+foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+    Copy-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Destination (Join-Path $demoReplayRoot $fixtureOutput)
+}
+
+# Exercise the original nested EditorFloodFill routine directly. The test-only
+# EditorLoop insertion bypasses menu/input handling and returns immediately.
+$stagedEditorPath = Join-Path $stageSource 'EDITOR.PAS'
+$stagedEditor = [IO.File]::ReadAllText($stagedEditorPath)
+$editorSourceOriginal = $stagedEditor
+$editorFillCallAnchor = 'copiedTile.Color := $0F;'
+$editorFillCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
+if ($editorFillCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the Pascal flood-fill probe.' }
+$editorFillCallEnd = $editorFillCallIndex + $editorFillCallAnchor.Length
+$stagedEditor = $stagedEditor.Insert(
+    $editorFillCallEnd,
+    "`r`n`t`tEditorFloodFill(30, 12, Board.Tiles[30][12]);`r`n`t`tExit;"
+)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDITORFL.PAS') -Destination (Join-Path $stageRoot 'EDITORFL.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal editor flood-fill probe: EDITORFL'
+Invoke-DosboxSession 'EDITORFL' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC EDITORFL.PAS > EDITORFL.LOG',
+    'BIN\EDITORFL.EXE'
+)
+
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+$stagedEditor = $editorSourceOriginal
+$editorFillCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
+if ($editorFillCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the Pascal queue-wrap probe.' }
+$editorFillCallEnd = $editorFillCallIndex + $editorFillCallAnchor.Length
+$stagedEditor = $stagedEditor.Insert(
+    $editorFillCallEnd,
+    "`r`n`t`tEditorFloodFill(30, 1, Board.Tiles[30][1]);`r`n`t`tExit;"
+)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDFLDOVR.PAS') -Destination (Join-Path $stageRoot 'EDFLDOVR.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal editor queue-wrap probe: EDFLDOVR'
+Invoke-DosboxSession 'EDFLDOVR' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC EDFLDOVR.PAS > EDFLDOVR.LOG',
+    'BIN\EDFLDOVR.EXE'
+)
+
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+$stagedEditor = $editorSourceOriginal
+$editorFillCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
+if ($editorFillCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the Pascal dense-queue probe.' }
+$editorFillCallEnd = $editorFillCallIndex + $editorFillCallAnchor.Length
+$stagedEditor = $stagedEditor.Insert(
+    $editorFillCallEnd,
+    "`r`n`t`tEditorFloodFill(28, 12, Board.Tiles[28][12]);`r`n`t`tExit;"
+)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDFLDQ17.PAS') -Destination (Join-Path $stageRoot 'EDFLDQ17.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal dense editor queue probe: EDFLDQ17'
+Invoke-DosboxSession 'EDFLDQ17' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC EDFLDQ17.PAS > EDFLDQ17.LOG',
+    'BIN\EDFLDQ17.EXE'
+)
+
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+$stagedEditor = $editorSourceOriginal
+$editorFillCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
+if ($editorFillCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the Pascal full-board fill probe.' }
+$editorFillCallEnd = $editorFillCallIndex + $editorFillCallAnchor.Length
+$stagedEditor = $stagedEditor.Insert(
+    $editorFillCallEnd,
+    "`r`n`t`tEditorFloodFill(30, 12, Board.Tiles[30][12]);`r`n`t`tExit;"
+)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDFLDFUL.PAS') -Destination (Join-Path $stageRoot 'EDFLDFUL.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal full-board editor fill probe: EDFLDFUL'
+Invoke-DosboxSession 'EDFLDFUL' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC EDFLDFUL.PAS > EDFLDFUL.LOG',
+    'BIN\EDFLDFUL.EXE'
+)
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+
+# Compare the actual nested EditorPlaceTile cases against extracted Android
+# placement/paste helpers, using the same board-preparation path in both.
+# Run after EditorLoop initializes its locals but before the full redraw so this
+# helper probe does not depend on VGA/transition state or the interactive loop.
+$editorPlacementAnchor = "`t`tEditorDrawRefresh;`r`n`t	if World.BoardCount = 0 then"
+$editorPlacementIndex = $editorSourceOriginal.IndexOf($editorPlacementAnchor, [StringComparison]::Ordinal)
+if ($editorPlacementIndex -lt 0) { throw 'Could not locate the EditorLoop setup for the Pascal editor-placement probe.' }
+$stagedEditor = $editorSourceOriginal
+$editorPlacementCode = @'
+		cursorPattern := 2;
+		cursorColor := $0E;
+		wasModified := false;
+		EditorPlaceTile(30, 12);
+		Board.Stats[0].P1 := Ord(wasModified);
+
+		wasModified := false;
+		EditorPlaceTile(31, 12);
+		Board.Stats[0].P2 := Ord(wasModified);
+
+		cursorPattern := EditorPatternCount + 1;
+		copiedHasStat := false;
+		copiedTile.Element := E_WATER;
+		copiedTile.Color := $7F;
+		wasModified := false;
+		EditorPlaceTile(32, 12);
+		Board.Stats[0].P3 := Ord(wasModified);
+
+		Board.StatCount := MAX_STAT;
+		Board.Tiles[34][12].Element := E_SOLID;
+		Board.Tiles[34][12].Color := $0F;
+		cursorPattern := EditorPatternCount + 1;
+		copiedHasStat := true;
+		copiedTile.Element := E_WATER;
+		copiedTile.Color := $17;
+		wasModified := false;
+		EditorPlaceTile(34, 12);
+		Board.Stats[0].DataPos := Ord(wasModified);
+
+		Exit;
+
+'@
+$editorPlacementIndex = $stagedEditor.IndexOf($editorPlacementAnchor, [StringComparison]::Ordinal)
+$stagedEditor = $stagedEditor.Insert($editorPlacementIndex, $editorPlacementCode)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDPLACE.PAS') -Destination (Join-Path $stageRoot 'EDPLACE.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal editor placement/paste probe: EDPLACE'
+Invoke-DosboxSession 'EDPLACE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC EDPLACE.PAS > EDPLACE.LOG',
+    'BIN\EDPLACE.EXE'
+)
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+
+# This separate probe calls the same Pascal board-preparation and AddStat
+# routines that EditorPlaceTile invokes, keeping the successful script copy
+# independent from EditorLoop's local fixture state.
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDSTAT.PAS') -Destination (Join-Path $stageRoot 'EDSTAT.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal successful stat/script paste probe: EDSTAT'
+Invoke-DosboxSession 'EDSTAT' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC EDSTAT.PAS > EDSTAT.LOG',
+    'BIN\EDSTAT.EXE'
+)
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+
+# Exercise the original nested EditorTransferBoard routine through the real
+# Pascal EditorLoop. The staging copy supplies only menu/filename choices and
+# substitutes the post-Escape state at the error-dialog boundary. The modal
+# acknowledgement interaction is skipped; import, IOResult checks, file reads,
+# BoardCreate/BoardOpen, and editor cleanup remain reconstructed Pascal code.
+$shortPayloadBrd = [byte[]]@(0x04, 0x00, 0x10, 0x20)
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTPAY.BRD'), $shortPayloadBrd)
+$stagedEditor = $editorSourceOriginal
+$transferChoiceAnchor = "SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);"
+$transferFilenameAnchor = "SidebarPromptString('Import board', '.BRD', SavedBoardFileName, PROMPT_ALPHANUM);"
+if (-not $stagedEditor.Contains($transferChoiceAnchor) -or -not $stagedEditor.Contains($transferFilenameAnchor)) {
+    throw 'Could not locate the EditorTransferBoard prompt inputs for controlled direct execution.'
+}
+$stagedEditor = $stagedEditor.Replace($transferChoiceAnchor, 'i := 0;')
+$stagedEditor = $stagedEditor.Replace($transferFilenameAnchor, 'SavedBoardFileName := World.Info.Name;')
+$editorTransferCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
+if ($editorTransferCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the direct board-transfer probe.' }
+$editorTransferCallEnd = $editorTransferCallIndex + $editorFillCallAnchor.Length
+$stagedEditor = $stagedEditor.Insert(
+    $editorTransferCallEnd,
+    "`r`n`t`tEditorTransferBoard;`r`n`t`tExit;"
+)
+[IO.File]::WriteAllText($stagedEditorPath, $stagedEditor, [Text.UTF8Encoding]::new($false))
+$stagedGamePath = Join-Path $stageSource 'GAME.PAS'
+$stagedGameBeforeBrdProbe = [IO.File]::ReadAllText($stagedGamePath)
+$errorDialogSelectAnchor = 'TextWindowSelect(textWindow, false, false);'
+if (-not $stagedGameBeforeBrdProbe.Contains($errorDialogSelectAnchor)) {
+    throw 'Could not locate the DisplayIOError acknowledgement input for the direct board-transfer probe.'
+}
+$stagedGameForBrdProbe = $stagedGameBeforeBrdProbe.Replace(
+    $errorDialogSelectAnchor,
+    'TextWindowRejected := true; InputKeyPressed := #0;'
+)
+[IO.File]::WriteAllText($stagedGamePath, $stagedGameForBrdProbe, [Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BRDXFER.PAS') -Destination (Join-Path $stageRoot 'BRDXFER.PAS')
+Write-Host 'Compiling and running the direct Turbo Pascal short-payload editor import probe: BRDXFER'
+Invoke-DosboxSession 'BRDXFER-COMPILE' @(
+    'TPC.EXE /B /EBIN /ISRC /USRC BRDXFER.PAS > BRDXFER.LOG'
+)
+if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'BRDXFER.EXE') -PathType Leaf)) {
+    throw "Turbo Pascal did not produce BIN\BRDXFER.EXE. See $stageRoot\BRDXFER.LOG and $stageRoot\BRDXFER-COMPILE.LOG."
+}
+# The imported board's deliberately short payload exercises original
+# IOResult/BoardOpen behavior. Running after the compiler in the same DOSBox-X
+# allocator history can hang; the identical compiled probe succeeds in a fresh
+# maximum-speed session, with no clock-dependent behavior in this operation.
+Invoke-DosboxSession 'BRDXFER-RUN' @('BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT') 'max'
+[IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText($stagedGamePath, $stagedGameBeforeBrdProbe, [Text.UTF8Encoding]::new($false))
+
+$editorWrapExpected = [Collections.Generic.List[string]]::new()
+$editorWrapExpected.Add('queue-wrap filled 792 empty 0')
+for ($y = 1; $y -le 25; $y++) {
+    $row = [char[]]::new(60)
+    for ($x = 1; $x -le 60; $x++) {
+        $row[$x - 1] = if (($y % 2) -eq 1) { 'F' } else { 'S' }
+    }
+    if (($y % 2) -eq 0) {
+        $connectorX = if (([int]($y / 2) % 2) -eq 1) { 60 } else { 1 }
+        $row[$connectorX - 1] = 'F'
+    }
+    if ($y -eq 2) { $row[29] = 'P' }
+    $editorWrapExpected.Add((-join $row))
+}
+$editorDenseExpected = [Collections.Generic.List[string]]::new()
+$editorDenseExpected.Add('dense-queue filled 289 empty 0')
+$editorDenseExpected.Add(('S' * 19))
+for ($row = 0; $row -lt 17; $row++) {
+    $editorDenseExpected.Add(('S' + ('F' * 17) + 'S'))
+}
+$editorDenseExpected.Add(('S' * 19))
+$editorFullExpected = [Collections.Generic.List[string]]::new()
+$editorFullExpected.Add('full-board filled 1334 empty 0')
+$editorFullExpected.Add(('P' + ('?' * 59)))
+for ($row = 0; $row -lt 23; $row++) {
+    $editorFullExpected.Add(('?' + ('F' * 58) + '?'))
+}
+$editorFullExpected.Add(('?' * 60))
+
+$expectedOutputs = [ordered]@{
+    'VALPROBE.OUT' = @('-1 0', '0 10', '0 10', '0 10')
+    'EDITORFL.OUT' = @('enclosed-fill 9 center 21 14 outside 21 15')
+    'EDFLDOVR.OUT' = $editorWrapExpected.ToArray()
+    'EDFLDQ17.OUT' = $editorDenseExpected.ToArray()
+    'EDFLDFUL.OUT' = $editorFullExpected.ToArray()
+    'EDPLACE.OUT' = @('N 22 14 1', 'P 4 15 1', 'C 19 127 1', 'L 21 15 0 150')
+    'EDSTAT.OUT' = @(
+        'S 13 23 1 1 35 12 9 2 3 77 88 99 255 255 0 47 0 0 0 0 0 0 0',
+        'D 13 23 1 2 36 12 9 2 3 77 88 99 255 255 0 47 4 0 66 13 0 90 1'
+    )
+    'INPUTBUF.OUT' = @(
+        'one 65', 'one 0',
+        'two 65', 'two 65', 'two 0',
+        'three 65', 'three 66', 'three 0',
+        'four 65', 'four 67', 'four 0',
+        'repeat-four 82', 'repeat-four 82', 'repeat-four 0',
+        'cp437-high 130', 'cp437-top 255',
+        'arrow-up 200 0 -1 0 -1', 'arrow-left 203 -1 0 -1 0',
+        'arrow-right 205 1 0 1 0', 'arrow-down 208 0 1 0 1',
+        'arrow-right-burst 205 1 0 1 0', 'arrow-right-burst 205 1 0 1 0',
+        'arrow-right-burst 0 0 0 1 0',
+        'numeric-up 56 0 -1 0 -1', 'numeric-left 52 -1 0 -1 0',
+        'numeric-right 54 1 0 1 0', 'numeric-down 50 0 1 0 1',
+        'neutral 53 0 0 0 1', 'empty 0 0 0 0 1'
+    )
+    'SOUNDTIK.OUT' = @(
+        'single 1 1 0 0',
+        'odd-first 1 3 1 1', 'odd-end 2 3 0 0',
+        'even-first 1 3 1 1', 'even-end 2 3 0 0',
+        'zero-first 1 3 0 1', 'zero-wrapped 256 3 1 1',
+        'zero-next 257 5 1 1'
+    )
+    'SOUNDCLK.OUT' = @(
+        'before-minute-wrap 0 5990',
+        'last-centisecond 1 5999',
+        'minute-rollover 1 1',
+        'below-threshold 0 1',
+        'at-threshold 1 6',
+        'zero-duration 1 1',
+        'backward-clock-step 1 90'
+    )
+    'GAMESCHD.OUT' = @(
+        'speed 0 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 21 times 0 5 10 16 21',
+        'speed 0 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 1 times 5980 5985 5990 5996 1',
+        'speed 1 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 27 times 5 10 16 21 27',
+        'speed 1 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 7 times 5985 5990 5996 1 7',
+        'speed 6 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 82 times 16 32 49 65 82',
+        'speed 6 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 62 times 5996 12 29 45 62',
+        'speed 9 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 109 times 21 43 65 87 109',
+        'speed 9 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 89 times 1 23 45 67 89',
+        'speed 6 start 0 stall 2 extra 4 cycles 5 delta 5 stat 0 counter 98 times 32 49 65 82 98'
+    )
+    'ZEROSPD.OUT' = @('zero-speed cycles 5 delta 5 stat 0 timer 0 counter 0 exit 1')
+    'BOARDENC.OUT' = @(
+        'runs 255 255 255 255 255 225',
+        'tiles 0 112 0 112 0 112 0 112 0 112 0 112'
+    )
+    'BOARDDEC.OUT' = @(
+        'zero first 7 8 row-end 7 8 cell256 7 8 cell257 1 2 final 1 2',
+        'overrun cell1275 5 15 cell1276 6 16 final 6 16 max-shots 77'
+    )
+    'WORLDTIT.OUT' = @('title-only 1 0 0 1 1')
+    'FULLLOAD.OUT' = @('full-load 1 15 0 0 1 missing-len 0 0')
+    'SHORTLEN.OUT' = @('short-len 1 15 0 272')
+    'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
+    'NEGBRD.OUT' = @('negative-brd 1 -1')
+    'BRDIOPRB.OUT' = @('partial-length 100 4610 next-IOResult 0', 'short-payload 0 100 next-IOResult 0 16 32 165 165')
+    'BRDXFER.OUT' = @('board 0 255 0 4 31 30 12 0')
+    'PLRTORCH.OUT' = @('0 199 30 12')
+    'PLAYERST.OUT' = @(
+        'shoot-held-right ammo 1 input 0 0 dir 1 0 stats 1 target 18 15 sound 2 6 bullet 11 10 0 1 0 100 under 0 0 64 1 48 1 32 1',
+        'shoot-space-down ammo 1 input 0 0 dir 0 1 stats 1 target 18 15 sound 2 6 bullet 10 11 0 0 1 100 under 0 0 64 1 48 1 32 1',
+        'shoot-blocked ammo 2 input 1 0 dir 1 0 stats 0 target 21 31 sound -1 0',
+        'shoot-limit ammo 2 input 1 0 dir 1 0 stats 1 target 0 0 sound -1 0',
+        'shoot-space-no-direction ammo 2 input 0 0 dir 0 0 stats 0 target 0 0 sound -1 0'
+    )
+    'PLAYERMV.OUT' = @(
+        'move-empty player 11 10 delta 1 0 dir 1 0 stats 0 t0 0 23 t1 4 31 t2 0 0 under 0 71 sound -1 0',
+        'move-blocked player 10 10 delta 1 0 dir 1 0 stats 0 t0 4 31 t1 21 95 t2 0 0 under 0 23 sound -1 0',
+        'move-push player 11 10 delta 1 0 dir 1 0 stats 0 t0 0 23 t1 4 31 t2 24 14 under 0 14 sound 2 2',
+        'move-push-blocked player 10 10 delta 1 0 dir 1 0 stats 0 t0 4 31 t1 24 14 t2 21 95 under 0 23 sound 2 2'
+    )
+    'PLAYERKY.OUT' = @(
+        'pause-key paused 1 health 100 torch 0 energizer 0 duration 4 color 31 char 1 key 112 sound 3 6 48 1',
+        'sound-key paused 0 health 100 enabled 1 playing 0 buffer 0 priority 2 key 32'
+    )
+    'PAUSEMV.OUT' = @(
+        'pause-open player 11 10 old 0 23 tile 4 31 under 0 70 delta 1 0 paused 0 save 1 exit 1 key 54 health 0',
+        'pause-cycle player 11 10 old 0 23 tile 4 31 under 0 70 delta 0 0 paused 0 save 1 exit 1 key 0 health 0',
+        'pause-blocked player 10 10 old 4 31 tile 21 95 under 0 23 delta 1 0 paused 1 save 0 exit 1 key 54 health 0'
+    )
+    'PLAYERDE.OUT' = @(
+        'dead-space player 10 10 health 0 ammo 1 input 0 0 shift FALSE dir 1 0 stats 2 tick 0 block TRUE sound -1 0 tile0 2 0 p2 0 shot 18',
+        'dead-existing-stat player 10 10 health 0 ammo 2 input 0 0 shift FALSE dir 0 0 stats 1 tick 0 block TRUE sound -1 0 tile0 36 255 p2 0 shot 0'
+    )
+    'BEARPROB.OUT' = @('11 10 0 112', '10 11 0 112', '10 10 34 6')
+    'MONPRB.OUT' = @(
+        '27 1 27', '97 1 97', '101 1 101', '104 1 104', '110 1 110',
+        '112 1 112', '113 1 113', '114 1 114', '115 1 115', '119 1 119',
+        '65 1 65', '69 1 69', '72 1 72', '78 1 78', '80 1 80',
+        '81 1 81', '82 1 82', '83 1 83', '87 1 87', '124 1 124',
+        '32 0 32', '98 0 98', '102 0 102', '120 0 120', '48 0 48',
+        '13 0 13', '200 0 200', '120 1 120'
+    )
+    'BLINKPRB.OUT' = @(
+        'right-empty player 21 11 origin 43 7 right 4 127 left 21 112 player-under 0 112 p3 3 health 90 stats 2 timer 11 message Ouch!',
+        'left-empty player 21 11 origin 43 7 right 4 127 left 0 112 player-under 21 112 p3 3 health 90 stats 2 timer 11 message Ouch!'
+    )
+    'SCROLLTH.OUT' = @(
+        'default 6 83 99 114 111 108 108 2 10 70 105 114 115 116 32 108 105 110 101 11 83 101 99 111 110 100 32 108 105 110 101 4 0 0 2 -1',
+        'override 19 83 99 114 111 108 108 32 99 117 115 116 111 109 32 116 105 116 108 101 2 10 70 105 114 115 116 32 108 105 110 101 11 83 101 99 111 110 100 32 108 105 110 101 4 0 0 2 -1'
+    )
+    'SPINGUN.OUT' = @(
+        'aimed-vertical-bullet stats 2 player 10 20 gun 12 10 rng 134775814 projectile 18 12 11 step 0 1 p1 1 p2 100 under 0 0',
+        'aimed-same-row-bullet stats 2 player 20 10 gun 10 12 rng 134775814 projectile 18 11 12 step 1 0 p1 1 p2 100 under 0 0',
+        'vertical-bullet stats 2 player 10 20 gun 12 10 rng -596792289 projectile 18 13 10 step 1 0 p1 1 p2 100 under 0 0',
+        'same-row-bullet stats 2 player 20 10 gun 10 12 rng -596792289 projectile 18 11 12 step 1 0 p1 1 p2 100 under 0 0',
+        'vertical-star stats 2 player 10 20 gun 12 10 rng -596792289 projectile 15 13 10 step 1 0 p1 1 p2 100 under 0 0',
+        'fire-rate-zero stats 1 player 10 20 gun 12 10 rng 1 no-projectile'
+    )
+    'SHARK.OUT' = @('Seed-zero Random(10)=0', '11 10 0 38 19 19', '10 10 38 0 0 112')
+    'LION.OUT' = @('seed 3 draws 9 2 tick 11 10 0 0', 'seed 26 draws 9 1 1 tick 10 11 0 0', 'seed 0 draws 0 0 tick 11 10 0 0')
+    'RUFFIAN.OUT' = @(
+        'seeds 1 85 454',
+        'wake draws 16 8 0 player 20 10 ruffian 10 10 step 1 0 under 0 112 tiles 35 13 0 0 0 0',
+        'move-retain draws 0 0 0 player 20 10 ruffian 11 10 step 1 0 under 0 0 tiles 0 112 35 13 0 0',
+        'move-stop draws 8 16 player 20 10 ruffian 12 10 step 0 0 under 0 0 tiles 0 112 0 0 35 13'
+    )
+    'STARPRB.OUT' = @(
+        'tick1 p2 3 pos 10 10 step 0 0 under 0 112 tiles 15 9 19 19 count 1 seed 0',
+        'tick2 p2 2 pos 11 10 step 1 0 under 19 19 tiles 0 112 15 9 count 1 seed 1',
+        'tick3 p2 1 pos 11 10 step 1 0 under 19 19 tiles 0 112 15 10 count 1 seed 1',
+        'tick4 count 0 tiles 0 112 19 19 seed 1'
+    )
+    'TIGER.OUT' = @(
+        'blocked-vertical seed 330 draws 0 0 0 count 1 tiger 11 10 tiles 0 112 21 255 42 11 final-seed -1860696767',
+        'star-horizontal seed 330 draws 0 0 0 count 2 tiger 10 10 tiles 42 11 0 0 15 9 projectile 11 10 1 1 0 100 final-seed -1860696767'
+    )
+    'CENTIP.OUT' = @(
+        'follow seed 0 draws 0 count 2 s1 11 10 1 0 -1 2 4 0 s2 10 10 1 0 1 -1 4 0 row 0 0 0 112 45 15 44 15 seed-after 1',
+        'reverse seed 256 draws 0 0 0 count 3 s1 10 10 0 0 2 -1 4 0 s2 9 10 1 0 3 1 4 0 s3 8 10 1 0 2 2 4 0 row 44 255 45 255 45 255 21 0 seed-after 1260005663',
+        'segment-pending seed 0 draws  count 1 s1 10 10 1 0 -2 -1 4 0 row 0 0 0 0 45 255 0 112 seed-after 0',
+        'segment-head seed 0 draws  count 1 s1 10 10 1 0 -2 -1 4 0 row 0 0 0 0 44 255 0 112 seed-after 0'
+    )
+    'PUSHDUP.OUT' = @(
+        'dup-tick 1 2 10 10 1 0 21 5 2 0 -1 -1 0 112 11 10 -1 1 4 6 7 8 -1 -1 0 112 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 112 12 14 36 42 0 0 0 0 0 0 -1 0 0 -1 -1 -1 -1 -1 -1 -1 -1',
+        'dup-tick 2 3 10 10 1 0 21 0 2 0 -1 -1 0 112 11 10 -1 1 4 6 7 8 -1 -1 0 112 9 10 -1 1 4 6 7 8 -1 -1 0 112 36 42 12 14 36 42 0 0 0 0 0 0 3 1 10 48 2 50 2 52 2 53 2',
+        'dup-tick 3 1 10 10 1 0 21 0 2 0 -1 -1 0 112 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 24 42 12 14 24 42 0 0 0 0 0 0 3 1 10 48 2 50 2 52 2 53 2',
+        'dup-tick 4 150 10 10 1 0 21 0 2 0 -1 -1 0 112 11 10 -1 1 4 6 7 8 -1 -1 0 112 9 10 -1 1 4 6 7 8 -1 -1 0 112 36 42 12 14 36 42 0 0 0 0 0 0 3 1 10 48 2 50 2 52 2 53 2',
+        'dup-tick 5 150 10 10 1 0 21 0 2 0 -1 -1 0 112 11 10 -1 1 4 6 7 8 -1 -1 0 112 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 112 12 14 36 42 0 0 0 0 0 0 3 1 10 48 2 50 2 52 2 53 2',
+        'pusher-tick 1 2 11 10 1 0 0 0 0 0 -1 -1 0 112 12 10 1 0 0 0 0 0 -1 -1 0 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 0 0 112 40 15 40 15 24 14 0 112 2 1 2 21 1 -1 -1 -1 -1 -1 -1',
+        'pusher-tick 2 2 10 10 1 0 0 0 0 0 -1 -1 0 112 11 10 1 0 0 0 0 0 -1 -1 0 112 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 0 40 15 40 15 24 14 21 15 0 112 -1 0 0 -1 -1 -1 -1 -1 -1 -1 -1'
+    )
+    'DOORPRB.OUT' = @(
+        'black 1 9 1', 'black 257 0 1', 'black 513 0 1',
+        'black-key pickup 1 257 0', 'black-key duplicate 257 8',
+        'color 1 wrong 9 1', 'color 1 match 0 1 0 1',
+        'color 2 wrong 9 1', 'color 2 match 0 1 0 1',
+        'color 3 wrong 9 1', 'color 3 match 0 1 0 1',
+        'color 4 wrong 9 1', 'color 4 match 0 1 0 1',
+        'color 5 wrong 9 1', 'color 5 match 0 1 0 1',
+        'color 6 wrong 9 1', 'color 6 match 0 1 0 1',
+        'color 7 wrong 9 1', 'color 7 match 0 1 0 1'
+    )
+    'ITEMPRB.OUT' = @(
+        'player-state', 'ammo 12 0', 'ammo-overflow -32766 0',
+        'gem 8 101 60 0', 'gem-overflow -32768 0 -32766 0',
+        'torch 6 0 0'
+    )
+    'ENERGY.OUT' = @('energizer-state', 'energizer 0 63 75 9 112 32 3 32 3 30 0 2 0 0 22 7 3 -2')
+    'TORCH.OUT' = @(
+        'torch-state',
+        'torch-message -32768 0 46 45 0 1 0 0 40 3 6 48 1 57 1 52 2 2 -1',
+        'torch-silent 1 0 46 0 0 0 3 6 48 1 57 1 52 2 2 -1'
+    )
+    'BOMB.OUT' = @(
+        'bomb-state',
+        'bomb-start 9 13 40 15 2 0 0 40 4 10 48 1 53 1 64 1 69 1 80 1 1 0',
+        'bomb-push 9 11 10 0 112 13 8 0 49 -1 0 1 0',
+        'bomb-blocked 9 10 10 13 40 22 14 -1 0 1 0',
+        'bomb-tick 1 1 0 0 112 13 40 0 80 -1 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1',
         'bomb-tick 2 1 2 0 112 13 40 0 80 1 2 248 1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1',
         'bomb-tick 3 1 1 0 112 13 40 23 13 -1 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1',
         'bomb-tick 4 0 -1 -1 -1 0 112 0 13 -1 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1',
@@ -1800,6 +2700,22 @@ end;
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production title/menu lifecycle replay failed with exit code $LASTEXITCODE." }
 
+    $titleSavedWorldPlayRoot = Join-Path $stageRoot 'TITLP'
+    New-Item -ItemType Directory -Force -Path $titleSavedWorldPlayRoot | Out-Null
+    Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleSavedWorldPlayRoot 'DEMO.ZZT') -Force
+    Write-Host 'Running the direct GameTitleLoop P reload through the original .ZZT: TITLPLAY'
+    Invoke-DosboxSession 'TITLEIN-SAVED-WORLD-PLAY' @('CD \TITLP', '..\BIN\TITLEIN.EXE S')
+    $titleSavedWorldPlayOutput = Join-Path $titleSavedWorldPlayRoot 'INTEGPR.OUT'
+    if (-not (Test-Path -LiteralPath $titleSavedWorldPlayOutput -PathType Leaf)) {
+        throw "Pascal GameTitleLoop P reload replay did not write INTEGPR.OUT. See $stageRoot\TITLEIN-SAVED-WORLD-PLAY.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        $titleSavedWorldPlayOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        '--saved-world-play' `
+        (Join-Path $titleSavedWorldPlayRoot 'DEMO.ZZT')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production title-P backing-world reload differential failed with exit code $LASTEXITCODE." }
+
     $titleRestoreRoot = Join-Path $stageRoot 'TITLER'
     New-Item -ItemType Directory -Force -Path $titleRestoreRoot | Out-Null
     Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleRestoreRoot 'DEMO.ZZT') -Force
@@ -1908,6 +2824,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 84 # Includes the previous isolated compile/run probes plus MISSLOAD-COMPILE and MISSLOAD-RUN; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+$directProbeCount = $probeFiles.Count + 85 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, and the successful title-P backing-world reload; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus the existing standalone runs and MISSLOAD-COMPILE/MISSLOAD-RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
