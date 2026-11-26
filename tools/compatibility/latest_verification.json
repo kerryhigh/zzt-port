@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-26",
-    "root_revision": "315573177c1bd4f0e7c20f5525d03b16f23dd5ab",
+    "root_revision": "80fd8d8915a5ffff3795d478a7d3f598bf8ffb27",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26: 126/126 direct Turbo Pascal 5.5 sessions (54 standard programs and 72 standalone sessions) and 54/54 configured Pascal-to-production differential invocations. Required integrated fixtures F01-F10 passed; F10 matched seven checkpoints / 23,861 state fields, 29 ordered gameplay cell writes, the exact 1,590-byte .HI insertion, and stable .SAV round-trip bytes. Runtime verification and the diagnostic negative control passed. E2-10 is closed; E2-01 through E2-09 and E2-11 remain open.",
+    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26: 126/126 direct Turbo Pascal 5.5 sessions (54 standard programs and 72 standalone sessions) and 54/54 configured Pascal-to-production differential invocations. E2-03-AC002 passed all nine deterministic schedule rows (117 fields), including both phases for TickSpeed 0, 1, 6, and 9 and the four-PIT stall; the existing F07 pause/resume fixture also passed. F01-F10 passed; F10 matched seven checkpoints / 23,861 fields and all 1,590 .HI bytes. Runtime verification and the diagnostic negative control passed. E2-10 is closed; E2-01 through E2-09 and E2-11 remain open.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
     "brd_short_read_probe": {
@@ -67,7 +67,7 @@
       "configured": 54,
       "passed": 54,
       "failed": 0,
-      "result": "54/54 configured Pascal-to-production differential invocations passed, including all integrated fixtures F01-F10; zero unexplained differences. F05/F08 identical-value redraw cadence remains separately classified."
+      "result": "54/54 configured Pascal-to-production differential invocations passed, including the nine-row E2-03-AC002 scheduler matrix and integrated fixtures F01-F10; zero unexplained differences. F05/F08 identical-value redraw cadence remains separately classified."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -1778,7 +1778,7 @@
     "other_suites": {
       "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record also matched through shared .BRD import/export; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
-      "runtime": "passed 2026-11-26: tools/runtime-compat/verify.ps1 exited 0 and rebuilt the integrated WebAssembly replay harness with the F10 malformed-world and high-score exports.",
+      "runtime": "passed 2026-11-26: tools/runtime-compat/verify.ps1 exited 0; the expanded scheduler harness accepts RETURN_IMMEDIATE at zero speed and compares the 0/5980 phase rows for speeds 0, 1, 6, and 9.",
       "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
       "android_build": "passed fresh offline on 2026-11-24: .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64",
       "windows_ctest": "passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly"
@@ -1793,7 +1793,8 @@
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
-      "E2-03 through E2-08: close remaining lifecycle, element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
+      "E2-03: finish lifecycle-transition and per-cycle state/order acceptance cases; the deterministic scheduler matrix E2-03-AC002 is complete.",
+      "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
@@ -1821,7 +1822,8 @@
       "E2-10-F06 passed in a post-fix clean 2026-11-25 runner at 1c39252ba592d90760fdab1acc2a37c46fa0307f: 120 direct Pascal sessions and 50/50 configured differentials passed; the dark-room/torch/Energizer/time-limit death replay matched 126 checkpoints/438,324 fields, four sound events, 3,730 effective cell changes, and all stable save/load bytes. The first-divergence negative control passed in the same run. The frozen corpus is 6/10.",
       "E2-10-F07 passed in the clean 2026-11-25 runner at 2adbf0bb4021533f0477217003164749921d819f: 121 direct Pascal sessions and 51/51 configured comparisons passed; the positive-speed pause/delayed-input replay matched 13 checkpoints / 44,187 state fields, zero sound events, four effective cell changes, 461 stable fresh-save bytes, and 829 round-trip bytes. Same-value redraw counts matched 3/3. The frozen corpus is 7/10; F08-F10 remain open.",
       "E2-10-F08 passed in the clean 2026-11-25 runner at 6668babc88d5d53add6f0f1ceb4c1eac12f57dea: 122 direct Pascal sessions and 52/52 comparisons passed. The six-cycle save/restore/world-reload replay matched 17 checkpoints / 58,251 state fields, one sound event, 6,006 effective cell changes, 896 stable generated-save bytes, and 1,562 round-trip bytes. Pascal and production both loaded the .SAV and baseline .ZZT; the F05/F08 redraw cadence difference remains separately classified. The fixed corpus is 8/10; F09-F10 remain pending.",
-      "E2-10-F09 passed in the clean 2026-11-25 runner committed as 080cc69bf2abfa745ecc2ad37b5d27117dba8fc2: corrected ledger count 124 direct Turbo Pascal sessions and 53/53 configured differentials; the real Pascal EditorLoop exported/imported .BRD before GamePlayLoop. The integrated comparison matched 12 checkpoints / 40,788 fields, five cell writes, zero sound events, all 324 .BRD bytes, 750 stable save bytes, and 1,152 round-trip bytes; F10 remains pending (9/10)."
+      "E2-10-F09 passed in the clean 2026-11-25 runner committed as 080cc69bf2abfa745ecc2ad37b5d27117dba8fc2: corrected ledger count 124 direct Turbo Pascal sessions and 53/53 configured differentials; the real Pascal EditorLoop exported/imported .BRD before GamePlayLoop. The integrated comparison matched 12 checkpoints / 40,788 fields, five cell writes, zero sound events, all 324 .BRD bytes, 750 stable save bytes, and 1,152 round-trip bytes; F10 remains pending (9/10).",
+      "E2-03-AC002 passed in the clean 2026-11-26 run at 80fd8d8915a5ffff3795d478a7d3f598bf8ffb27: nine deterministic schedule rows / 117 fields matched direct compiled Pascal and shared production for TickSpeed 0, 1, 6, and 9 at phases 0 and 5980, plus the four-PIT stall. Existing F07 supplies pause/resume coverage. E2-03 remains open."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -1850,7 +1852,7 @@
     "latest_attempt": {
       "date": "2026-11-26",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "315573177c1bd4f0e7c20f5525d03b16f23dd5ab",
+      "source_revision": "80fd8d8915a5ffff3795d478a7d3f598bf8ffb27",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 126,
       "configured_differentials_passed": 54,
@@ -1862,7 +1864,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean full runner passed: 126/126 direct sessions and 54/54 configured differentials; integrated fixtures F01-F10 passed. F10 matched seven checkpoints / 23,861 fields, 29 ordered cell writes, and all 1,590 .HI bytes. Runtime compatibility and first-divergence diagnostic negative control passed; E2-10 is closed.",
+      "status": "Clean full runner passed: 126/126 direct sessions and 54/54 configured differentials; E2-03-AC002 matched nine schedule rows / 117 fields; F01-F10 passed; runtime and diagnostic negative control passed. E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path; it records the observed version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 23861,
@@ -2287,7 +2289,10 @@
       "malformed_pascal_world_load_result": false,
       "malformed_production_world_load_result": -3,
       "high_score_bytes_matched": 1590,
-      "high_score_byte_differences": 0
+      "high_score_byte_differences": 0,
+      "scheduler_matrix_rows_passed": 9,
+      "scheduler_matrix_fields_compared": 117,
+      "scheduler_matrix_differences": 0
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -2564,6 +2569,199 @@
       "classified_roundtrip_pointer_positions": 8,
       "fixture_completion_credit": 1,
       "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md"
+    },
+    "schedule_matrix": {
+      "acceptance_case": "E2-03-AC002",
+      "result": "passed",
+      "date": "2026-11-26",
+      "tested_local_revision": "80fd8d8915a5ffff3795d478a7d3f598bf8ffb27",
+      "clean_runner_exit_code": 0,
+      "standalone_runtime_runner_exit_code": 0,
+      "direct_pascal_sessions_in_clean_run": 126,
+      "pascal_to_production_differential_invocations_in_clean_run": "54/54",
+      "rows_required": 9,
+      "rows_passed": 9,
+      "cycles_per_row": 5,
+      "fields_compared": 117,
+      "field_differences": 0,
+      "rows": [
+        {
+          "tick_speed": 0,
+          "start_phase_hsecs": 0,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            0,
+            5,
+            10,
+            16,
+            21
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 0,
+          "start_phase_hsecs": 5980,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            5980,
+            5985,
+            5990,
+            5996,
+            1
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 1,
+          "start_phase_hsecs": 0,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            5,
+            10,
+            16,
+            21,
+            27
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 1,
+          "start_phase_hsecs": 5980,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            5985,
+            5990,
+            5996,
+            1,
+            7
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 6,
+          "start_phase_hsecs": 0,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            16,
+            32,
+            49,
+            65,
+            82
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 6,
+          "start_phase_hsecs": 5980,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            5996,
+            12,
+            29,
+            45,
+            62
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 9,
+          "start_phase_hsecs": 0,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            21,
+            43,
+            65,
+            87,
+            109
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 9,
+          "start_phase_hsecs": 5980,
+          "stall_after_poll": 0,
+          "extra_pit_ticks": 0,
+          "cycle_phases_hsecs": [
+            1,
+            23,
+            45,
+            67,
+            89
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        },
+        {
+          "tick_speed": 6,
+          "start_phase_hsecs": 0,
+          "stall_after_poll": 2,
+          "extra_pit_ticks": 4,
+          "cycle_phases_hsecs": [
+            32,
+            49,
+            65,
+            82,
+            98
+          ],
+          "cycles": 5,
+          "pascal_production_fields_compared": 13,
+          "differences": 0,
+          "result": "matched"
+        }
+      ],
+      "pause_resume_case": {
+        "reused_fixture": "E2-10-F07",
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md",
+        "checkpoints": 13,
+        "state_fields_compared": 44187,
+        "state_field_differences": 0,
+        "result": "passed"
+      },
+      "oracle_output": {
+        "path": "build/pascal-compat-verification/GAMESCHD.OUT",
+        "size_bytes": 822,
+        "sha256": "bf363aa6f0aed4aec33a474f18ce2f1df5013617b8e840745ced024ed00eac88"
+      },
+      "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-scheduler-matrix.md",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_tick",
+        "tools/runtime-compat/tick_exit.c::run_game_schedule_checks"
+      ],
+      "direct_oracle": [
+        "tools/pascal-compat/GAMESCHD.PAS::RunCase/GamePlayLoop",
+        "tools/pascal-compat/verify.ps1::staged deterministic SoundHasTimeElapsed clock"
+      ]
     }
   }
 }

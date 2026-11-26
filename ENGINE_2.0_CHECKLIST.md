@@ -64,12 +64,12 @@ The latest clean-suite record dated 2026-11-26 reports 126 direct Turbo Pascal 5
 
 ### Tick scheduling, clocks, timers, and RNG — [~]
 
-- [x] `GAMESCHD.PAS` directly exercises five real game-loop cycles at tick speeds 1, 6, and 9, a scripted four-extra-PIT stall, and a start near the centisecond rollover; the production cycle timestamps/counters match.
+- [x] `GAMESCHD.PAS` directly exercises nine rows of five real game-loop cycles at tick speeds 0, 1, 6, and 9 from phases 0 and 5,980, plus a scripted four-extra-PIT stall. Direct Pascal and production match all 117 row fields; see the [E2-03 scheduler evidence](tools/compatibility/evidence/2026-11-26-e2-03-scheduler-matrix.md).
 - [x] `ZEROSPD.PAS` verifies five zero-speed cycles; deterministic scheduler tests cover fractional 60 Hz accumulation, catch-up, suspension/rebase, backward timestamps, and deadlines.
 - [x] Direct sound-clock cases cover thresholds and minute rollover; sound timer probes cover duration underflow/wrap and note advancement.
 - [x] Seeded direct element cases compare RNG state and call order for selected Lion, Tiger, Centipede, Spinning Gun, and other behaviors.
 - [~] These checks do not cover the complete game-loop state machine, every caller/order of `Random`, pause/resume interactions, repeated clock stalls, or long integrated sessions.
-- [ ] Finish the deterministic clock/RNG and timer acceptance matrix in blockers E2-03 and E2-07.
+- [ ] Finish the remaining lifecycle transitions in E2-03 and deterministic RNG/timer cases in E2-07.
 
 ### Input queue and player behavior — [~]
 
@@ -163,7 +163,7 @@ Every blocker is mandatory. A blocker closes only with committed automated evide
 ### E2-03 — World/game lifecycle and logical time — [~]
 
 - [ ] Compare direct Pascal and production transitions for initial world load, title-to-play, board entry/change, passages, death, restore, pause/resume, save/return, quit/abort, malformed-load failure, and retry. Include both successful and refused/blocked transitions.
-- [ ] Run a deterministic schedule matrix with `TickSpeed` 0, 1, 6, and 9; 5 cycles per speed; start phases 0 and 5,980 centiseconds; normal clock; a four-PIT stall after poll two; pause/resume across a pending tick; and minute rollover. Reuse existing passing cases and add only currently missing cases.
+- [x] Run the deterministic schedule matrix with `TickSpeed` 0, 1, 6, and 9; five cycles at start phases 0 and 5,980 centiseconds; a four-PIT stall after poll two; pause/resume across a pending tick; and minute rollover. Nine direct Pascal/production rows matched all 117 fields; the existing F07 replay supplies the pause/resume case. See [`2026-11-26-e2-03-scheduler-matrix.md`](tools/compatibility/evidence/2026-11-26-e2-03-scheduler-matrix.md) and [`2026-11-25-e2-10-pause-positive-scheduler.md`](tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md).
 - [ ] Compare after each logical cycle: world/board identity, tick counters and phase, board timer, message timer, player/stat state, input consumed, queued sound, and cell writes. Use scripted time; wall-clock equality is not a criterion.
 - **Pass:** every transition/schedule row has direct **D**/**DP** evidence; exact state/order matches at each checkpoint; no duplicate or skipped logical tick against the scripted clock.
 

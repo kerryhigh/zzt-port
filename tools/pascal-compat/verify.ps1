@@ -1918,7 +1918,7 @@ try {
     & node 'tools/pascal-compat/compare-game-schedule.js' `
         (Join-Path $stageRoot 'GAMESCHD.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\tick_exit.wasm')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production positive-speed schedule comparison failed with exit code $LASTEXITCODE." }
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production deterministic game schedule comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-flood-fill.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\runtime-compatibility\editor_flood_fill.wasm')

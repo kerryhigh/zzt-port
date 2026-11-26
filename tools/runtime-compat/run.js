@@ -52,7 +52,7 @@ function pascalSoundParse(input) {
   }
   console.log('Zero-speed schedule: five game cycles advance immediately without PIT or tick-counter time');
   const gameScheduleResult = instance.exports.run_game_schedule_checks();
-  if (gameScheduleResult !== 0) throw new Error(`Positive-speed game schedule check returned ${gameScheduleResult}`);
+  if (gameScheduleResult !== 0) throw new Error(`Deterministic game schedule check returned ${gameScheduleResult}`);
   const gameSchedule = new Int16Array(instance.exports.memory.buffer,
     instance.exports.game_schedule_output_ptr(), 117);
   const expectedScheduleCases = [
@@ -67,7 +67,7 @@ function pascalSoundParse(input) {
     if (row[0] !== speed || row[1] !== startHsecs || row[2] !== stallAfterPoll
         || row[3] !== stallExtraPits || row[4] !== 5 || row[5] !== 5
         || row[6] !== 0 || row[7] !== row[12]) {
-      throw new Error(`Malformed positive-speed schedule capture for case ${caseIndex + 1}: ${Array.from(row).join(' ')}`);
+      throw new Error(`Malformed deterministic schedule capture for case ${caseIndex + 1}: ${Array.from(row).join(' ')}`);
     }
     let previousHsecs = startHsecs;
     for (let cycle = 0; cycle < 5; cycle++) {
@@ -78,7 +78,7 @@ function pascalSoundParse(input) {
       previousHsecs = row[8 + cycle];
     }
   }
-  console.log('Positive-speed schedule: five cycles match PIT elapsed time, including a multi-tick stall and minute rollover');
+  console.log('Game schedule: speeds 0, 1, 6, and 9 at phases 0 and 5980, plus a four-PIT stall, match across five cycles');
   const frameScheduleResult = instance.exports.run_frame_scheduler_checks();
   if (frameScheduleResult !== 0) throw new Error(`Android frame scheduler check returned ${frameScheduleResult}`);
   const frameSchedule = new Int16Array(instance.exports.memory.buffer,

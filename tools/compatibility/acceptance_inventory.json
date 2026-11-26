@@ -280,12 +280,20 @@
       "kind": "acceptance_requirement",
       "requirement": "Run a deterministic schedule matrix with `TickSpeed` 0, 1, 6, and 9; 5 cycles per speed; start phases 0 and 5,980 centiseconds; normal clock; a four-PIT stall after poll two; pause/resume across a pending tick; and minute rollover. Reuse existing passing cases and add only currently missing cases.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:162",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "status": "complete",
+      "evidence_class": "DP",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick/zoo_game_tick",
+        "tools/runtime-compat/tick_exit.c::run_game_schedule_checks"
+      ],
+      "test_fixture": [
+        "tools/pascal-compat/GAMESCHD.PAS",
+        "tools/pascal-compat/compare-game-schedule.js",
+        "tools/runtime-compat/verify.ps1",
+        "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md (reused F07 pause/resume case)"
+      ],
+      "oracle_output": "build/pascal-compat-verification/GAMESCHD.OUT: 822 bytes, SHA-256 bf363aa6f0aed4aec33a474f18ce2f1df5013617b8e840745ced024ed00eac88; nine rows / five cycles per row / 117 compared fields.",
+      "verification_result": "Passed 2026-11-26 clean full runner: all nine direct compiled-Pascal GamePlayLoop rows matched the shared production zoo_tick path for five cycles each; 117 row fields and zero differences. Covers TickSpeed 0, 1, 6, and 9 at phases 0 and 5980, plus the four-PIT stall after poll two. Existing integrated F07 supplied the required pause/resume-across-pending-tick case (13 checkpoints / 44,187 state fields, zero differences). Full runner exit 0; 126 direct sessions; 54/54 configured differentials.",
       "required_evidence_classes": [
         "D",
         "DP"
