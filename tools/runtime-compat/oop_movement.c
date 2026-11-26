@@ -349,6 +349,12 @@ void zoo_sound_queue(zoo_sound_state *sound, int16_t priority, const uint8_t *da
 	for (index = 0; index < sound->buffer_len; index++) event[261 + index] = sound->buffer[index];
 }
 #endif
+#ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
+/* Exercise the same public lifecycle calls used by the frontends. */
+#define zoo_has_hsecs_elapsed zoo_has_hsecs_elapsed_host
+#include "../../third_party/libzoo/src/libzoo/zoo.c"
+#undef zoo_has_hsecs_elapsed
+#endif
 
 bool zoo_has_hsecs_elapsed(zoo_state *test_state, int16_t *counter, int16_t value) {
 	if (!force_elapsed_for_tick_check) return false;
@@ -4458,6 +4464,92 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	if (!capture_integrated_gameplay_snapshot(
 			integrated_gameplay_snapshot_count_value, 'T', 2)) return 4;
 	return cycles == cycle_limit ? 0 : 3;
+}
+
+int32_t run_integrated_title_lifecycle_checks(void) {
+	int32_t calls;
+	int16_t previous_tick;
+	zoo_tick_retval tick_result;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	state.d_video = &video;
+	state.func_draw_sidebar = test_sidebar_update;
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	state.input.repeat_start = 4;
+	state.input.repeat_end = 6;
+	state.tick_speed = 0;
+	zoo_world_create(&state);
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	zoo_game_start(&state, GS_TITLE);
+	integrated_schedule_enabled = true;
+	integrated_configured_tick_speed = 0;
+	integrated_elapsed_nanos = 0;
+	integrated_fixed_clock_enabled = false;
+	force_elapsed_for_tick_check = true;
+	zoo_input_key_press(&state.input, 'P');
+	zoo_input_key_press(&state.input, 'X');
+	for (calls = 0; calls < 1000 && state.input.key_pressed != 'P'; calls++) {
+		tick_result = zoo_tick(&state);
+		if (tick_result == ERROR) {
+			force_elapsed_for_tick_check = false;
+			integrated_schedule_enabled = false;
+			return 20 - state.error_value;
+		}
+	}
+	if (state.input.key_pressed != 'P') {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 21;
+	}
+	result = zoo_world_play(&state);
+	if (result != 0 || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 22 - (result != 0 ? result : state.error_value);
+	}
+	if (!capture_integrated_gameplay_snapshot(0, 'P', 0)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 23;
+	}
+	previous_tick = state.current_tick;
+	for (calls = 0; calls < 1000; calls++) {
+		tick_result = zoo_tick(&state);
+		if (tick_result == ERROR) {
+			force_elapsed_for_tick_check = false;
+			integrated_schedule_enabled = false;
+			return 24 - state.error_value;
+		}
+		if (state.current_stat_tick == 0 && state.current_tick != previous_tick) break;
+	}
+	if (calls == 1000) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 25;
+	}
+	state.game_play_exit_requested = true;
+	if (!capture_integrated_gameplay_snapshot(1, 'C', 1)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 26;
+	}
+	result = zoo_world_return_title(&state);
+	if (result != 0 || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 27 - (result != 0 ? result : state.error_value);
+	}
+	if (!capture_integrated_gameplay_snapshot(2, 'T', 0)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 28;
+	}
+	force_elapsed_for_tick_check = false;
+	integrated_schedule_enabled = false;
+	return 0;
 }
 
 int32_t run_integrated_gameplay_checks(void) {

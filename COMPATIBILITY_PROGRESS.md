@@ -14,7 +14,7 @@ Counts below are generated from the frozen checklist inventory and the latest re
 |---|---:|---:|---:|---:|---:|
 | E2-01 | partial | 1/5 | 0 | 4 | 20.0% |
 | E2-02 | partial | 0/5 | 5 | 0 | 0.0% |
-| E2-03 | partial | 2/4 | 0 | 2 | 50.0% |
+| E2-03 | partial | 2/4 | 1 | 1 | 50.0% |
 | E2-04 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-05 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-06 | open | 0/5 | 0 | 5 | 0.0% |
@@ -28,10 +28,10 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Acceptance case status
 
-- Passing/complete: **9**; partial: **9**; pending: **36**; failing: **0**.
+- Passing/complete: **9**; partial: **10**; pending: **35**; failing: **0**.
 - Required evidence classes mapped: **54/54**; D: 42, S: 15, P: 11, DP: 49, I: 10 cases (categories can overlap; required evidence is not a passing result).
 - Acceptance cases missing or invalid required evidence classes: **0**; IDs: none.
-- Acceptance cases without an evidence classification: **36**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC001, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC001, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
+- Acceptance cases without an evidence classification: **35**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC001, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
 - Unclassified source inventory entries: **1464**; explicitly excluded adapter/presentation entries: **10**.
 - Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P counts recorded production-only regressions; I counts only completed full integrated fixtures.
 

@@ -57,6 +57,9 @@ int zoo_world_reload(zoo_state *state) {
 
 int zoo_world_play(zoo_state *state) {
 	int ret = 0;
+	uint8_t key_pressed = state->input.key_pressed;
+	uint8_t key_buffer_head = state->input.key_buffer_head;
+	uint8_t key_buffer_count = state->input.key_buffer_count;
 
 	if (state->world.info.is_save && !state->debug_enabled) {
 		ret = zoo_world_reload(state);
@@ -64,6 +67,11 @@ int zoo_world_play(zoo_state *state) {
 
 	if (!ret) {
 		zoo_game_start(state, GS_PLAY);
+		/* Pascal enters GamePlayLoop without clearing InputKeyPressed or the
+		   remaining InputKeyBuffer bytes consumed by the title menu. */
+		state->input.key_pressed = key_pressed;
+		state->input.key_buffer_head = key_buffer_head;
+		state->input.key_buffer_count = key_buffer_count;
 
 		zoo_board_change(state, state->return_board_id);
 		// Pascal calls BoardEnter after selecting a board to play. Keep it here,

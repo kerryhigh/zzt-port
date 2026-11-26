@@ -262,13 +262,28 @@
       "blocker": "E2-03",
       "kind": "acceptance_requirement",
       "requirement": "Compare direct Pascal and production transitions for initial world load, title-to-play, board entry/change, passages, death, restore, pause/resume, save/return, quit/abort, malformed-load failure, and retry. Include both successful and refused/blocked transitions.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:161",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:165",
+      "status": "partial",
+      "evidence_class": "D+DP",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_load",
+        "third_party/libzoo/src/libzoo/zoo.c::zoo_world_play/zoo_world_return_title",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_start/zoo_tick/zoo_board_change/zoo_board_enter"
+      ],
+      "test_fixture": [
+        "tools/pascal-compat/DEMOINT.PAS (F01 initial full-world load and gameplay)",
+        "tools/pascal-compat/BOARDENT.PAS and BOARDIN.PAS (direct board-entry cases)",
+        "tools/pascal-compat/BOARDPASSIN.PAS (F05 board change and passage)",
+        "tools/pascal-compat/DARKIN.PAS (F06 death path)",
+        "tools/pascal-compat/PAUSEIN.PAS (F07 pause/resume)",
+        "tools/pascal-compat/SAVEIN.PAS (F08 save, restore, world reload, and board change)",
+        "tools/pascal-compat/F10IN.PAS (malformed startup load and fallback world creation)",
+        "tools/pascal-compat/TITLEIN.PAS and compare-title-lifecycle.js (direct original GameTitleLoop P/title-to-play, one gameplay cycle, and return-to-title snapshots)",
+        "tools/runtime-compat/tick_exit.c::run_game_start_enter_checks (production-only; supplemental, not D/DP evidence)",
+        "tools/compatibility/evidence/2026-11-26-e2-03-lifecycle-transition-coverage.md"
+      ],
+      "oracle_output": "TITLEIN.PAS generated build/pascal-compat-verification/INTEGPR.OUT (50,437 bytes; SHA-256 fc4d432a6ccbf007b95d50114cb7e3a8cccfd18c9eec2060d088210e0a1d62f1); P/player-start, C1/player-cycle, and T/title-return checkpoints. Output is a local generated oracle artifact, not committed.",
+      "verification_result": "Partial. Focused direct Turbo Pascal 5.5/production replay passed at P/player-start, C1/one real player cycle, and T/title-return (3 checkpoints, 10,242 state fields). Its P/X input tape exposed a production loss of Pascal's pending key and remaining queued input during zoo_world_play; the shared production wrapper now preserves key_pressed, key_buffer_head, and key_buffer_count, and the focused differential passes. The prior clean full run passed 126/126 direct sessions, 54/54 configured differentials, and F01-F10 before this new replay was added; a new full clean run after the fix is pending. AC001 remains incomplete: title-loop R/restore, save/return aftermath, quit/abort confirmation and cancel, malformed-load retry, and a consistent successful/refused transition matrix still require D/DP checkpoints.",
       "required_evidence_classes": [
         "D",
         "DP"

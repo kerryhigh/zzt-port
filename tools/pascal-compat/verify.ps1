@@ -400,6 +400,7 @@ var
 	GameLoopProbeEnabled, GameLoopProbeSeedPauseBlink, GameLoopProbeCycleClockEnabled: boolean;
 	GameLoopProbeLastPaused, GameLoopProbeCycleCompleted: boolean;
 	GameLoopProbeCaptureNextBoardChange: boolean;
+	GameLoopProbeTitleLifecycleEnabled, GameLoopProbeTitleLifecyclePlayerReturned: boolean;
 	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
 	GameLoopProbeCellWriteCount: longint;
 	GameLoopProbeCellWriteEvents: PGameLoopProbeCellWriteEventArray;
@@ -407,6 +408,12 @@ var
 
 "@
 $stagedGame = $stagedGame.Insert($gameImplementationIndex, $gameProbeDeclarations)
+$aboutScreenCallAnchor = "TextWindowDisplayFile('ABOUT.HLP', 'About ZZT...');"
+if ([regex]::Matches($stagedGame, [regex]::Escape($aboutScreenCallAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the startup About screen call for the title lifecycle probe.'
+}
+$stagedGame = $stagedGame.Replace($aboutScreenCallAnchor,
+    'if not GameLoopProbeTitleLifecycleEnabled then ' + $aboutScreenCallAnchor)
 $probeUsesAnchor = 'uses Dos, Crt, Video, Sounds, Input, Elements, Editor, Oop;'
 $probeUsesIndex = $stagedGame.IndexOf($probeUsesAnchor, [StringComparison]::Ordinal)
 if ($probeUsesIndex -lt 0) { throw 'Could not locate the staged Game implementation uses clause for integrated checkpoint instrumentation.' }
@@ -540,12 +547,34 @@ if ($startStatIndex -lt 0) { throw 'Could not locate GamePlayLoop stat initializ
 $startStatEnd = $startStatIndex + $startStatAnchor.Length
 # GAME.PAS leaves pauseBlink uninitialized. Only F05 opts into a controlled staging seed, matching LibZoo's zero-initialized pause blink state without changing earlier replay traces.
 $gamePlayLoop = $gamePlayLoop.Substring(0, $startStatEnd) + "`r`n`t`tGameLoopProbeStartTick := CurrentTick;`r`n`t`tGameLoopProbeCycles := 0;`r`n`t`tGameLoopProbeTransitionCount := 0;`r`n`t`tGameLoopProbeCycleCompleted := false;`r`n`t`tif GameLoopProbeEnabled then begin`r`n`t`t`tif GameLoopProbeSeedPauseBlink then pauseBlink := false;`r`n`t`t`tGameLoopProbeCapture('S', 0);`r`n`t`t`tGameLoopProbeLastBoard := World.Info.CurrentBoard;`r`n`t`t`tGameLoopProbeLastState := GameStateElement;`r`n`t`t`tGameLoopProbeLastPaused := GamePaused;`r`n`t`t`tGameLoopProbeCellCaptureEnabled := true;`r`n`t`tend;" + $gamePlayLoop.Substring($startStatEnd)
+$titleLifecycleStartAnchor = "GameLoopProbeCapture('S', 0);"
+if ([regex]::Matches($gamePlayLoop, [regex]::Escape($titleLifecycleStartAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate GamePlayLoop start capture for title lifecycle checkpoints.'
+}
+$titleLifecycleStartProbe = @'
+if GameLoopProbeTitleLifecycleEnabled then begin
+	if GameStateElement = E_PLAYER then begin
+		GameLoopProbeCapture('P', 0);
+		GameLoopProbeStopAfter := 1;
+	end else if GameLoopProbeTitleLifecyclePlayerReturned then begin
+		GameLoopProbeCapture('T', 0);
+		GameLoopProbeTitleLifecyclePlayerReturned := false;
+		GameLoopProbeEnabled := false;
+		GamePlayExitRequested := true;
+		GameTitleExitRequested := true;
+	end;
+end;
+'@
+$gamePlayLoop = $gamePlayLoop.Replace($titleLifecycleStartAnchor,
+    $titleLifecycleStartAnchor + "`r`n`t`t`t" + $titleLifecycleStartProbe.Trim())
 $cycleAdvancePattern = '(?s)(CurrentStatTicked := 0;\s*InputUpdate;)'
 if ([regex]::Matches($gamePlayLoop, $cycleAdvancePattern).Count -ne 1) {
     throw 'Could not uniquely locate the completed GamePlayLoop cycle for zero-speed instrumentation.'
 }
 $cycleProbe = @'
 GameLoopProbeCycleCompleted := true;
+if GameLoopProbeTitleLifecycleEnabled and (GameStateElement = E_MONITOR)
+	and (InputKeyPressed = 'P') then GamePlayExitRequested := true;
 '@
 $cycleProbeReplacement = '$1' + "`r`n`t`t`t`t`t" + $cycleProbe.Trim()
 $gamePlayLoop = [regex]::Replace($gamePlayLoop, $cycleAdvancePattern, $cycleProbeReplacement, 1)
@@ -597,6 +626,18 @@ end;
 $loopEndReplacement = $iterationProbe.Trim() + "`r`n`t`t" + $loopEndAnchor
 $gamePlayLoop = $gamePlayLoop.Replace($loopEndAnchor, $loopEndReplacement)
 $stagedGame = $stagedGame.Substring(0, $gamePlayLoopStart) + $gamePlayLoop + $stagedGame.Substring($gameTitleLoopStart)
+$gameTitleLoopStart = $stagedGame.IndexOf('procedure GameTitleLoop;', $gamePlayLoopStart + $gamePlayLoop.Length, [StringComparison]::Ordinal)
+if ($gameTitleLoopStart -lt 0) { throw 'Could not relocate the GameTitleLoop implementation after staging GamePlayLoop hooks.' }
+$gameTitleLoopEnd = $stagedGame.IndexOf('procedure GamePrintRegisterMessage;', $gameTitleLoopStart, [StringComparison]::Ordinal)
+if ($gameTitleLoopEnd -lt 0) { throw 'Could not isolate GameTitleLoop for lifecycle return instrumentation.' }
+$gameTitleLoop = $stagedGame.Substring($gameTitleLoopStart, $gameTitleLoopEnd - $gameTitleLoopStart)
+$playerLoopAnchor = 'GamePlayLoop(true);'
+if ([regex]::Matches($gameTitleLoop, [regex]::Escape($playerLoopAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the player-loop return in GameTitleLoop.'
+}
+$gameTitleLoop = $gameTitleLoop.Replace($playerLoopAnchor,
+    $playerLoopAnchor + "`r`n`t`t`t`t`tif GameLoopProbeTitleLifecycleEnabled then GameLoopProbeTitleLifecyclePlayerReturned := true;")
+$stagedGame = $stagedGame.Substring(0, $gameTitleLoopStart) + $gameTitleLoop + $stagedGame.Substring($gameTitleLoopEnd)
 [IO.File]::WriteAllText($stagedGamePath, $stagedGame, [Text.UTF8Encoding]::new($false))
 
 Write-Host 'Compiling the reconstructed Pascal engine...'
@@ -1327,6 +1368,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDTIK.PAS') -Destination (Jo
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SOUNDCLK.PAS') -Destination (Join-Path $stageRoot 'SOUNDCLK.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'GAMESCHD.PAS') -Destination (Join-Path $stageRoot 'GAMESCHD.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'INTEGPRB.PAS') -Destination (Join-Path $stageRoot 'INTEGPRB.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TITLEIN.PAS') -Destination (Join-Path $stageRoot 'TITLEIN.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'DEMOINT.PAS') -Destination (Join-Path $stageRoot 'DEMOINT.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MOTIONIN.PAS') -Destination (Join-Path $stageRoot 'MOTIONIN.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'COMBATIN.PAS') -Destination (Join-Path $stageRoot 'COMBATIN.PAS')
@@ -2572,11 +2614,30 @@ end;
         (Join-Path $stageRoot 'F10BAD.OUT') `
         (Join-Path $stageRoot 'F10ROOM.HI')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F10 malformed-load/high-score/gameplay replay failed with exit code $LASTEXITCODE." }
+
+    Write-Host 'Compiling and running the direct GameTitleLoop lifecycle replay: TITLEIN'
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'INTEGPR.OUT') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'TITLEIN.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'TITLEIN.EXE') -Force -ErrorAction SilentlyContinue
+    Invoke-DosboxSession 'TITLEIN-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC TITLEIN.PAS > TITLECOMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'TITLEIN.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\TITLEIN.EXE. See $stageRoot\TITLECOMP.LOG and $stageRoot\TITLEIN-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'TITLEIN' @('BIN\TITLEIN.EXE')
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'INTEGPR.OUT') -PathType Leaf)) {
+        throw "Pascal GameTitleLoop lifecycle replay did not write INTEGPR.OUT. See $stageRoot\TITLEIN.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production title/menu lifecycle replay failed with exit code $LASTEXITCODE." }
 }
 finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 72 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures (F09/F10 use separate compile and run sessions), four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 74 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures, the TITLEIN compile/run pair, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, TITLEIN-COMPILE, TITLEIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
