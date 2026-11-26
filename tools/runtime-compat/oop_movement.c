@@ -101,6 +101,7 @@ static int32_t integrated_title_restore_failure_fields[INTEGRATED_TITLE_RESTORE_
 static int32_t integrated_title_restore_failure_field_count_value;
 static int32_t integrated_title_restore_failure_error_value;
 static int32_t integrated_end_play_output[7][5];
+static int32_t integrated_end_play_loop_output[22];
 static int32_t integrated_title_quit_output[3][2];
 static uint8_t integrated_editor_brd_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_editor_brd_length_value;
@@ -4721,6 +4722,80 @@ int32_t run_integrated_end_play_checks(void) {
 	integrated_end_play_output[row][3] = state.game_paused ? 1 : 0;
 	integrated_end_play_output[row][4] = state.world.info.health;
 	return 0;
+}
+
+int32_t run_integrated_end_play_loop_check(int32_t world_length) {
+	zoo_io_handle world_handle;
+	zoo_tick_retval tick_result;
+	int result;
+	if (world_length <= 0 || world_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 50;
+	memset(&state, 0, sizeof(state));
+	memset(&video, 0, sizeof(video));
+	memset(&integrated_title_world_io, 0, sizeof(integrated_title_world_io));
+	memset(integrated_end_play_loop_output, 0, sizeof(integrated_end_play_loop_output));
+	video.func_write = test_video_write;
+	integrated_title_world_length = world_length;
+	integrated_title_world_io.read_only = true;
+	integrated_title_world_io.func_open_file = integrated_title_world_open_file;
+	state.d_video = &video;
+	state.d_io = &integrated_title_world_io;
+	state.func_draw_sidebar = test_sidebar_update;
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	state.input.repeat_start = 4;
+	state.input.repeat_end = 6;
+	state.tick_speed = 0;
+	zoo_world_create(&state);
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	world_handle = zoo_io_open_file_mem(integrated_demo_world_bytes, (size_t) world_length, MODE_READ);
+	result = zoo_world_load(&state, &world_handle, false);
+	if (world_handle.func_close != NULL) world_handle.func_close(&world_handle);
+	if (result != 0 || state.error_value != 0) return 51 - (result != 0 ? result : state.error_value);
+	result = zoo_world_play(&state);
+	if (result != 0 || state.error_value != 0) return 52 - (result != 0 ? result : state.error_value);
+	/* ABORTLP.PAS resets this sound state after BoardEnter and before the
+	   paused player loop. Mirror that setup through the shared initializer. */
+	zoo_sound_state_init(&state.sound);
+	state.sound.enabled = false;
+	state.sound.current_priority = -1;
+	/* The original paused GamePlayLoop has already polled Escape and received
+	   Yes from GamePromptEndPlay before returning at this shared loop boundary. */
+	zoo_game_resolve_end_play(&state, true, true);
+	tick_result = zoo_tick(&state);
+	if (tick_result == ERROR || tick_result != RETURN_NEXT_CYCLE || state.error_value != 0) return 53;
+	integrated_end_play_loop_output[0] = state.game_play_exit_requested ? 1 : 0;
+	integrated_end_play_loop_output[1] = state.game_paused ? 1 : 0;
+	integrated_end_play_loop_output[2] = state.input.key_pressed;
+	integrated_end_play_loop_output[3] = state.input.key_buffer_count;
+	integrated_end_play_loop_output[4] = state.current_tick;
+	integrated_end_play_loop_output[5] = state.current_stat_tick;
+	integrated_end_play_loop_output[6] = state.tick_duration;
+	integrated_end_play_loop_output[7] = state.tick_counter;
+	integrated_end_play_loop_output[8] = state.world.info.current_board;
+	integrated_end_play_loop_output[9] = state.return_board_id;
+	integrated_end_play_loop_output[10] = state.world.info.health;
+	integrated_end_play_loop_output[11] = state.world.info.ammo;
+	integrated_end_play_loop_output[12] = state.world.info.is_save ? 1 : 0;
+	integrated_end_play_loop_output[13] = state.board.stat_count;
+	integrated_end_play_loop_output[14] = state.board.stats[0].x;
+	integrated_end_play_loop_output[15] = state.board.stats[0].y;
+	integrated_end_play_loop_output[16] = state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].element;
+	integrated_end_play_loop_output[17] = state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].color;
+	integrated_end_play_loop_output[18] = state.sound.block_queueing ? 1 : 0;
+	/* C stores a zero-based byte offset; Pascal SoundBufferPos is one-based. */
+	integrated_end_play_loop_output[19] = state.sound.buffer_pos + 1;
+	integrated_end_play_loop_output[20] = state.sound.buffer_len;
+	integrated_end_play_loop_output[21] = state.sound.current_priority;
+	return 0;
+}
+
+uint32_t integrated_end_play_loop_output_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_end_play_loop_output;
+}
+
+int32_t integrated_end_play_loop_output_count(void) {
+	return 22;
 }
 
 uint32_t integrated_end_play_output_ptr(void) {

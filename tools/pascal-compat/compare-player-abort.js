@@ -3,8 +3,10 @@ const fs = require('node:fs');
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
 const titleQuitPascalPath = process.argv[4] || null;
+const endPlayLoopPascalPath = process.argv[5] || null;
+const demoWorldPath = process.argv[6] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-player-abort.js <ABORT.OUT> <integrated_gameplay.wasm> [TITLEQUIT.OUT]');
+  throw new Error('Usage: compare-player-abort.js <ABORT.OUT> <integrated_gameplay.wasm> [TITLEQUIT.OUT [ABORTLP.OUT DEMO.ZZT]]');
 }
 
 const expected = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/).map((line, lineIndex) => {
@@ -94,6 +96,45 @@ if (expected.length !== 7) throw new Error(`Pascal end-play replay emitted ${exp
       }
     }
     console.log('Title quit decision: direct Pascal SidebarPromptYesNo results for Yes/No/Escape match the shared engine exit flag.');
+  }
+  if (endPlayLoopPascalPath || demoWorldPath) {
+    if (!endPlayLoopPascalPath || !demoWorldPath) {
+      throw new Error('The real-loop abort differential requires both ABORTLP.OUT and DEMO.ZZT.');
+    }
+    const loopExpected = fs.readFileSync(endPlayLoopPascalPath, 'ascii').trim().split(/\s+/).map(Number);
+    const loopNames = [
+      'exit requested', 'paused', 'key pressed', 'key buffer count', 'current tick',
+      'current stat tick', 'tick duration', 'tick counter', 'current board',
+      'return board', 'health', 'ammo', 'save flag', 'stat count', 'player x',
+      'player y', 'player tile element', 'player tile color', 'sound blocking',
+      'sound buffer position', 'sound buffer length', 'sound priority',
+    ];
+    if (loopExpected.length !== loopNames.length || loopExpected.some(value => !Number.isInteger(value))) {
+      throw new Error(`Malformed Pascal accepted-abort loop capture: ${loopExpected.length} fields, expected ${loopNames.length}.`);
+    }
+    const world = fs.readFileSync(demoWorldPath);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (world.length > capacity) throw new Error(`DEMO.ZZT exceeds production harness capacity: ${world.length}/${capacity}`);
+    const worldPointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, worldPointer, world.length).set(world);
+    const loopResult = instance.exports.run_integrated_end_play_loop_check(world.length);
+    if (loopResult !== 0) throw new Error(`Production accepted-abort loop replay returned ${loopResult}`);
+    const count = instance.exports.integrated_end_play_loop_output_count();
+    if (count !== loopExpected.length) throw new Error(`Production accepted-abort loop emitted ${count} fields; expected ${loopExpected.length}`);
+    const pointer = instance.exports.integrated_end_play_loop_output_ptr();
+    const loopActual = new Int32Array(instance.exports.memory.buffer, pointer, count);
+    for (let field = 0; field < count; field++) {
+      if (loopExpected[field] !== loopActual[field]) {
+        const from = Math.max(0, field - 2);
+        const to = Math.min(count - 1, field + 2);
+        const context = [];
+        for (let near = from; near <= to; near++) {
+          context.push({ field: loopNames[near], pascal: loopExpected[near], production: loopActual[near] });
+        }
+        throw new Error(`Accepted player-abort loop first difference at field ${field} (${loopNames[field]}): Pascal=${loopExpected[field]}, production=${loopActual[field]}; nearby=${JSON.stringify(context)}`);
+      }
+    }
+    console.log(`Accepted player-abort loop: actual Pascal GamePlayLoop return matched production zoo_tick exit boundary across ${count}/${count} player/world/scheduler/sound fields.`);
   }
 })().catch(error => {
   console.error(error);

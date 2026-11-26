@@ -43,9 +43,10 @@ The output fixture uses `TQUIT.OUT` because DOS filenames are limited to 8.3 cha
 ## Verification record
 
 - Evidence classification: **D+DP**. Ten decision rows were captured by compiled Pascal and compared with the shared production state results; player abort passed 7/7 and title quit passed 3/3.
-- Clean Pascal/production runner: exit 0 on 2026-11-26; 136/136 direct Turbo Pascal 5.5 sessions (54 standard, 82 standalone), 59/59 configured Pascal-to-production comparisons, and zero unexplained comparable differences.
+- The accepted Yes decision is also followed through the actual Pascal `GamePlayLoop(true)` return boundary in [`2026-11-26-e2-03-accepted-abort-loop.md`](2026-11-26-e2-03-accepted-abort-loop.md); all 22 captured player/world/scheduler/sound fields match the shared production exit boundary.
+- Clean Pascal/production runner: exit 0 on 2026-11-26; 142/142 direct Turbo Pascal 5.5 sessions (54 standard, 88 standalone), 62/62 configured Pascal-to-production comparisons, and zero unexplained comparable differences.
 - Integrated replay corpus: unchanged frozen F01–F10; 10/10 fixtures, 238 checkpoints, 824,821 state-field comparisons, and 169/169 logical-cycle snapshots matched. The negative-control divergence check passed and retained the original Pascal output hash.
 - Toolchain: Borland Turbo Pascal 5.5 (`TPC.EXE`/`TURBO.TPL`, external and not redistributed); DOSBox-X 2026.10.01, executable SHA-256 `B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3` (external and not redistributed).
 - Production files: `third_party/libzoo/include/zoo.h`, `third_party/libzoo/src/libzoo/zoo_game.c`; frontends call the same engine APIs.
 
-This evidence verifies decision state and pause preservation. It does not claim title or play prompt rendering equivalence, complete process-exit behavior, or the remaining save/return and successful/refused world/board transition matrix. E2-03 remains open; E2-10 remains the only closed blocker.
+The decision cases verify pause preservation and accept/refuse results; the separate accepted-loop probe verifies the Yes route across its shared loop boundary. These records do not claim title or play prompt rendering equivalence, complete process-exit behavior, the refused No/Escape loop aftermath, or the remaining save/return and successful/refused world/board transition matrix. E2-03 remains open; E2-10 remains the only closed blocker.

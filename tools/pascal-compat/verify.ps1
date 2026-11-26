@@ -2820,14 +2820,30 @@ end;
     Invoke-DosboxSession 'ABORTIN-RUN' @('BIN\ABORTIN.EXE')
     $abortOutput = Join-Path $stageRoot 'ABORT.OUT'
     $titleQuitOutput = Join-Path $stageRoot 'TQUIT.OUT'
+    Write-Host 'Compiling and running the direct Pascal accepted-abort gameplay-loop replay: ABORTLP'
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORTLP.OUT') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORTLP.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'ABORTLP.EXE') -Force -ErrorAction SilentlyContinue
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ABORTLP.PAS') -Destination (Join-Path $stageRoot 'ABORTLP.PAS') -Force
+    Invoke-DosboxSession 'ABORTLP-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC ABORTLP.PAS > ABORTLPCOM.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'ABORTLP.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\ABORTLP.EXE. See $stageRoot\ABORTLPCOM.LOG and $stageRoot\ABORTLP-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'ABORTLP-RUN' @('BIN\ABORTLP.EXE')
+    $abortLoopOutput = Join-Path $stageRoot 'ABORTLP.OUT'
     if (-not (Test-Path -LiteralPath $abortOutput -PathType Leaf) -or
-        -not (Test-Path -LiteralPath $titleQuitOutput -PathType Leaf)) {
-        throw "Pascal end-play/title-quit replay did not write both decision captures. See $stageRoot\ABORTIN-RUN.LOG."
+        -not (Test-Path -LiteralPath $titleQuitOutput -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $abortLoopOutput -PathType Leaf)) {
+        throw "Pascal end-play/title-quit/accepted-abort-loop replay did not write all captures. See $stageRoot\ABORTIN-RUN.LOG and $stageRoot\ABORTLP-RUN.LOG."
     }
     & node 'tools/pascal-compat/compare-player-abort.js' `
         $abortOutput `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
-        $titleQuitOutput
+        $titleQuitOutput `
+        $abortLoopOutput `
+        (Join-Path $stageRoot 'DEMO.ZZT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production player-abort decision differential failed with exit code $LASTEXITCODE." }
 
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MISSLOAD.PAS') -Destination (Join-Path $stageRoot 'MISSLOAD.PAS') -Force
@@ -2852,6 +2868,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 86 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, the successful title-P backing-world reload, and empty-SAV title-R refusal; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus the existing standalone runs and MISSLOAD-COMPILE/MISSLOAD-RUN)."
+$directProbeCount = $probeFiles.Count + 88 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, empty-SAV title-R refusal, and ABORTLP-COMPILE/RUN; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP-COMPILE/RUN and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
