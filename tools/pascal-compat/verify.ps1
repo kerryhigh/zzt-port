@@ -1593,11 +1593,15 @@ $expectedOutputs = [ordered]@{
         'backward-clock-step 1 90'
     )
     'GAMESCHD.OUT' = @(
+        'speed 0 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 21 times 0 5 10 16 21',
+        'speed 0 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 1 times 5980 5985 5990 5996 1',
         'speed 1 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 27 times 5 10 16 21 27',
+        'speed 1 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 7 times 5985 5990 5996 1 7',
         'speed 6 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 82 times 16 32 49 65 82',
+        'speed 6 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 62 times 5996 12 29 45 62',
         'speed 9 start 0 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 109 times 21 43 65 87 109',
-        'speed 6 start 0 stall 2 extra 4 cycles 5 delta 5 stat 0 counter 98 times 32 49 65 82 98',
-        'speed 9 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 89 times 1 23 45 67 89'
+        'speed 9 start 5980 stall 0 extra 0 cycles 5 delta 5 stat 0 counter 89 times 1 23 45 67 89',
+        'speed 6 start 0 stall 2 extra 4 cycles 5 delta 5 stat 0 counter 98 times 32 49 65 82 98'
     )
     'ZEROSPD.OUT' = @('zero-speed cycles 5 delta 5 stat 0 timer 0 counter 0 exit 1')
     'BOARDENC.OUT' = @(

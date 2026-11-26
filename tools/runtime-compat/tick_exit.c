@@ -23,7 +23,7 @@ static uint16_t sidebar_flags;
 static bool elapsed_ready;
 static int16_t zero_speed_schedule_output[5];
 static bool schedule_clock_enabled;
-static int16_t game_schedule_output[65];
+static int16_t game_schedule_output[117];
 static int16_t frame_scheduler_output[11];
 static int16_t frame_gameplay_output[24];
 
@@ -34,12 +34,16 @@ typedef struct {
     int16_t stall_extra_pits;
 } game_schedule_case;
 
-static const game_schedule_case game_schedule_cases[5] = {
+static const game_schedule_case game_schedule_cases[9] = {
+    {0, 0, 0, 0},
+    {0, 5980, 0, 0},
     {1, 0, 0, 0},
+    {1, 5980, 0, 0},
     {6, 0, 0, 0},
+    {6, 5980, 0, 0},
     {9, 0, 0, 0},
-    {6, 0, 2, 4},
-    {9, 5980, 0, 0}
+    {9, 5980, 0, 0},
+    {6, 0, 2, 4}
 };
 
 static int16_t test_random(zoo_state *s, int16_t max) {
@@ -233,7 +237,7 @@ int run_zero_speed_schedule_checks(void) {
 int run_game_schedule_checks(void) {
     int case_index;
     schedule_clock_enabled = true;
-    for (case_index = 0; case_index < 5; case_index++) {
+    for (case_index = 0; case_index < 9; case_index++) {
         const game_schedule_case *test_case = &game_schedule_cases[case_index];
         int16_t *row = &game_schedule_output[case_index * 13];
         double elapsed_ms = (double) test_case->start_hsecs * 10.0;
@@ -255,7 +259,10 @@ int run_game_schedule_checks(void) {
             int16_t previous_tick = state.current_tick;
             zoo_tick_retval result = zoo_tick(&state);
             int advance_pits = 1;
-            if (result != RETURN_NEXT_CYCLE) return 1 + case_index;
+            if ((test_case->speed == 0 && result != RETURN_IMMEDIATE)
+                    || (test_case->speed > 0 && result != RETURN_NEXT_CYCLE)) {
+                return 1 + case_index;
+            }
             if (state.current_tick != previous_tick) {
                 int16_t event_hsecs = (int16_t) ((int16_t) (state.time_elapsed / 10) % 6000);
                 row[8 + cycles] = event_hsecs;

@@ -66,11 +66,15 @@ begin
 	New(IoTmpBuf);
 	Assign(output, 'GAMESCHD.OUT');
 	Rewrite(output);
+	RunCase(0, 0, 0, 0);
+	RunCase(0, 5980, 0, 0);
 	RunCase(1, 0, 0, 0);
+	RunCase(1, 5980, 0, 0);
 	RunCase(6, 0, 0, 0);
+	RunCase(6, 5980, 0, 0);
 	RunCase(9, 0, 0, 0);
-	RunCase(6, 0, 2, 4);
 	RunCase(9, 5980, 0, 0);
+	RunCase(6, 0, 2, 4);
 	Close(output);
 	Dispose(IoTmpBuf);
 end.

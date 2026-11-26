@@ -6,9 +6,12 @@ if (!pascalOutputPath || !productionWasmPath) {
 }
 
 const lines = fs.readFileSync(pascalOutputPath, 'ascii').trim().split(/\r?\n/);
-if (lines.length !== 5) throw new Error(`Expected five Pascal schedule rows; found ${lines.length}`);
+if (lines.length !== 9) throw new Error(`Expected nine Pascal schedule rows; found ${lines.length}`);
 const expectedCases = [
-  [1, 0, 0, 0], [6, 0, 0, 0], [9, 0, 0, 0], [6, 0, 2, 4], [9, 5980, 0, 0],
+  [0, 0, 0, 0], [0, 5980, 0, 0],
+  [1, 0, 0, 0], [1, 5980, 0, 0],
+  [6, 0, 0, 0], [6, 5980, 0, 0],
+  [9, 0, 0, 0], [9, 5980, 0, 0], [6, 0, 2, 4],
 ];
 const expectedRows = lines.map((line, index) => {
   const fields = line.trim().split(/\s+/);
@@ -34,7 +37,7 @@ const expectedRows = lines.map((line, index) => {
   const result = instance.exports.run_game_schedule_checks();
   if (result !== 0) throw new Error(`Production schedule check returned ${result}`);
   const pointer = instance.exports.game_schedule_output_ptr();
-  const actualRows = new Int16Array(instance.exports.memory.buffer, pointer, 65);
+  const actualRows = new Int16Array(instance.exports.memory.buffer, pointer, 117);
   for (let row = 0; row < expectedRows.length; row++) {
     for (let field = 0; field < 13; field++) {
       const actual = actualRows[row * 13 + field];
@@ -44,7 +47,7 @@ const expectedRows = lines.map((line, index) => {
       }
     }
   }
-  console.log('Turbo Pascal GamePlayLoop versus production schedule: speeds 1, 6, and 9, a five-PIT frame stall, and minute rollover match for five cycles.');
+  console.log('Turbo Pascal GamePlayLoop versus production schedule: speeds 0, 1, 6, and 9 at phases 0 and 5980, plus a four-PIT stall, match for five cycles.');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

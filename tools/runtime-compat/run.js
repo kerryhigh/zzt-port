@@ -54,9 +54,12 @@ function pascalSoundParse(input) {
   const gameScheduleResult = instance.exports.run_game_schedule_checks();
   if (gameScheduleResult !== 0) throw new Error(`Positive-speed game schedule check returned ${gameScheduleResult}`);
   const gameSchedule = new Int16Array(instance.exports.memory.buffer,
-    instance.exports.game_schedule_output_ptr(), 65);
+    instance.exports.game_schedule_output_ptr(), 117);
   const expectedScheduleCases = [
-    [1, 0, 0, 0], [6, 0, 0, 0], [9, 0, 0, 0], [6, 0, 2, 4], [9, 5980, 0, 0],
+    [0, 0, 0, 0], [0, 5980, 0, 0],
+    [1, 0, 0, 0], [1, 5980, 0, 0],
+    [6, 0, 0, 0], [6, 5980, 0, 0],
+    [9, 0, 0, 0], [9, 5980, 0, 0], [6, 0, 2, 4],
   ];
   for (let caseIndex = 0; caseIndex < expectedScheduleCases.length; caseIndex++) {
     const row = gameSchedule.subarray(caseIndex * 13, caseIndex * 13 + 13);
