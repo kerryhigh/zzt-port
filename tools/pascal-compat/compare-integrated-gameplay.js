@@ -11,11 +11,13 @@ const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
 const worldLoadResultPath = process.argv[11];
 const editorBrdPath = process.argv[10];
+const highScorePath = process.argv[12];
 if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death|pause-positive-scheduler-delayed-input|save-restore-world-reload-board-change [DEMO.ZZT] [INTEGWRL.OUT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input', 'save-restore-world-reload-board-change', 'editor-brd-roundtrip-play'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input', 'save-restore-world-reload-board-change', 'editor-brd-roundtrip-play', 'malformed-load-high-score-insertion'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 if (scenario === 'save-restore-world-reload-board-change' && (!demoWorldPath || !worldLoadResultPath)) throw new Error('F08 save/restore/world reload comparison requires INTEGWRL.ZZT and INTEGWRL.OUT');
 if (scenario === 'editor-brd-roundtrip-play' && !editorBrdPath) throw new Error('F09 editor/.BRD comparison requires the Pascal-exported .BRD file');
+if (scenario === 'malformed-load-high-score-insertion' && (!demoWorldPath || !worldLoadResultPath || !highScorePath)) throw new Error('F10 malformed-load/high-score comparison requires F10BAD.ZZT, F10BAD.OUT, and F10ROOM.HI');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -23,14 +25,17 @@ const statFieldCount = 14;
 const schedulerFieldCount = 11;
 const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
 const checkpointSpecs = [];
-const replayTransitionCount = scenario === 'editor-brd-roundtrip-play' ? 1
+const replayTransitionCount = scenario === 'malformed-load-high-score-insertion' ? 0
+  : scenario === 'editor-brd-roundtrip-play' ? 1
   : ['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario) ? 4 : 3;
 const postCycleStateIds = scenario === 'board-neighbors-passages'
     || scenario === 'pause-positive-scheduler-delayed-input'
-    || scenario === 'editor-brd-roundtrip-play' ? [2, 3]
+    || scenario === 'editor-brd-roundtrip-play'
+    || scenario === 'malformed-load-high-score-insertion' ? [2, 3]
     : scenario === 'save-restore-world-reload-board-change' ? [2, 3, 4, 5] : [];
 const expectedCycleCount = scenario === 'dark-room-torch-energizer-timers-death' ? 120
-  : scenario === 'pause-positive-scheduler-delayed-input' ? 5 : 6;
+  : scenario === 'pause-positive-scheduler-delayed-input' ? 5
+  : scenario === 'malformed-load-high-score-insertion' ? 2 : 6;
 let postCycleStateIndex = 0;
 let nextTransitionId = 1;
 let nextCycleId = 1;
@@ -39,7 +44,8 @@ const checkpointHeaders = expectedLines.map((line, rowIndex) => {
   if (fields.length < 3) throw new Error(`Malformed Pascal checkpoint header at row ${rowIndex + 1}`);
   return { kind: fields[0], id: Number(fields[1]), fieldCount: Number(fields[2]), fields };
 });
-if (checkpointHeaders.length < expectedCycleCount + 6
+const expectedCheckpointCount = 2 + replayTransitionCount + expectedCycleCount + postCycleStateIds.length + 1;
+if (checkpointHeaders.length < expectedCheckpointCount
     || checkpointHeaders[0].kind !== 'L' || checkpointHeaders[0].id !== 0
     || checkpointHeaders[1].kind !== 'S' || checkpointHeaders[1].id !== 0) {
   throw new Error('Integrated replay must start with L0 loaded state followed by S0 game-loop start');
@@ -397,6 +403,15 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_save_restore_world_reload_checks();
     } else if (scenario === 'editor-brd-roundtrip-play') {
       result = instance.exports.run_integrated_editor_brd_roundtrip_checks();
+    } else if (scenario === 'malformed-load-high-score-insertion') {
+      const malformedWorld = fs.readFileSync(demoWorldPath);
+      const capacity = instance.exports.integrated_f10_bad_world_bytes_capacity();
+      if (malformedWorld.length !== capacity) {
+        throw new Error(`F10 malformed .ZZT length ${malformedWorld.length}; expected exact fixture size ${capacity}`);
+      }
+      new Uint8Array(instance.exports.memory.buffer,
+        instance.exports.integrated_f10_bad_world_bytes_ptr(), malformedWorld.length).set(malformedWorld);
+      result = instance.exports.run_integrated_f10_checks(malformedWorld.length);
     } else {
       result = instance.exports.run_integrated_script_stat_order_checks();
     }
@@ -451,6 +466,35 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       }
     }
     comparedBrdBytes = pascalBrd.length;
+  }
+
+  let comparedHighScoreBytes = 0;
+  if (scenario === 'malformed-load-high-score-insertion') {
+    const pascalBadLoadResult = Number(fs.readFileSync(worldLoadResultPath, 'ascii').trim());
+    const productionBadLoadResult = instance.exports.integrated_f10_bad_world_load_result();
+    if (pascalBadLoadResult !== 0 || productionBadLoadResult !== -3) {
+      throw new Error(`F10 malformed .ZZT recovery divergence: Pascal WorldLoad=${pascalBadLoadResult} (expected false/0), production zoo_world_load=${productionBadLoadResult} (expected ZOO_ERROR_WRONGVER/-3)`);
+    }
+    const pascalHighScores = fs.readFileSync(highScorePath);
+    const productionHighScoreLength = instance.exports.integrated_f10_high_score_save_length();
+    const productionHighScores = new Uint8Array(instance.exports.memory.buffer,
+      instance.exports.integrated_f10_high_score_save_bytes_ptr(), productionHighScoreLength);
+    if (productionHighScoreLength !== pascalHighScores.length) {
+      throw new Error(`F10 high-score .HI length divergence: Pascal=${pascalHighScores.length}, production=${productionHighScoreLength}`);
+    }
+    for (let offset = 0; offset < pascalHighScores.length; offset++) {
+      if (productionHighScores[offset] !== pascalHighScores[offset]) {
+        const from = Math.max(0, offset - 5);
+        const to = Math.min(pascalHighScores.length, offset + 6);
+        throw new Error(`F10 first high-score .HI divergence at byte ${offset} (entry ${Math.floor(offset / 53)}, field ${offset % 53}): Pascal=${pascalHighScores[offset]}, production=${productionHighScores[offset]}; Pascal context=${pascalHighScores.subarray(from, to).toString('hex')}, production=${Buffer.from(productionHighScores.subarray(from, to)).toString('hex')}`);
+      }
+      comparedHighScoreBytes++;
+    }
+    const expectedFirstEntry = Buffer.from(pascalHighScores.subarray(0, 53));
+    if (expectedFirstEntry[0] !== 5 || expectedFirstEntry.subarray(1, 6).toString('ascii') !== 'KERRY'
+        || expectedFirstEntry.readInt16LE(51) !== 1234) {
+      throw new Error(`F10 Pascal high-score result did not insert KERRY/1234 at first rank: ${expectedFirstEntry.toString('hex')}`);
+    }
   }
 
   const pascalSave = fs.readFileSync(savePath);
@@ -895,5 +939,5 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const cellWriteSummary = ['board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'save-restore-world-reload-board-change'].includes(scenario)
     ? `${expectedCells.count} playfield cell changes matched (${cellComparedFields} event fields); ${expectedCells.idempotentWriteCount} Pascal and ${actualIdempotentWriteCount} production identical-value redraws were reported separately`
     : `${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields)`;
-  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary};${scenario === 'editor-brd-roundtrip-play' ? ` exact ${comparedBrdBytes}-byte Pascal/production .BRD export matched;` : ''} generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0${scenario === 'save-restore-world-reload-board-change' ? ' for both SAV restore and ZZT world reload' : ''}; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
+  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary};${scenario === 'editor-brd-roundtrip-play' ? ` exact ${comparedBrdBytes}-byte Pascal/production .BRD export matched;` : ''}${scenario === 'malformed-load-high-score-insertion' ? ` malformed startup .ZZT recovery returned Pascal=false/production=WRONGVER and ${comparedHighScoreBytes}-byte .HI insertion matched;` : ''} generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0${scenario === 'save-restore-world-reload-board-change' ? ' for both SAV restore and ZZT world reload' : ''}; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

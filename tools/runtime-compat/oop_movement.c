@@ -3,6 +3,7 @@
 #include <string.h>
 #include "zoo_internal.h"
 #include "zoo_editor_brd.h"
+#include "zoo_high_scores.h"
 #include "zoo_random.h"
 
 static zoo_state state;
@@ -95,6 +96,12 @@ static int32_t integrated_gameplay_roundtrip_save_overflow_value;
 static uint8_t integrated_demo_world_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static uint8_t integrated_editor_brd_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_editor_brd_length_value;
+static uint8_t integrated_f10_bad_world_bytes[512];
+static int32_t integrated_f10_bad_world_load_result_value;
+static zoo_high_score_table integrated_f10_high_score_table;
+static uint8_t integrated_f10_high_score_save_bytes[ZOO_HIGH_SCORE_TABLE_BYTES];
+static bool integrated_gameplay_initial_paused = true;
+static uint16_t integrated_gameplay_post_loop_key_pressed;
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
 static int16_t integrated_configured_tick_speed;
@@ -237,6 +244,7 @@ static void capture_window_append(const char *text) {
 #ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
 #include "../../third_party/libzoo/src/libzoo/zoo_callstack.c"
 #include "../../third_party/libzoo/src/libzoo/zoo_editor_brd.c"
+#include "../../third_party/libzoo/src/libzoo/zoo_high_scores.c"
 #endif
 #include "../../third_party/libzoo/src/libzoo/zoo_io.c"
 #define zoo_board_change zoo_board_change_actual
@@ -4240,6 +4248,8 @@ static void integrated_gameplay_capture_reset(void) {
 	state.func_draw_sidebar = test_sidebar_update;
 	state.func_random = integrated_gameplay_random;
 	state.random_seed = 0;
+	integrated_gameplay_initial_paused = true;
+	integrated_gameplay_post_loop_key_pressed = 0;
 	/* Match the original Pascal player's transient glyph override. */
 	state.player_character = 2;
 	zoo_sound_state_init(&state.sound);
@@ -4290,10 +4300,12 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	integrated_board_change_checkpoint_failed = false;
 	integrated_pause_transition_checkpoint_pending = pause_transition_input_guard;
 	state.tick_speed = integrated_configured_tick_speed;
-	state.game_paused = true;
+	state.game_paused = integrated_gameplay_initial_paused;
 	if (!capture_integrated_gameplay_snapshot(0, 'L', 0)) return 4;
 	force_elapsed_for_tick_check = true;
 	zoo_game_start(&state, GS_PLAY);
+	/* GamePlayLoop can enter this path unpaused; zoo_game_start defaults GS_PLAY to paused. */
+	state.game_paused = integrated_gameplay_initial_paused;
 	while (input_length-- > 0) zoo_input_key_press(&state.input, (uint8_t) *input_tape++);
 	if (!capture_integrated_gameplay_snapshot(1, 'S', 0)) return 4;
 	last_board = state.world.info.current_board;
@@ -4405,6 +4417,7 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].element = ZOO_E_PLAYER;
 	state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].color = zoo_element_defs[ZOO_E_PLAYER].color;
 	state.sound.block_queueing = false;
+	state.input.key_pressed = integrated_gameplay_post_loop_key_pressed;
 	save_handle = zoo_io_open_file_mem(integrated_gameplay_save_bytes,
 		INTEGRATED_GAMEPLAY_SAVE_CAPACITY, MODE_WRITE);
 	integrated_gameplay_save_result_value = zoo_world_save(&state, &save_handle);
@@ -4987,6 +5000,96 @@ uint32_t integrated_editor_brd_bytes_ptr(void) {
 
 int32_t integrated_editor_brd_bytes_length(void) {
 	return integrated_editor_brd_length_value;
+}
+
+uint32_t integrated_f10_bad_world_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_f10_bad_world_bytes;
+}
+
+int32_t integrated_f10_bad_world_bytes_capacity(void) {
+	return (int32_t) sizeof(integrated_f10_bad_world_bytes);
+}
+
+int32_t run_integrated_f10_checks(int32_t malformed_world_length) {
+	zoo_io_handle bad_world_handle;
+	uint8_t *entry;
+	int16_t i, j, random_index, score_position;
+	uint16_t swap;
+	int result;
+	static const uint8_t name[] = "KERRY";
+
+	if (malformed_world_length != (int32_t) sizeof(integrated_f10_bad_world_bytes)) return 70;
+	integrated_gameplay_capture_reset();
+	integrated_f10_bad_world_load_result_value = -99;
+	memset(&integrated_f10_high_score_table, 0, sizeof(integrated_f10_high_score_table));
+	memset(integrated_f10_high_score_save_bytes, 0, sizeof(integrated_f10_high_score_save_bytes));
+	/* Match the Pascal startup order before the failed startup-world load. */
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		state.transition_order[i] = (uint16_t) i;
+	}
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		random_index = integrated_gameplay_random(&state, ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT);
+		swap = state.transition_order[random_index];
+		state.transition_order[random_index] = state.transition_order[i];
+		state.transition_order[i] = swap;
+	}
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	bad_world_handle = zoo_io_open_file_mem(integrated_f10_bad_world_bytes,
+		sizeof(integrated_f10_bad_world_bytes), MODE_READ);
+	integrated_f10_bad_world_load_result_value = zoo_world_load(&state, &bad_world_handle, false);
+	if (integrated_f10_bad_world_load_result_value != ZOO_ERROR_WRONGVER) return 71;
+
+	/* GameTitleLoop's failed startup WorldLoad falls back to WorldCreate. */
+	zoo_world_create(&state);
+	zoo_io_pstring_assign_pascal(state.world.info.name, sizeof(state.world.info.name) - 1,
+		state.world.info.io_name_data, &state.world.info.io_name_length,
+		&state.world.info.io_name_valid, "F10ROOM", 7);
+	state.world.info.health = 0;
+	state.world.info.score = 1234;
+	zoo_board_enter(&state);
+	state.game_state = GS_PLAY;
+	state.game_paused = false;
+	state.tick_speed = 0;
+	integrated_gameplay_initial_paused = false;
+	/* Seed observable Pascal shortstring tails, then exercise missing-.HI reset. */
+	zoo_high_score_table_init(&integrated_f10_high_score_table);
+	for (i = 0; i < ZOO_HIGH_SCORE_COUNT; i++) {
+		entry = integrated_f10_high_score_table.bytes
+			+ (size_t) i * ZOO_HIGH_SCORE_ENTRY_BYTES;
+		entry[0] = ZOO_HIGH_SCORE_NAME_BYTES;
+		for (j = 0; j < ZOO_HIGH_SCORE_NAME_BYTES; j++) {
+			entry[1 + j] = (uint8_t) ('A' + (((i * 7) + j) % 26));
+		}
+	}
+	if (zoo_high_score_table_load(&integrated_f10_high_score_table, NULL, 0, false)
+			!= ZOO_ERROR_INVAL) return 72;
+	integrated_gameplay_post_loop_key_pressed = 13;
+	result = integrated_gameplay_run_ticks(NULL, 0, NULL, 0, 2,
+		false, false, false, true);
+	if (result != 0) return result;
+	score_position = zoo_high_score_insertion_position(&integrated_f10_high_score_table,
+		state.world.info.score);
+	if (score_position != 0) return 73;
+	result = zoo_high_score_insert_at(&integrated_f10_high_score_table, score_position,
+		state.world.info.score, name, sizeof(name) - 1);
+	if (result != 0) return 74;
+	result = zoo_high_score_table_save(&integrated_f10_high_score_table,
+		integrated_f10_high_score_save_bytes, sizeof(integrated_f10_high_score_save_bytes));
+	if (result != 0) return 75;
+	return 0;
+}
+
+int32_t integrated_f10_bad_world_load_result(void) {
+	return integrated_f10_bad_world_load_result_value;
+}
+
+uint32_t integrated_f10_high_score_save_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_f10_high_score_save_bytes;
+}
+
+int32_t integrated_f10_high_score_save_length(void) {
+	return (int32_t) sizeof(integrated_f10_high_score_save_bytes);
 }
 
 int32_t integrated_gameplay_mutate_for_f08_restore(void) {

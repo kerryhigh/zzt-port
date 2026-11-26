@@ -525,6 +525,12 @@ $gamePlayLoopStart = $stagedGame.LastIndexOf('procedure GamePlayLoop(boardChange
 $gameTitleLoopStart = $stagedGame.IndexOf('procedure GameTitleLoop;', $gamePlayLoopStart, [StringComparison]::Ordinal)
 if ($gamePlayLoopStart -lt 0 -or $gameTitleLoopStart -lt 0) { throw 'Could not isolate GamePlayLoop for zero-speed instrumentation.' }
 $gamePlayLoop = $stagedGame.Substring($gamePlayLoopStart, $gameTitleLoopStart - $gamePlayLoopStart)
+$highScoreCaptureAnchor = 'HighScoresAdd(World.Info.Score);'
+if ([regex]::Matches($gamePlayLoop, [regex]::Escape($highScoreCaptureAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the GamePlayLoop high-score insertion call for F10 presentation capture filtering.'
+}
+$highScoreCaptureHook = "if GameLoopProbeEnabled and (World.Info.Name = 'F10ROOM') then GameLoopProbeCellCaptureEnabled := false;`r`n`t`t`t`tHighScoresAdd(World.Info.Score);"
+$gamePlayLoop = $gamePlayLoop.Replace($highScoreCaptureAnchor, $highScoreCaptureHook)
 $startTickAnchor = 'CurrentTick := Random(100);'
 $startTickIndex = $gamePlayLoop.IndexOf($startTickAnchor, [StringComparison]::Ordinal)
 if ($startTickIndex -lt 0) { throw 'Could not locate GamePlayLoop tick initialization for the zero-speed probe.' }
@@ -2460,11 +2466,53 @@ end;
         (Join-Path $syntheticReplayRoot 'INTEG2SV.SAV') `
         (Join-Path $stageRoot 'INTEGPR_DIAG_MUTATION.OUT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production integrated diagnostic negative control failed with exit code $LASTEXITCODE." }
+
+    Write-Host 'Compiling and running the F10 malformed-load/high-score/gameplay replay: F10IN'
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'F10IN.PAS') -Destination (Join-Path $stageRoot 'F10IN.PAS')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'F10BAD.OUT', 'F10ROOM.HI')) {
+        Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'F10IN.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'F10IN.EXE') -Force -ErrorAction SilentlyContinue
+    $malformedWorldBytes = New-Object byte[] 512
+    $malformedWorldBytes[0] = 0xFE
+    $malformedWorldBytes[1] = 0xFF
+    [IO.File]::WriteAllBytes((Join-Path $stageRoot 'F10BAD.ZZT'), $malformedWorldBytes)
+    $stagedInput = $stagedInputWithoutNormalizedTape
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'F10IN-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC F10IN.PAS > F10COMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'F10IN.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\F10IN.EXE. See $stageRoot\F10COMP.LOG and $stageRoot\F10IN-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'F10IN-RUN' @('BIN\F10IN.EXE')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'F10BAD.OUT', 'F10ROOM.HI')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+            throw "Pascal F10 malformed-load/high-score replay did not write $fixtureOutput. See $stageRoot\F10IN.LOG."
+        }
+    }
+    if ((Get-Item -LiteralPath (Join-Path $stageRoot 'F10ROOM.HI')).Length -ne 1590) {
+        throw 'Pascal F10 HighScoresAdd did not write the exact 1,590-byte HI record.'
+    }
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'malformed-load-high-score-insertion' `
+        (Join-Path $stageRoot 'F10BAD.ZZT') `
+        (Join-Path $stageRoot 'F10BAD.OUT') `
+        (Join-Path $stageRoot 'F10ROOM.HI')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F10 malformed-load/high-score/gameplay replay failed with exit code $LASTEXITCODE." }
 }
 finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 70 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09 integrated fixtures (F09 uses separate compile and run sessions), four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 72 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures (F09/F10 use separate compile and run sessions), four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
