@@ -1153,6 +1153,12 @@ static zoo_tick_retval zoo_game_tick(zoo_state *state) {
 			// return
 			return RETURN_IMMEDIATE;
 		}
+		/* Pascal reaches the shared elapsed-time check only after all stats
+		   have been ticked. Otherwise its paused repeat yields without moving
+		   the stat cursor, which the host represents as the next cycle. */
+		if (state->current_stat_tick > state->board.stat_count)
+			goto GameTickStateDone;
+		return RETURN_NEXT_CYCLE;
 
 GameTickState1:
 		if (
@@ -1218,6 +1224,7 @@ GameTickState2:
 		}
 	}
 
+GameTickStateDone:
 	if (state->game_play_exit_requested) {
 		return RETURN_NEXT_CYCLE;
 	}

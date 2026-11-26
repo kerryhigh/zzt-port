@@ -2145,6 +2145,7 @@ end;
 			'L': InputDeltaX := -1;
 			'R': InputDeltaX := 1;
 			'T': InputKeyPressed := 'T';
+			'P': InputKeyPressed := 'P';
 			'N': InputKeyPressed := #0;
 			'F': begin
 				InputDeltaX := 1;
@@ -2287,6 +2288,38 @@ end;
         'dark-room-torch-energizer-timers-death'
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F06 dark-room/timer/death replay failed with exit code $LASTEXITCODE." }
 
+    Write-Host 'Compiling and running the F07 positive-speed/pause/delayed-input replay: PAUSEIN'
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'PAUSEIN.PAS') -Destination (Join-Path $stageRoot 'PAUSEIN.PAS')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'PAUSEIN.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'PAUSEIN.EXE') -Force -ErrorAction SilentlyContinue
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'PAUSEIN-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC PAUSEIN.PAS > PAUSECOMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'PAUSEIN.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\PAUSEIN.EXE. See $stageRoot\PAUSECOMP.LOG and $stageRoot\PAUSEIN-COMPILE.LOG."
+    }
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInputWithoutNormalizedTape, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'PAUSEIN' @('BIN\PAUSEIN.EXE')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+            throw "Pascal F07 integrated replay did not write $fixtureOutput. See $stageRoot\PAUSEIN.LOG."
+        }
+    }
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'pause-positive-scheduler-delayed-input'
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F07 pause/scheduler/delayed-input replay failed with exit code $LASTEXITCODE." }
+
     & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
         'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
@@ -2303,6 +2336,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 66 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06 integrated fixtures, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 67 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07 integrated fixtures, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

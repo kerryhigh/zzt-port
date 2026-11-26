@@ -94,6 +94,7 @@ static int32_t integrated_gameplay_roundtrip_save_overflow_value;
 static uint8_t integrated_demo_world_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
+static int16_t integrated_configured_tick_speed;
 static const char *integrated_normalized_input_tape;
 static int16_t integrated_normalized_input_tape_length;
 static int16_t integrated_normalized_input_tape_position;
@@ -305,6 +306,7 @@ void zoo_input_update(zoo_input_state *input) {
 			integrated_torch_action_pending = true;
 			break;
 		case 'N': input->key_pressed = 0; break;
+		case 'P': input->key_pressed = 'P'; break;
 	}
 }
 #include "../../third_party/libzoo/src/libzoo/zoo_oop.c"
@@ -343,8 +345,17 @@ bool zoo_has_hsecs_elapsed(zoo_state *test_state, int16_t *counter, int16_t valu
 		if (difference < value) return false;
 		*counter = integrated_fixed_clock_hsecs;
 	} else if (integrated_schedule_enabled) {
-		*counter = (int16_t) ((integrated_elapsed_nanos / 10000000) % 6000);
+		int16_t current_hsecs = (int16_t) ((integrated_elapsed_nanos / 10000000) % 6000);
+		int16_t difference = (int16_t) ((current_hsecs - *counter + 6000) % 6000);
 		integrated_elapsed_nanos += 54924578;
+		/* Existing zero-speed replay fixtures deliberately model immediate
+		   polling; positive-speed F07 uses the staged Pascal clock threshold. */
+		if (integrated_configured_tick_speed == 0) {
+			*counter = current_hsecs;
+			return true;
+		}
+		if (difference < value) return false;
+		*counter = current_hsecs;
 	} else {
 		*counter = (int16_t) (test_state->time_elapsed / 10);
 	}
@@ -3552,9 +3563,12 @@ static int check_paused_player_tick(void) {
 	cycle_output[12] = state.input.key_pressed;
 	cycle_output[13] = state.world.info.health;
 	result = zoo_tick(&state);
-	if (result != RETURN_NEXT_CYCLE || state.board.stats[0].x != 10
-		|| !state.game_paused || state.input.delta_x != 0
-		|| state.input.delta_y != 0 || state.world.info.is_save) return 6;
+	if (result != RETURN_NEXT_CYCLE) return 61;
+	if (state.board.stats[0].x != 10) return 62;
+	if (!state.game_paused) return 63;
+	if (state.input.delta_x != 0) return 64;
+	if (state.input.delta_y != 0) return 65;
+	if (state.world.info.is_save) return 66;
 
 	force_elapsed_for_tick_check = false;
 	return 0;
@@ -4216,6 +4230,7 @@ static void integrated_gameplay_capture_reset(void) {
 	integrated_fixed_clock_hsecs = 0;
 	integrated_schedule_enabled = true;
 	integrated_elapsed_nanos = 0;
+	integrated_configured_tick_speed = 0;
 	video.func_write = test_video_write;
 	state.d_video = &video;
 	state.func_draw_sidebar = test_sidebar_update;
@@ -4270,7 +4285,7 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	integrated_board_change_checkpoint_captured = false;
 	integrated_board_change_checkpoint_failed = false;
 	integrated_pause_transition_checkpoint_pending = pause_transition_input_guard;
-	state.tick_speed = 0;
+	state.tick_speed = integrated_configured_tick_speed;
 	state.game_paused = true;
 	if (!capture_integrated_gameplay_snapshot(0, 'L', 0)) return 4;
 	force_elapsed_for_tick_check = true;
@@ -4780,6 +4795,42 @@ int32_t run_integrated_dark_room_torch_energizer_timers_death_checks(void) {
 	integrated_gameplay_cell_coalesce_idempotent_writes = true;
 	result = integrated_gameplay_run_ticks(NULL, 0, "RTRN", 4, 120, true, false, false, true);
 	return result;
+}
+
+int32_t run_integrated_pause_scheduler_checks(void) {
+	int result;
+
+	integrated_gameplay_capture_reset();
+	/* The Pascal fixture performs ZZT's startup transition-table shuffle before
+	   WorldCreate; use its measured post-shuffle seed for comparable Random calls. */
+	state.random_seed = (int32_t) 0x240F47C4u;
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	zoo_board_create(&state);
+	state.world.info.health = 100;
+	state.world.info.current_board = 0;
+	state.board.info.start_player_x = 5;
+	state.board.info.start_player_y = 5;
+	state.board.stats[0].x = 5;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].step_x = 0;
+	state.board.stats[0].step_y = 0;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[30][12].element = ZOO_E_EMPTY;
+	state.board.tiles[30][12].color = 0;
+	state.board.tiles[5][5].element = ZOO_E_PLAYER;
+	state.board.tiles[5][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	/* Pause blinking can issue cadence-dependent repeated writes; compare the
+	   ordered effective screen changes and report identical redraws separately. */
+	integrated_gameplay_cell_coalesce_idempotent_writes = true;
+	integrated_configured_tick_speed = 6;
+	result = integrated_gameplay_run_ticks(NULL, 0, "RPNNRNNN", 8, 5, true, false, false, false);
+	if (result != 0) return result;
+	if (state.tick_speed != 6 || state.tick_duration != 12
+			|| state.game_paused || state.board.stats[0].x != 7 || state.board.stats[0].y != 5) return 46;
+	return 0;
 }
 
 uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {

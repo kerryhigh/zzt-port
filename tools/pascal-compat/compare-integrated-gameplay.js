@@ -10,7 +10,7 @@ const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
 if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
@@ -20,8 +20,10 @@ const schedulerFieldCount = 11;
 const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
 const checkpointSpecs = [];
 const replayTransitionCount = scenario === 'board-neighbors-passages' ? 4 : 3;
-const postCycleStateIds = scenario === 'board-neighbors-passages' ? [2, 3] : [];
-const expectedCycleCount = scenario === 'dark-room-torch-energizer-timers-death' ? 120 : 6;
+const postCycleStateIds = scenario === 'board-neighbors-passages'
+    || scenario === 'pause-positive-scheduler-delayed-input' ? [2, 3] : [];
+const expectedCycleCount = scenario === 'dark-room-torch-energizer-timers-death' ? 120
+  : scenario === 'pause-positive-scheduler-delayed-input' ? 5 : 6;
 let postCycleStateIndex = 0;
 let nextTransitionId = 1;
 let nextCycleId = 1;
@@ -47,7 +49,7 @@ for (let row = 2; row < checkpointHeaders.length; row++) {
   } else if (header.kind === 'C' && header.id === nextCycleId && nextCycleId <= expectedCycleCount) {
     checkpointSpecs.push({ kind: 'C', id: header.id, name: `cycle ${header.id}` });
     nextCycleId++;
-  } else if (nextCycleId === 7 && postCycleStateIndex < postCycleStateIds.length
+  } else if (nextCycleId === expectedCycleCount + 1 && postCycleStateIndex < postCycleStateIds.length
       && header.kind === 'T' && header.id === postCycleStateIds[postCycleStateIndex]) {
     const snapshotName = postCycleStateIndex === 0 ? 'post-save state' : 'post-load state';
     checkpointSpecs.push({ kind: 'T', id: header.id, name: snapshotName });
@@ -380,6 +382,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_board_neighbor_passage_checks();
     } else if (scenario === 'dark-room-torch-energizer-timers-death') {
       result = instance.exports.run_integrated_dark_room_torch_energizer_timers_death_checks();
+    } else if (scenario === 'pause-positive-scheduler-delayed-input') {
+      result = instance.exports.run_integrated_pause_scheduler_checks();
     } else {
       result = instance.exports.run_integrated_script_stat_order_checks();
     }
@@ -639,6 +643,33 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
         || tileElementAt(final, 20, 15) !== 11 || tileElementAt(final, 22, 17) !== 11
         || tileElementAt(final, 30, 12) !== 0) {
       throw new Error(`F05 coverage assertion failed: expected last matching passage at (22,17), one resumed step to (23,17), earlier match retained at (20,15), and cleared board spawn (30,12); final board=${final[3]}, player=(${statField(final, 0, 0)},${statField(final, 0, 1)})`);
+    }
+  }
+  if (scenario === 'pause-positive-scheduler-delayed-input') {
+    const schedulerStartFor = values => scalarNames.length + (values[11] + 1) * statFieldCount;
+    const initial = expectedSnapshots[1].values;
+    const initialScheduler = schedulerStartFor(initial);
+    const firstCycle = expectedSnapshots.find((snapshot, row) => checkpointSpecs[row].kind === 'C' && checkpointSpecs[row].id === 1)?.values;
+    const pauseTransition = expectedSnapshots.find((snapshot, row) => checkpointSpecs[row].kind === 'T' && checkpointSpecs[row].id === 2)?.values;
+    const resumeTransition = expectedSnapshots.find((snapshot, row) => checkpointSpecs[row].kind === 'T' && checkpointSpecs[row].id === 3)?.values;
+    const final = expectedSnapshots.at(-1).values;
+    const playerX = values => values[scalarNames.length];
+    const playerY = values => values[scalarNames.length + 1];
+    if (initial[initialScheduler + 2] !== 6 || initial[initialScheduler + 3] !== 12) {
+      throw new Error(`F07 coverage assertion failed: expected TickSpeed=6 and TickTimeDuration=12, observed ${initial[initialScheduler + 2]}/${initial[initialScheduler + 3]}`);
+    }
+    if (!firstCycle || firstCycle[schedulerStartFor(firstCycle) + 5] !== 0
+        || firstCycle[schedulerStartFor(firstCycle) + 9] !== 80) {
+      throw new Error('F07 coverage assertion failed: cycle 1 must leave the delayed P key pending while gameplay is still unpaused');
+    }
+    if (!pauseTransition || pauseTransition[schedulerStartFor(pauseTransition) + 5] !== 1
+        || !resumeTransition || resumeTransition[schedulerStartFor(resumeTransition) + 5] !== 0
+        || playerX(resumeTransition) !== 7 || playerY(resumeTransition) !== 5) {
+      throw new Error(`F07 coverage assertion failed: delayed P must pause on the next player callback, then paused-mode R must move the player and resume; T2 paused=${pauseTransition?.[schedulerStartFor(pauseTransition) + 5]}, T3 paused=${resumeTransition?.[schedulerStartFor(resumeTransition) + 5]}, player=${resumeTransition ? `${playerX(resumeTransition)},${playerY(resumeTransition)}` : 'missing'}`);
+    }
+    if (final[2] !== 100 || playerX(final) !== 7 || playerY(final) !== 5
+        || final[schedulerStartFor(final) + 5] !== 0) {
+      throw new Error(`F07 coverage assertion failed: expected healthy resumed final player at (7,5), observed health=${final[2]}, player=(${playerX(final)},${playerY(final)}), paused=${final[schedulerStartFor(final) + 5]}`);
     }
   }
   const expectedSound = parseSoundEvents(soundPath);
