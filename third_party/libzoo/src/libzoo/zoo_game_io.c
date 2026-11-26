@@ -633,10 +633,23 @@ int zoo_world_close(zoo_state *state) {
 int zoo_io_world_read(zoo_io_handle *h, zoo_world *world, bool title_only) {
 	int i;
 	bool has_version_marker;
-	size_t header_start = h->func_tell(h);
+	zoo_io_handle *source_handle = h;
+	zoo_io_handle header_handle;
+	uint8_t header[512];
+	size_t header_start;
+	size_t header_read;
 #ifdef ZOO_USE_ROM_POINTERS
 	bool is_rom = h->func_getptr != NULL && platform_is_rom_ptr(h->func_getptr(h));
 #endif
+	/* Pascal reads its complete 512-byte header into IoTmpBuf before applying
+	   any of it to World. A short read therefore leaves the existing metadata
+	   intact even though WorldUnload has already closed the board. */
+	header_read = h->func_read(h, header, sizeof(header));
+	if (header_read != sizeof(header))
+		return ZOO_ERROR_INVAL;
+	header_handle = zoo_io_open_file_mem(header, sizeof(header), MODE_READ);
+	h = &header_handle;
+	header_start = h->func_tell(h);
 
 	world->board_count = zoo_io_read_short(h);
 	has_version_marker = (world->board_count == -1);
@@ -690,6 +703,7 @@ int zoo_io_world_read(zoo_io_handle *h, zoo_world *world, bool title_only) {
 		world->info.is_save = true;
 		world->info.io_is_save_byte = 1;
 	}
+	h = source_handle;
 
 	for (i = 0; i <= world->board_count; i++) {
 		size_t board_length_pos = h->func_tell(h);

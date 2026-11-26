@@ -18,6 +18,8 @@ begin
 	Rewrite(output);
 	WorldCreate;
 	if not WorldLoad('DEMO', '.ZZT', false) then Halt(1);
+	{ Capture-only flush; it does not alter loaded game state or probe output. }
+	Flush(output);
 	for ix := 1 to BOARD_WIDTH do
 		for iy := 1 to BOARD_HEIGHT do begin
 			Board.Tiles[ix][iy].Element := E_EMPTY;

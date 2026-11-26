@@ -4929,7 +4929,7 @@ int32_t run_integrated_title_restore_failure_checks(int32_t save_length) {
 	int16_t ix, iy;
 	zoo_stat *player;
 
-	if (save_length <= 0 || save_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 38;
+	if (save_length < 0 || save_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 38;
 	integrated_gameplay_capture_reset();
 	memset(integrated_title_restore_failure_fields, 0,
 		sizeof(integrated_title_restore_failure_fields));

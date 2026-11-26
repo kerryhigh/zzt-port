@@ -3,13 +3,16 @@ const fs = require('node:fs');
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
 const savedWorldPlayWorldPath = process.argv[4] === '--saved-world-play' ? process.argv[5] || null : null;
-const restoreFailureSavePath = process.argv[4] === '--restore-failure' ? process.argv[5] || null : null;
+const restoreFailureEmpty = process.argv[4] === '--restore-empty';
+const restoreFailureSavePath = process.argv[4] === '--restore-failure' || restoreFailureEmpty
+  ? process.argv[5] || null
+  : null;
 const restoreRetrySavePath = process.argv[4] === '--restore-retry' ? process.argv[5] || null : null;
 const restoreSavePath = savedWorldPlayWorldPath || restoreFailureSavePath || restoreRetrySavePath
   ? null
   : process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [--saved-world-play world.ZZT|restore.SAV|--restore-failure malformed.SAV|--restore-retry restore.SAV]');
+  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [--saved-world-play world.ZZT|restore.SAV|--restore-failure malformed.SAV|--restore-empty empty.SAV|--restore-retry restore.SAV]');
 }
 
 const scalarNames = [
@@ -160,7 +163,10 @@ function readProductionSnapshots(instance, expectedCount) {
   let result;
   if (restoreFailureSavePath) {
     const save = fs.readFileSync(restoreFailureSavePath);
-    if (save.length !== 512) throw new Error(`Malformed restore fixture is ${save.length} bytes; expected the direct-Pascal 512-byte header.`);
+    if (restoreFailureEmpty ? save.length !== 0 : save.length !== 512) {
+      const expectedSize = restoreFailureEmpty ? 0 : 512;
+      throw new Error(`Malformed restore fixture is ${save.length} bytes; expected ${expectedSize}.`);
+    }
     const capacity = instance.exports.integrated_demo_world_bytes_capacity();
     if (save.length > capacity) throw new Error(`Restore fixture exceeds production harness capacity: ${save.length}/${capacity}`);
     const pointer = instance.exports.integrated_demo_world_bytes_ptr();
@@ -168,7 +174,11 @@ function readProductionSnapshots(instance, expectedCount) {
     const result = instance.exports.run_integrated_title_restore_failure_checks(save.length);
     if (result !== 0) throw new Error(`Production malformed title restore harness returned ${result}`);
     const error = instance.exports.integrated_title_restore_failure_error();
-    if (error !== -3) throw new Error(`Production malformed title restore returned ${error}; expected ZOO_ERROR_WRONGVER (-3).`);
+    const expectedError = restoreFailureEmpty ? -2 : -3;
+    if (error !== expectedError) {
+      const errorName = restoreFailureEmpty ? 'ZOO_ERROR_INVAL' : 'ZOO_ERROR_WRONGVER';
+      throw new Error(`Production malformed title restore returned ${error}; expected ${errorName} (${expectedError}).`);
+    }
     const count = instance.exports.integrated_title_restore_failure_field_count();
     if (count !== expected.length) throw new Error(`Production malformed title restore emitted ${count} fields; Pascal emitted ${expected.length}.`);
     const actual = Array.from(new Int32Array(
@@ -187,6 +197,11 @@ function readProductionSnapshots(instance, expectedCount) {
         if (actual[field] <= 0) throw new Error(`Production retained invalid internal board length ${actual[field]} after malformed restore.`);
         continue;
       }
+      // The shared restore API returns before the frontend acknowledges its
+      // empty-file error dialog; Pascal's modal consumes Escape before the
+      // title loop capture. That adapter-owned InputKeyPressed value is not a
+      // shared engine state comparison for this route.
+      if (restoreFailureEmpty && field === 16) continue;
       if (expected[field] !== actual[field]) {
         const from = Math.max(0, field - 2);
         const to = Math.min(expected.length - 1, field + 2);
@@ -199,7 +214,8 @@ function readProductionSnapshots(instance, expectedCount) {
       comparedFields++;
     }
     if (expected[0] !== 0) throw new Error(`Pascal GameWorldLoad accepted the malformed .SAV (result=${expected[0]}).`);
-    console.log(`Title R malformed-version refusal matched Pascal across ${comparedFields}/${count} comparable world/board/stat/tile fields; private board-buffer length was excluded from equality; LibZoo returned ZOO_ERROR_WRONGVER (-3).`);
+    const refusal = restoreFailureEmpty ? 'empty-file' : 'malformed-version';
+    console.log(`Title R ${refusal} refusal matched Pascal across ${comparedFields}/${count} comparable world/board/stat/tile fields; private board-buffer length was excluded from equality; LibZoo returned ${restoreFailureEmpty ? 'ZOO_ERROR_INVAL (-2)' : 'ZOO_ERROR_WRONGVER (-3)'}.`);
     return;
   }
   if (savedWorldPlayWorldPath) {

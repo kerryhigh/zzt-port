@@ -433,6 +433,7 @@ var
 	GameLoopProbeCaptureNextBoardChange: boolean;
 	GameLoopProbeTitleLifecycleEnabled, GameLoopProbeTitleLifecyclePlayerReturned: boolean;
 	GameLoopProbeTitleRestoreEnabled, GameLoopProbeTitleRestoreFailureEnabled: boolean;
+	GameLoopProbeTitleRestoreEmptyEnabled: boolean;
 	GameLoopProbeTitleRestoreCancelOnceEnabled, GameLoopProbeTitleRestoreCancelled: boolean;
 	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
 	GameLoopProbeCellWriteCount: longint;
@@ -698,6 +699,12 @@ if GameWorldLoad('.SAV') then begin
 '@
 $gameTitleLoop = [regex]::Replace($gameTitleLoop, $restoreFailurePattern, $restoreFailureReplacement, 1)
 $stagedGame = $stagedGame.Substring(0, $gameTitleLoopStart) + $gameTitleLoop + $stagedGame.Substring($gameTitleLoopEnd)
+$emptyRestoreReadAnchor = 'BlockRead(f, IoTmpBuf^, WORLD_FILE_HEADER_SIZE);'
+if ([regex]::Matches($stagedGame, [regex]::Escape($emptyRestoreReadAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate WorldLoad header read for the empty-save error acknowledgement hook.'
+}
+$stagedGame = $stagedGame.Replace($emptyRestoreReadAnchor,
+    $emptyRestoreReadAnchor + "`r`n`t`t`t`tif GameLoopProbeTitleRestoreEmptyEnabled then TextWindowProbeInjectEscape := true;")
 [IO.File]::WriteAllText($stagedGamePath, $stagedGame, [Text.UTF8Encoding]::new($false))
 
 Set-TitleRestoreEscapeInputHook
@@ -2777,6 +2784,27 @@ end;
         $titleFailureSave
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production malformed .SAV restore differential failed with exit code $LASTEXITCODE." }
 
+    $titleEmptyRestoreRoot = Join-Path $stageRoot 'TILEMPT'
+    New-Item -ItemType Directory -Force -Path $titleEmptyRestoreRoot | Out-Null
+    Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleEmptyRestoreRoot 'DEMO.ZZT') -Force
+    Write-Host 'Running the direct GameTitleLoop empty .SAV refusal replay: TITLEEMPTY'
+    Invoke-DosboxSession 'TITLEIN-EMPTY-RESTORE' @('CD \TILEMPT', '..\BIN\TITLEIN.EXE E')
+    $titleEmptyRestoreOutput = Join-Path $titleEmptyRestoreRoot 'TITLFAIL.OUT'
+    $titleEmptyRestoreSave = Join-Path $titleEmptyRestoreRoot 'RESTORE.SAV'
+    if (-not (Test-Path -LiteralPath $titleEmptyRestoreOutput -PathType Leaf)) {
+        throw "Pascal GameTitleLoop empty .SAV refusal did not write TITLFAIL.OUT. See $stageRoot\TITLEIN-EMPTY-RESTORE.LOG."
+    }
+    if (-not (Test-Path -LiteralPath $titleEmptyRestoreSave -PathType Leaf) -or
+        (Get-Item -LiteralPath $titleEmptyRestoreSave).Length -ne 0) {
+        throw "Pascal empty .SAV fixture was not an existing zero-byte file. See $stageRoot\TITLEIN-EMPTY-RESTORE.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        $titleEmptyRestoreOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        '--restore-empty' `
+        $titleEmptyRestoreSave
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production empty .SAV refusal differential failed with exit code $LASTEXITCODE." }
+
     Write-Host 'Compiling and running the direct Pascal player-abort decision replay: ABORTIN'
     Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORT.OUT') -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath (Join-Path $stageRoot 'TQUIT.OUT') -Force -ErrorAction SilentlyContinue
@@ -2824,6 +2852,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 85 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, and the successful title-P backing-world reload; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+$directProbeCount = $probeFiles.Count + 86 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, the successful title-P backing-world reload, and empty-SAV title-R refusal; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus the existing standalone runs and MISSLOAD-COMPILE/MISSLOAD-RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
