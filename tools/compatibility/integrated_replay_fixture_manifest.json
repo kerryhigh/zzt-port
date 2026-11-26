@@ -1812,7 +1812,7 @@
     {
       "id": "E2-10-F07",
       "scenario": "pause, zero/positive-speed scheduling, and delayed input",
-      "status": "pending",
+      "status": "complete",
       "evidence_classes": [
         "D",
         "DP",
@@ -1826,12 +1826,181 @@
         "third_party/libzoo/src/libzoo/zoo_game.c:zoo_game_start,zoo_tick",
         "third_party/libzoo/src/libzoo/zoo_input.c:zoo_input_update"
       ],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "test_fixture": "tools/pascal-compat/PAUSEIN.PAS (purpose-built five-cycle positive-speed pause and delayed-input replay)",
+      "oracle_probe": "tools/pascal-compat/PAUSEIN.PAS (compiled with reconstructed Pascal gameplay source)",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
       "verification": {
-        "result": "pending",
-        "fixture_completion_credit": 0
+        "result": "passed",
+        "date": "2026-11-25",
+        "tested_local_revision": "2adbf0bb4021533f0477217003164749921d819f",
+        "clean_runner_exit_code": 0,
+        "fixture_execution_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 121,
+        "pascal_to_production_differential_invocations_in_clean_run": "51/51",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "T1",
+          "C1",
+          "T2",
+          "C2",
+          "T3",
+          "C3",
+          "C4",
+          "C5",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 13,
+        "fields_compared_by_checkpoint": [
+          {
+            "checkpoint": "L0",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "S0",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T1",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C1",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C2",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C3",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C4",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C5",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "F0",
+            "fields_compared": 3399,
+            "result": "matched"
+          }
+        ],
+        "state_field_comparisons": 44187,
+        "state_field_differences": 0,
+        "per_cycle_checkpoint_count": 5,
+        "per_cycle_checkpoint_field_totals": [
+          {
+            "cycles": "C1-C5",
+            "checkpoints": 5,
+            "fields_per_checkpoint": 3399
+          }
+        ],
+        "logical_sound_events": 0,
+        "logical_sound_event_fields": 0,
+        "logical_sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 4,
+        "ordered_playfield_cell_write_fields": 16,
+        "cell_write_differences": 0,
+        "effective_cell_changes": 4,
+        "identical_value_redraws": {
+          "pascal": 3,
+          "production": 3,
+          "classification": "identical character and attribute writes matched and are counted separately from effective cell changes"
+        },
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 833,
+          "generated_save_sha256": "faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7",
+          "stable_serialized_bytes_compared": 461,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 372,
+          "classified_pointer_positions_differing": 0,
+          "round_trip_save_size_bytes": 833,
+          "round_trip_save_sha256": "faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7",
+          "round_trip_stable_serialized_bytes_compared": 829,
+          "round_trip_stable_serialized_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 4
+        },
+        "unexplained_differences": 0,
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 93020,
+            "sha256": "b428274a4cdf8011b2d2c7e65e621ce5d4069b42bff2a10390dbfec6b15603e7"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 5,
+            "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 49,
+            "sha256": "7ec1f5425ab34de63e7132b83f8554b34df5542c0b2aadac8b95675e79f1e9b8"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 833,
+            "sha256": "faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 833,
+            "sha256": "faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7"
+          }
+        ],
+        "fixture_completion_credit": 1,
+        "interventions": [
+          "RandSeed=0; GenerateTransitionTable runs before WorldCreate in reconstructed Pascal startup order.",
+          "World.Info.unk1 is set to zero because WorldCreate leaves it undefined and production test storage starts initialized.",
+          "The verification-only staged GamePlayLoop hook seeds otherwise undefined pauseBlink.",
+          "InputProbeSetNormalizedTape supplies the fixed RPNNRNNN tape; the oracle still invokes original InputUpdate and the player callback.",
+          "A staged logical-clock schedule advances by 5.4924578 hundredths per scheduler poll to exercise positive TickSpeed=6 and TickTimeDuration=12 deterministically.",
+          "Physical audio output is disabled while original SoundQueue calls and logical queue state are captured.",
+          "VideoWriteText is observed for CP437 cell output; the actual GamePlayLoop and gameplay callbacks remain in control.",
+          "Compile and execute in separate fresh DOSBox-X sessions to control inherited DOS allocation history."
+        ]
       }
     },
     {

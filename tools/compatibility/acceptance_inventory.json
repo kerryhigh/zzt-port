@@ -521,7 +521,7 @@
       "id": "E2-06-AC002",
       "blocker": "E2-06",
       "kind": "acceptance_requirement",
-      "requirement": "Include allocation request sizes 0, 1, 26–70, 255, and every observed script/text-window allocation boundary; exercise single and adjacent frees, multiple free blocks, first-fit/reuse order, repeated binds, self/cross-object aliases, source/recipient removal, and board change/unload.",
+      "requirement": "Include allocation request sizes 0, 1, 26\u201370, 255, and every observed script/text-window allocation boundary; exercise single and adjacent frees, multiple free blocks, first-fit/reuse order, repeated binds, self/cross-object aliases, source/recipient removal, and board change/unload.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:185",
       "status": "pending",
       "evidence_class": null,
@@ -589,7 +589,7 @@
       "id": "E2-07-AC001",
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
-      "requirement": "For the engine's normalized input queue, directly compare empty, one-byte, every buffer-length boundary 0–255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Assert consumed-byte order and exact residual buffer.",
+      "requirement": "For the engine's normalized input queue, directly compare empty, one-byte, every buffer-length boundary 0\u2013255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Assert consumed-byte order and exact residual buffer.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:192",
       "status": "pending",
       "evidence_class": null,
@@ -694,7 +694,7 @@
       "id": "E2-08-AC002",
       "blocker": "E2-08",
       "kind": "acceptance_requirement",
-      "requirement": "Cover the 80×25 logical cell coordinate/attribute range wherever shared engine code writes it; compare CP437 character byte, foreground/background/blink bits, write order, and restored underlying cells for gameplay draw, `DrawPlayerSurroundings`, message rows, Scroll/text-window title/body, label jump, append, and close/restore.",
+      "requirement": "Cover the 80\u00d725 logical cell coordinate/attribute range wherever shared engine code writes it; compare CP437 character byte, foreground/background/blink bits, write order, and restored underlying cells for gameplay draw, `DrawPlayerSurroundings`, message rows, Scroll/text-window title/body, label jump, append, and close/restore.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:201",
       "status": "pending",
       "evidence_class": null,
@@ -975,10 +975,11 @@
         "tools/pascal-compat/compare-integrated-gameplay.js",
         "tools/runtime-compat/oop_movement.c",
         "tools/pascal-compat/STATORD.PAS",
-        "tools/pascal-compat/BOARDPASSIN.PAS"
+        "tools/pascal-compat/BOARDPASSIN.PAS",
+        "tools/pascal-compat/PAUSEIN.PAS"
       ],
-      "oracle_output": "F01-F05 oracle captures and evidence are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md. F05 output hashes: INTEGPR.OUT 108638 bytes SHA-256 ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4; INTEGSND.OUT 171 bytes SHA-256 54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20; INTEGCEL.OUT 75014 bytes SHA-256 f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070; INTEGSAV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04; INTEG2SV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de. Generated build outputs are not committed.",
-      "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision af5929bf67fc32c1600d90582a98792db4452bcf (119/119 direct Pascal sessions; 49/49 configured comparisons). F01-F05 each passed their recorded integrated comparisons; F05 matched 15 checkpoints / 51,493 state fields, one sound event, 6,006 effective cell changes, and stable save/load bytes. The 834 Pascal / 835 production repeated identical-value redraw counts are separately classified under the clock/poll cadence contract. Five of the fixed ten scenarios remain pending, so this acceptance case and E2-10 remain partial.",
+      "oracle_output": "F01-F05 oracle captures and evidence are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md. F05 output hashes: INTEGPR.OUT 108638 bytes SHA-256 ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4; INTEGSND.OUT 171 bytes SHA-256 54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20; INTEGCEL.OUT 75014 bytes SHA-256 f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070; INTEGSAV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04; INTEG2SV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de. Generated build outputs are not committed. F06 and F07 oracle captures are recorded in tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md and the fixture manifest. F07 hashes: INTEGPR.OUT 93020 bytes SHA-256 b428274a4cdf8011b2d2c7e65e621ce5d4069b42bff2a10390dbfec6b15603e7; INTEGSND.OUT 5 bytes SHA-256 043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652; INTEGCEL.OUT 49 bytes SHA-256 7ec1f5425ab34de63e7132b83f8554b34df5542c0b2aadac8b95675e79f1e9b8; INTEGSAV.SAV and INTEG2SV.SAV 833 bytes SHA-256 faac8906f433045b02f9e00223d587941c258d10f7d6bda8936fc493622af1a7; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04. Generated build outputs are not committed.",
+      "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision 2adbf0bb4021533f0477217003164749921d819f (121/121 direct Pascal sessions; 51/51 configured comparisons). F01-F07 pass their recorded integrated comparisons; F07 matched 13 checkpoints / 44,187 state fields, zero sound events, four effective cell changes, three same-value redraws on each side, 461 stable generated-save bytes, and 829 stable round-trip bytes. Three of the fixed ten scenarios remain pending, so this acceptance case and E2-10 remain partial.",
       "required_evidence_classes": [
         "D",
         "DP",
@@ -1007,7 +1008,8 @@
         "tools/pascal-compat/compare-integrated-gameplay.js",
         "tools/runtime-compat/oop_movement.c",
         "tools/pascal-compat/STATORD.PAS",
-        "tools/pascal-compat/BOARDPASSIN.PAS"
+        "tools/pascal-compat/BOARDPASSIN.PAS",
+        "tools/pascal-compat/PAUSEIN.PAS"
       ],
       "oracle_output": "F01-F05 oracle captures and evidence are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md. F05 output hashes: INTEGPR.OUT 108638 bytes SHA-256 ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4; INTEGSND.OUT 171 bytes SHA-256 54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20; INTEGCEL.OUT 75014 bytes SHA-256 f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070; INTEGSAV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04; INTEG2SV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de. Generated build outputs are not committed.",
       "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision af5929bf67fc32c1600d90582a98792db4452bcf (119/119 direct Pascal sessions; 49/49 configured comparisons). F01-F05 each passed their recorded integrated comparisons; F05 matched 15 checkpoints / 51,493 state fields, one sound event, 6,006 effective cell changes, and stable save/load bytes. The 834 Pascal / 835 production repeated identical-value redraw counts are separately classified under the clock/poll cadence contract. Five of the fixed ten scenarios remain pending, so this acceptance case and E2-10 remain partial.",
@@ -1021,7 +1023,7 @@
       "id": "E2-10-AC004",
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
-      "requirement": "Compare world and board fields, all 60×25 playable cells plus every source-defined border/sentinel cell, stats and order, script bytes/cursors/aliases, flags/counters/timers/RNG state, ordered effective logical cell changes (with identical-value repeats separately counted under the explicit cadence rule), sound event queue, return/error result, and generated file bytes. Apply only the explicit nondeterminism rules above.",
+      "requirement": "Compare world and board fields, all 60\u00d725 playable cells plus every source-defined border/sentinel cell, stats and order, script bytes/cursors/aliases, flags/counters/timers/RNG state, ordered effective logical cell changes (with identical-value repeats separately counted under the explicit cadence rule), sound event queue, return/error result, and generated file bytes. Apply only the explicit nondeterminism rules above.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:228",
       "status": "partial",
       "evidence_class": "DP",
@@ -1039,7 +1041,8 @@
         "tools/pascal-compat/compare-integrated-gameplay.js",
         "tools/runtime-compat/oop_movement.c",
         "tools/pascal-compat/STATORD.PAS",
-        "tools/pascal-compat/BOARDPASSIN.PAS"
+        "tools/pascal-compat/BOARDPASSIN.PAS",
+        "tools/pascal-compat/PAUSEIN.PAS"
       ],
       "oracle_output": "F01-F05 oracle captures and evidence are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md. F05 output hashes: INTEGPR.OUT 108638 bytes SHA-256 ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4; INTEGSND.OUT 171 bytes SHA-256 54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20; INTEGCEL.OUT 75014 bytes SHA-256 f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070; INTEGSAV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04; INTEG2SV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de. Generated build outputs are not committed.",
       "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision af5929bf67fc32c1600d90582a98792db4452bcf (119/119 direct Pascal sessions; 49/49 configured comparisons). F01-F05 each passed their recorded integrated comparisons; F05 matched 15 checkpoints / 51,493 state fields, one sound event, 6,006 effective cell changes, and stable save/load bytes. The 834 Pascal / 835 production repeated identical-value redraw counts are separately classified under the clock/poll cadence contract. Five of the fixed ten scenarios remain pending, so this acceptance case and E2-10 remain partial.",
@@ -1051,7 +1054,7 @@
       "id": "E2-10-AC005",
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
-      "requirement": "all 10 fixtures finish deterministically under their tapes with zero unexplained per-checkpoint differences. Any mismatch is triaged as a compatibility defect or an explicitly justified environment-dependent case; it cannot be waived as “visual only” when engine state/events differ.",
+      "requirement": "all 10 fixtures finish deterministically under their tapes with zero unexplained per-checkpoint differences. Any mismatch is triaged as a compatibility defect or an explicitly justified environment-dependent case; it cannot be waived as \u201cvisual only\u201d when engine state/events differ.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:229",
       "status": "partial",
       "evidence_class": "I",
@@ -1069,7 +1072,8 @@
         "tools/pascal-compat/compare-integrated-gameplay.js",
         "tools/runtime-compat/oop_movement.c",
         "tools/pascal-compat/STATORD.PAS",
-        "tools/pascal-compat/BOARDPASSIN.PAS"
+        "tools/pascal-compat/BOARDPASSIN.PAS",
+        "tools/pascal-compat/PAUSEIN.PAS"
       ],
       "oracle_output": "F01-F05 oracle captures and evidence are recorded in tools/compatibility/integrated_replay_fixture_manifest.json and tools/compatibility/evidence/2026-11-25-e2-10-board-neighbor-passages.md. F05 output hashes: INTEGPR.OUT 108638 bytes SHA-256 ae820773cc411d5ea965977b083d7e1c679e2c552a5860618d04414fc80b61b4; INTEGSND.OUT 171 bytes SHA-256 54ce182b9a2f5d64ea10669833d391589fd937e8ecbf61ac88453a310b0a5c20; INTEGCEL.OUT 75014 bytes SHA-256 f4be88707882d7cd34a963b0efe2f4fc885822f05523ef97c14c6a9b5d69b070; INTEGSAV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de; INTEGLOD.OUT 3 bytes SHA-256 f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04; INTEG2SV.SAV 1580 bytes SHA-256 c034768a1dfb2d8013f79c5ae89da27ce74ba01021ca94396511a7da828e86de. Generated build outputs are not committed.",
       "verification_result": "Partial: clean full runner passed on 2026-11-25 at revision af5929bf67fc32c1600d90582a98792db4452bcf (119/119 direct Pascal sessions; 49/49 configured comparisons). F01-F05 each passed their recorded integrated comparisons; F05 matched 15 checkpoints / 51,493 state fields, one sound event, 6,006 effective cell changes, and stable save/load bytes. The 834 Pascal / 835 production repeated identical-value redraw counts are separately classified under the clock/poll cadence contract. Five of the fixed ten scenarios remain pending, so this acceptance case and E2-10 remain partial.",
