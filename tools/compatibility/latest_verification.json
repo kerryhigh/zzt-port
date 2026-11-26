@@ -2070,9 +2070,9 @@
       "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record also matched through shared .BRD import/export; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
       "runtime": "passed in the clean 2026-11-26 full Pascal runner: tools/runtime-compat/verify.ps1 exited 0; scheduler matrix and real shared-engine lifecycle harness built and passed.",
-      "android_compat": "passed; tools/android-compat/verify.ps1 exit 0",
-      "android_build": "passed fresh offline on 2026-11-24: .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest with GRADLE_USER_HOME=build\\gradle-home; exit 0, 64 tasks (13 executed, 51 up-to-date), native engine built for arm64-v8a and x86_64",
-      "windows_ctest": "passed after the E2-02 API change: CMake-generated zzt_core, zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test targets built with MSBuild 17.14.19 (Release x64, BuildProjectReferences=false); CTest 3/3 passed. The CMake ZERO_CHECK wrapper stalled, so explicit generated projects were built directly"
+      "android_compat": "passed 2026-11-26; tools/android-compat/verify.ps1 exit 0: Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
+      "android_build": "passed fresh offline 2026-11-26: GRADLE_USER_HOME=build\\gradle-home; .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); native engine built for arm64-v8a and x86_64.",
+      "windows_ctest": "passed fresh 2026-11-26: powershell -NoProfile -ExecutionPolicy Bypass -File windows\\build.ps1 -BuildDirectory build\\windows-engine2-check; Release x64 targets zzt_windows, zzt_windows_smoke, zzt_renderer_test, zzt_sound_pcm_test built; CTest 3/3 passed. Generated executable and build files are ignored."
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
