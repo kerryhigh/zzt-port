@@ -368,10 +368,11 @@ static void resolve_confirmation(uint16_t key) {
 	g_confirmation_mode = CONFIRM_NONE;
 	clear_sidebar_prompt_line(5);
 	if (mode == CONFIRM_QUIT_TITLE) {
+		zoo_game_resolve_title_quit(&g_zoo, accepted);
 		if (accepted) PostMessageW(g_window, WM_CLOSE, 0, 0);
 	} else if (mode == CONFIRM_QUIT_PLAY) {
+		zoo_game_resolve_end_play(&g_zoo, accepted, g_paused_before_confirmation);
 		if (accepted) zoo_world_return_title(&g_zoo);
-		else g_zoo.game_paused = g_paused_before_confirmation;
 	}
 	InvalidateRect(g_window, NULL, FALSE);
 }

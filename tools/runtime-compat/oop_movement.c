@@ -98,6 +98,8 @@ static uint8_t integrated_demo_world_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_title_restore_failure_fields[INTEGRATED_TITLE_RESTORE_FAILURE_FIELD_CAPACITY];
 static int32_t integrated_title_restore_failure_field_count_value;
 static int32_t integrated_title_restore_failure_error_value;
+static int32_t integrated_end_play_output[7][5];
+static int32_t integrated_title_quit_output[3][2];
 static uint8_t integrated_editor_brd_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_editor_brd_length_value;
 static uint8_t integrated_f10_bad_world_bytes[512];
@@ -4554,6 +4556,87 @@ int32_t run_integrated_title_lifecycle_checks(void) {
 	force_elapsed_for_tick_check = false;
 	integrated_schedule_enabled = false;
 	return 0;
+}
+
+int32_t run_integrated_end_play_checks(void) {
+	static const uint8_t answer_keys[3] = { 'Y', 'N', 27 };
+	int32_t row = 0;
+	int paused, answer;
+	memset(integrated_end_play_output, 0, sizeof(integrated_end_play_output));
+	for (paused = 0; paused <= 1; paused++) {
+		for (answer = 0; answer < 3; answer++) {
+			memset(&state, 0, sizeof(state));
+			memset(&video, 0, sizeof(video));
+			state.d_video = &video;
+			state.func_draw_sidebar = test_sidebar_update;
+			state.func_random = integrated_gameplay_random;
+			state.random_seed = 0;
+			zoo_world_create(&state);
+			zoo_game_start(&state, GS_PLAY);
+			state.world.info.health = 37;
+			state.game_paused = paused != 0;
+			state.input.key_pressed = 'Q';
+			zoo_game_resolve_end_play(&state, answer_keys[answer] == 'Y', paused != 0);
+			integrated_end_play_output[row][0] = row + 1;
+			integrated_end_play_output[row][1] = state.game_play_exit_requested ? 1 : 0;
+			integrated_end_play_output[row][2] = state.input.key_pressed;
+			integrated_end_play_output[row][3] = state.game_paused ? 1 : 0;
+			integrated_end_play_output[row][4] = state.world.info.health;
+			row++;
+		}
+	}
+	memset(&state, 0, sizeof(state));
+	memset(&video, 0, sizeof(video));
+	state.d_video = &video;
+	state.func_draw_sidebar = test_sidebar_update;
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	zoo_world_create(&state);
+	zoo_game_start(&state, GS_PLAY);
+	state.world.info.health = 0;
+	state.input.key_pressed = 27;
+	zoo_game_resolve_end_play(&state, true, false);
+	integrated_end_play_output[row][0] = row + 1;
+	integrated_end_play_output[row][1] = state.game_play_exit_requested ? 1 : 0;
+	integrated_end_play_output[row][2] = state.input.key_pressed;
+	integrated_end_play_output[row][3] = state.game_paused ? 1 : 0;
+	integrated_end_play_output[row][4] = state.world.info.health;
+	return 0;
+}
+
+uint32_t integrated_end_play_output_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_end_play_output;
+}
+
+int32_t integrated_end_play_output_rows(void) {
+	return 7;
+}
+
+int32_t run_integrated_title_quit_checks(void) {
+	int32_t row;
+	memset(integrated_title_quit_output, 0, sizeof(integrated_title_quit_output));
+	for (row = 0; row < 3; row++) {
+		memset(&state, 0, sizeof(state));
+		memset(&video, 0, sizeof(video));
+		state.d_video = &video;
+		state.func_draw_sidebar = test_sidebar_update;
+		state.func_random = integrated_gameplay_random;
+		state.random_seed = 0;
+		zoo_world_create(&state);
+		zoo_game_start(&state, GS_TITLE);
+		zoo_game_resolve_title_quit(&state, row == 0);
+		integrated_title_quit_output[row][0] = row + 1;
+		integrated_title_quit_output[row][1] = state.game_title_exit_requested ? 1 : 0;
+	}
+	return 0;
+}
+
+uint32_t integrated_title_quit_output_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_title_quit_output;
+}
+
+int32_t integrated_title_quit_output_rows(void) {
+	return 3;
 }
 
 static int32_t run_integrated_title_restore_replay(int32_t save_length, bool capture_cancel) {

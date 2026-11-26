@@ -1181,6 +1181,24 @@ Java_com_kerry_zzt_ZztNative_returnToTitle(JNIEnv *env, jclass clazz) {
 }
 
 JNIEXPORT void JNICALL
+Java_com_kerry_zzt_ZztNative_resolveEndPlay(JNIEnv *env, jclass clazz,
+        jboolean accepted, jboolean was_paused) {
+    (void) env; (void) clazz;
+    if (ready && game.game_state == GS_PLAY) {
+        zoo_game_resolve_end_play(&game, accepted == JNI_TRUE, was_paused == JNI_TRUE);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_kerry_zzt_ZztNative_resolveTitleQuit(JNIEnv *env, jclass clazz,
+        jboolean accepted) {
+    (void) env; (void) clazz;
+    if (ready && game.game_state == GS_TITLE) {
+        zoo_game_resolve_title_quit(&game, accepted == JNI_TRUE);
+    }
+}
+
+JNIEXPORT void JNICALL
 Java_com_kerry_zzt_ZztNative_setMonochrome(JNIEnv *env, jclass clazz, jboolean enabled) {
     (void) env; (void) clazz;
     if (!ready) return;

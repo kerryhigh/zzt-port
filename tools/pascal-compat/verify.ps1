@@ -2760,11 +2760,36 @@ end;
         '--restore-failure' `
         $titleFailureSave
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production malformed .SAV restore differential failed with exit code $LASTEXITCODE." }
+
+    Write-Host 'Compiling and running the direct Pascal player-abort decision replay: ABORTIN'
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORT.OUT') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'TQUIT.OUT') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORTIN.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'ABORTIN.EXE') -Force -ErrorAction SilentlyContinue
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ABORTIN.PAS') -Destination (Join-Path $stageRoot 'ABORTIN.PAS') -Force
+    Invoke-DosboxSession 'ABORTIN-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC ABORTIN.PAS > ABORTCOMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'ABORTIN.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\ABORTIN.EXE. See $stageRoot\ABORTCOMP.LOG and $stageRoot\ABORTIN-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'ABORTIN-RUN' @('BIN\ABORTIN.EXE')
+    $abortOutput = Join-Path $stageRoot 'ABORT.OUT'
+    $titleQuitOutput = Join-Path $stageRoot 'TQUIT.OUT'
+    if (-not (Test-Path -LiteralPath $abortOutput -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $titleQuitOutput -PathType Leaf)) {
+        throw "Pascal end-play/title-quit replay did not write both decision captures. See $stageRoot\ABORTIN-RUN.LOG."
+    }
+    & node 'tools/pascal-compat/compare-player-abort.js' `
+        $abortOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        $titleQuitOutput
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production player-abort decision differential failed with exit code $LASTEXITCODE." }
 }
 finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 80 # Includes twelve separate compile/run probes plus isolated HILODPRB and BOARDRLE runtimes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures, the TITLEIN compile/run pair plus isolated restore-save generation, restore, cancel/retry, and malformed-version refusal runs, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, HILODPRB-RUN, BOARDRLE-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, TITLEIN-COMPILE, TITLEIN, TITLEIN-SAVE, TITLEIN-RESTORE, TITLEIN-RESTORE-CANCEL-RETRY, TITLEIN-BAD-RESTORE, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 82 # Includes twelve separate compile/run probes plus isolated HILODPRB and BOARDRLE runtimes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures, the TITLEIN compile/run pair plus isolated restore-save generation, restore, cancel/retry, and malformed-version refusal runs, ABORTIN compile/run, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, HILODPRB-RUN, BOARDRLE-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, TITLEIN-COMPILE, TITLEIN, TITLEIN-SAVE, TITLEIN-RESTORE, TITLEIN-RESTORE-CANCEL-RETRY, TITLEIN-BAD-RESTORE, ABORTIN-COMPILE, ABORTIN-RUN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

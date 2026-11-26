@@ -58,6 +58,8 @@ final class ZztNative {
     static native int editorUpdateStatText(int x, int y, byte[] text);
     static native int editorRemoveStat(int x, int y);
     static native int returnToTitle();
+    static native void resolveEndPlay(boolean accepted, boolean wasPaused);
+    static native void resolveTitleQuit(boolean accepted);
     static native void setMonochrome(boolean enabled);
     static native void setModalPromptBlocked(boolean blocked);
     static native void togglePause();

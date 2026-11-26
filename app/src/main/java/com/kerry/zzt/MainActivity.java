@@ -1077,9 +1077,13 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
         AlertDialog quitDialog = new AlertDialog.Builder(this)
                 .setTitle("Quit ZZT?")
                 .setMessage("Leave ZZT for Android?")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Quit", (dialog, which) -> finish())
+                .setNegativeButton("Cancel", (dialog, which) -> ZztNative.resolveTitleQuit(false))
+                .setPositiveButton("Quit", (dialog, which) -> {
+                    ZztNative.resolveTitleQuit(true);
+                    finish();
+                })
                 .create();
+        quitDialog.setOnCancelListener(dialog -> ZztNative.resolveTitleQuit(false));
         showBlockedDialog(quitDialog);
     }
 
@@ -1102,7 +1106,6 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
         if (status == null || status.length == 0 || status[0] == GAME_STATE_TITLE) {
             confirmQuit();
         } else if (status[0] == GAME_STATE_PLAY) {
-            ZztNative.keyStroke(KEY_ESCAPE);
             requestEndPlay();
         }
     }
@@ -1116,16 +1119,22 @@ public final class MainActivity extends Activity implements Choreographer.FrameC
             return;
         }
 
+        boolean wasPaused = status[14] != 0;
         acquireModalPromptBlock();
         AlertDialog prompt = new AlertDialog.Builder(this)
                 .setTitle("End this game?")
                 .setNegativeButton("No", (dialog, which) -> {
+                    ZztNative.resolveEndPlay(false, wasPaused);
                     releaseModalPromptBlock();
                     refreshStatus();
                 })
-                .setPositiveButton("Yes", (dialog, which) -> returnToTitle())
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    ZztNative.resolveEndPlay(true, wasPaused);
+                    returnToTitle();
+                })
                 .create();
         prompt.setOnCancelListener(dialog -> {
+            ZztNative.resolveEndPlay(false, wasPaused);
             releaseModalPromptBlock();
             refreshStatus();
         });

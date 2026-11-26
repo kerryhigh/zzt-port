@@ -1028,6 +1028,18 @@ void zoo_game_start(zoo_state *state, zoo_game_state game_state) {
 	state->sound.block_queueing = false;
 }
 
+void zoo_game_resolve_end_play(zoo_state *state, bool accepted, bool was_paused) {
+	/* Pascal's GamePromptEndPlay consumes the prompt key, records the Yes/No
+	   result, and leaves the pause state that existed before the prompt intact. */
+	state->input.key_pressed = 0;
+	state->game_play_exit_requested = accepted;
+	state->game_paused = was_paused;
+}
+
+void zoo_game_resolve_title_quit(zoo_state *state, bool accepted) {
+	state->game_title_exit_requested = accepted;
+}
+
 void zoo_game_stop(zoo_state *state) {
 	state->game_state = GS_NONE;
 	zoo_sound_clear_queue(&(state->sound));
