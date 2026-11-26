@@ -119,21 +119,24 @@
       "requirement": "Create a checked-in fixture manifest with, for each format, at least one real source-produced valid file and generated boundary fixtures for every serialized field/record. Compare full output bytes, not selected fields.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:153",
       "status": "partial",
-      "evidence_class": "DP",
+      "evidence_class": "D+DP",
       "production_implementation": [
         "third_party/libzoo/src/libzoo/zoo_editor_brd.c (zoo_editor_brd_import_record, zoo_editor_brd_parse, zoo_editor_brd_serialize)",
         "third_party/libzoo/src/libzoo/zoo_game_io.c (zoo_board_close, zoo_io_world_write)",
-        "tools/serializer-compat/world_roundtrip.c (run_editor_brd_record_roundtrip, run_pascal_boardclose_worldsave)"
+        "tools/serializer-compat/world_roundtrip.c (run_editor_brd_record_roundtrip, run_pascal_boardclose_worldsave)",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read (rejects a short 512-byte header before applying world metadata)"
       ],
       "test_fixture": [
         "tools/compatibility/serialization_fixture_manifest.json (source-produced .ZZT/.SAV/.BRD/.HI samples with hashes and comparison outcomes)",
         "tools/pascal-compat/BOARDENC.PAS (source BoardClose output capture)",
         "tools/pascal-compat/compare-pascal-boardenc.js",
         "build/pascal-compat-verification/BOARDENC.BRD (generated staging fixture; not committed)",
-        "build/pascal-compat-verification/BOARDENC.ZZT (generated Pascal WorldSave output; not committed)"
+        "build/pascal-compat-verification/BOARDENC.ZZT (generated Pascal WorldSave output; not committed)",
+        "tools/pascal-compat/TITLEIN.PAS mode E and tools/pascal-compat/compare-title-lifecycle.js (--restore-empty)",
+        "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
       ],
-      "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa.",
-      "verification_result": "Partial DP: the checked-in serialization fixture manifest records one source-produced .ZZT, .SAV, .BRD, and .HI sample, each with a complete matching byte comparison and SHA-256. The 289-byte Pascal BoardClose record round-trips through shared LibZoo .BRD import/export, and the complete 25,928-byte Pascal WorldSave output matches production zoo_board_close plus zoo_io_world_write byte-for-byte. The clean full runner passed 84/84 direct Pascal sessions and 44/44 configured comparison invocations. The required per-field/boundary matrix and full malformed/error coverage remain outstanding.",
+      "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa. Empty RESTORE.SAV title-R refusal: zero-byte fixture SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; 3,384/3,386 comparable world/board/stat/tile fields matched (two route-specific exclusions).",
+      "verification_result": "Partial D/DP: the four-format manifest and valid source-produced .ZZT/.SAV/.BRD/.HI byte comparisons remain recorded; Pascal BoardClose and WorldSave output matches the shared serializers byte-for-byte. The clean 2026-11-26 run passed 140 direct Pascal sessions and 62/62 differentials, including an existing zero-byte .SAV refusal through GameTitleLoop R (3,384/3,386 comparable state fields; ZOO_ERROR_INVAL -2). The checked-in per-field/error-boundary matrix and remaining malformed cases are still outstanding; this case remains partial.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -271,7 +274,8 @@
         "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_start/zoo_tick/zoo_board_change/zoo_board_enter",
         "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_resolve_end_play/zoo_game_resolve_title_quit",
         "third_party/libzoo/src/libzoo/zoo.c::zoo_world_reload",
-        "third_party/libzoo/src/libzoo/zoo.c::zoo_world_play (successful and failed saved-world reload routes)"
+        "third_party/libzoo/src/libzoo/zoo.c::zoo_world_play (successful and failed saved-world reload routes)",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read"
       ],
       "test_fixture": [
         "tools/pascal-compat/DEMOINT.PAS (F01 initial full-world load and gameplay)",
@@ -297,13 +301,17 @@
         "tools/pascal-compat/MISSLOAD.PAS and compare-missing-world-load.js (missing .ZZT title reload and 18 preserved world/board fields)",
         "tools/runtime-compat/world_reload.c::run_world_play_missing_reload_capture (shared zoo_world_reload with missing-file I/O result)",
         "tools/compatibility/evidence/2026-11-26-e2-03-missing-world-reload.md",
-        "tools/compatibility/evidence/2026-11-26-e2-03-title-p-world-reload.md"
+        "tools/compatibility/evidence/2026-11-26-e2-03-title-p-world-reload.md",
+        "tools/pascal-compat/TITLEIN.PAS (mode E: existing zero-byte RESTORE.SAV through the original GameTitleLoop R path)",
+        "tools/pascal-compat/compare-title-lifecycle.js (--restore-empty)",
+        "tools/runtime-compat/oop_movement.c::run_integrated_title_restore_failure_checks (zero-length restore fixture)",
+        "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
       ],
-      "oracle_output": "TITLEIN P output: build/pascal-compat-verification/INTEGPR.OUT (50,437 bytes; SHA-256 fc4d432a6ccbf007b95d50114cb7e3a8cccfd18c9eec2060d088210e0a1d62f1). R output: build/pascal-compat-verification/TITLER/INTEGPR.OUT (69,715 bytes; SHA-256 1ec2b9ed36354468804e57d7a2c7c0179ed175fea128eadafc7f941f10e0e0ea). R consumes Pascal-generated build/pascal-compat-verification/TITLER/RESTORE.SAV (1,649 bytes; SHA-256 f1b86edd83a2d0d8a0ff3279ddbb75afb9fd072188e78968b0036f8a5c498611). Unsupported-version R refusal output: build/pascal-compat-verification/TITLFAIL/TITLFAIL.OUT (7,115 bytes; SHA-256 52057421f0e73bf296cdb117660f20010f7317ee5ba9473c3485b024f303412c), using malformed build/pascal-compat-verification/TITLFAIL/RESTORE.SAV (512 bytes; SHA-256 378621df4e6f111e6ce670297eeb7a21a6613732b88b22d79619124cd7894c2f). Transient verification outputs; not committed. Cancel/retry output: build/pascal-compat-verification/TITLRTY/INTEGPR.OUT (99,592 bytes; SHA-256 4cc0243c80d0742bd16e60d56d9f07e59074bf8d68263ed76597678a4f081d97), using the same Pascal-generated build/pascal-compat-verification/TITLRTY/RESTORE.SAV (1,649 bytes; SHA-256 f1b86edd83a2d0d8a0ff3279ddbb75afb9fd072188e78968b0036f8a5c498611). Transient outputs are regenerated and not committed. Player abort decision captures: build/pascal-compat-verification/ABORT.OUT (83 bytes; SHA-256 B81BBC6D066E636BF3EEC8A236376CF2F7BF51C8AF94314716899B37A00E9511), seven rows for Yes/No/Escape at both pause states plus health-zero no-prompt. Title quit decisions: build/pascal-compat-verification/TQUIT.OUT (15 bytes; SHA-256 183886D371228921F1F961DF371EE891D14EC00CC771F6F376D389964697AEA4), three Yes/No/Escape rows. Transient captures are regenerated, not committed. Missing-file reload capture: MISSLOAD.OUT (51 bytes; SHA-256 CA813E093836052530ADE37C5D89B36C592FAA8819A3792FDCF16DDEBF5C45E8); Pascal returned false and all 18 preserved fields matched production.",
+      "oracle_output": "TITLEIN P output: build/pascal-compat-verification/INTEGPR.OUT (50,437 bytes; SHA-256 fc4d432a6ccbf007b95d50114cb7e3a8cccfd18c9eec2060d088210e0a1d62f1). R output: build/pascal-compat-verification/TITLER/INTEGPR.OUT (69,715 bytes; SHA-256 1ec2b9ed36354468804e57d7a2c7c0179ed175fea128eadafc7f941f10e0e0ea). R consumes Pascal-generated build/pascal-compat-verification/TITLER/RESTORE.SAV (1,649 bytes; SHA-256 f1b86edd83a2d0d8a0ff3279ddbb75afb9fd072188e78968b0036f8a5c498611). Unsupported-version R refusal output: build/pascal-compat-verification/TITLFAIL/TITLFAIL.OUT (7,115 bytes; SHA-256 52057421f0e73bf296cdb117660f20010f7317ee5ba9473c3485b024f303412c), using malformed build/pascal-compat-verification/TITLFAIL/RESTORE.SAV (512 bytes; SHA-256 378621df4e6f111e6ce670297eeb7a21a6613732b88b22d79619124cd7894c2f). Transient verification outputs; not committed. Cancel/retry output: build/pascal-compat-verification/TITLRTY/INTEGPR.OUT (99,592 bytes; SHA-256 4cc0243c80d0742bd16e60d56d9f07e59074bf8d68263ed76597678a4f081d97), using the same Pascal-generated build/pascal-compat-verification/TITLRTY/RESTORE.SAV (1,649 bytes; SHA-256 f1b86edd83a2d0d8a0ff3279ddbb75afb9fd072188e78968b0036f8a5c498611). Transient outputs are regenerated and not committed. Player abort decision captures: build/pascal-compat-verification/ABORT.OUT (83 bytes; SHA-256 B81BBC6D066E636BF3EEC8A236376CF2F7BF51C8AF94314716899B37A00E9511), seven rows for Yes/No/Escape at both pause states plus health-zero no-prompt. Title quit decisions: build/pascal-compat-verification/TQUIT.OUT (15 bytes; SHA-256 183886D371228921F1F961DF371EE891D14EC00CC771F6F376D389964697AEA4), three Yes/No/Escape rows. Transient captures are regenerated, not committed. Missing-file reload capture: MISSLOAD.OUT (51 bytes; SHA-256 CA813E093836052530ADE37C5D89B36C592FAA8819A3792FDCF16DDEBF5C45E8); Pascal returned false and all 18 preserved fields matched production. Empty-file R refusal: TILEMPT/TITLFAIL.OUT, 7,113 bytes, SHA-256 61003ce108e18dfd7bf5b7826df3801ddbda76ae93bebdbefd9115e523bcc42; RESTORE.SAV is 0 bytes (SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855).",
       "additional_oracle_outputs": [
         "Successful title-P full-world reload: build/pascal-compat-verification/TITLP/INTEGPR.OUT (65,591 bytes; SHA-256 D060FA833D8FFC69AAE4880ADBD9B5A34A7D555E12C9021A63296987894E5ED); exact build/pascal-compat-verification/TITLP/DEMO.ZZT fixture (26,465 bytes; SHA-256 B54610B5A52B125FA3083F38F6BEEC1CF2178655575FC0D60E999E2659253831); transient outputs are regenerated and not committed."
       ],
-      "verification_result": "Partial. The clean 2026-11-26 full runner passed 139 direct Turbo Pascal 5.5 sessions (54 standard, 85 standalone), 61/61 direct Pascal-to-production differential invocations, all ten integrated fixtures (238 checkpoints, 824,821 state-field comparisons, 169 logical cycles), the runtime suite, and first-divergence negative control. The successful full-world title-P reload matched at 3 checkpoints / 10,360 state fields; title P/R/refusal/cancel-retry routes and direct player-abort/title-quit decisions passed. For the missing backing-world title-P path, direct Pascal WorldLoad returned false; production zoo_world_play returned ZOO_ERROR_INVAL (-2) before starting play, with all 18 preserved world/board fields matched. AC001 remains partial because other save/return routes and the broader successful/refused transition matrix remain mandatory.",
+      "verification_result": "Partial D/DP. The clean 2026-11-26 run passed 140 direct Turbo Pascal sessions (54 standard, 86 standalone), 62/62 Pascal-to-production differentials, all ten integrated fixtures (238 checkpoints, 824,821 fields, 169 logical cycles), and the runtime suite. Title P/R success, unsupported-version refusal, cancel/retry, empty-file refusal (3,384/3,386 comparable fields), player abort, title quit, and missing-world reload preservation were exercised. The empty-file route returns ZOO_ERROR_INVAL (-2); field 2 private board-buffer length and field 16 frontend-consumed InputKeyPressed are excluded. Remaining save/return routes and the consistent successful/refused world/board transition matrix remain mandatory.",
       "required_evidence_classes": [
         "D",
         "DP"
