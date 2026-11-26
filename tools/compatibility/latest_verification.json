@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-26",
-    "root_revision": "4a10f5b33963108128b6b11dae5d1646e0d09979",
+    "root_revision": "eb906fd5508c0a7cc8428cdfb7e52c44bc626ec0",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26 for source revision 4a10f5b33963108128b6b11dae5d1646e0d09979: 140 direct Turbo Pascal 5.5 sessions (54 standard, 86 standalone), 62/62 direct differentials, and integrated F01-F10 passed with 238 checkpoints, 824,821 state-field comparisons, and 169/169 logical-cycle snapshots. Original title P/R success, unsupported-version R refusal, R cancel/retry, and empty-file R refusal passed; the empty-save route matched 3,384/3,386 comparable fields and returned ZOO_ERROR_INVAL (-2). Player abort matched 7/7, title quit 3/3, and the missing-world title-P refusal preserved all 18 compared world/board fields. The runtime suite and first-divergence negative control passed. There were zero unexplained comparable differences; the existing F05/F08 redraw cadence and classified nondeterministic bytes retain their prior contracts. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26: 142 direct Turbo Pascal 5.5 sessions (54 standard, 88 standalone; session count includes the two ABORTLP compile/run sessions), 62/62 direct differentials, and integrated F01-F10 passed with 238 checkpoints, 824,821 state-field comparisons, and 169/169 logical-cycle snapshots. Title P/R lifecycle routes, empty-file refusal, retry, missing-world preservation, player-abort decisions 7/7, title quit 3/3, and accepted-abort loop boundary 22/22 fields passed. Runtime suite and first-divergence negative control passed. No unexplained comparable differences; existing redraw-cadence and classified nondeterministic-byte contracts remain. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -58,16 +58,16 @@
       "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
-      "sessions": 140,
+      "sessions": 142,
       "standard_programs": 54,
-      "standalone_sessions": 86,
-      "session_result": "140 direct Turbo Pascal 5.5 sessions passed in the clean run: 54 standard programs and 86 standalone compile/run or fixture sessions, including the ten integrated fixtures, all title lifecycle routes, ABORTIN, and MISSLOAD compile/run. BOARDENC uses an explicit empty output-stream Flush after WorldLoad; this capture-only hook emits no probe bytes and stabilizes the direct serialization capture."
+      "standalone_sessions": 88,
+      "session_result": "142 direct Turbo Pascal 5.5 compile/run sessions passed in the clean run: 54 standard probes and 88 standalone compile/run or fixture sessions, including the ten integrated fixtures, all title lifecycle routes, ABORTIN, ABORTLP, and MISSLOAD compile/run. The runner previously omitted ABORTLP-COMPILE and ABORTLP-RUN from its static standalone-session offset; the offset is corrected. BOARDENC uses an explicit empty output-stream Flush after WorldLoad; this capture-only hook emits no probe bytes and stabilizes the direct serialization capture."
     },
     "direct_differential_comparisons": {
       "configured": 62,
       "passed": 62,
       "failed": 0,
-      "result": "62/62 direct Pascal-to-production differential invocations passed in the clean run, including the zero-byte GameTitleLoop R refusal (3,384/3,386 comparable fields), successful and missing-world title-P reload, the nine-row scheduler matrix, integrated F01-F10, other title lifecycle routes, and player-abort/title-quit decisions. Zero unexplained comparable differences; F05/F08 identical-value redraw cadence remains separately classified."
+      "result": "62/62 direct Pascal-to-production differential invocations passed in the clean run, including the accepted-abort loop comparison (22/22 captured fields) inside the existing abort/quit comparator invocation. Integrated F01-F10, title lifecycle routes, scheduler, save/load, and decision comparisons passed. Zero unexplained comparable differences; F05/F08 identical-value redraw cadence remains separately classified."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2085,7 +2085,7 @@
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
-      "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player abort, title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the consistent successful/refused board/world transition matrix remain mandatory.",
+      "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player abort decisions and the accepted Yes loop boundary (22/22 fields), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the consistent successful/refused board/world transition matrix remain mandatory.",
       "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
@@ -2095,6 +2095,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-03-AC001: added a compiled-Pascal accepted player-abort GamePlayLoop capture and compared the shared-engine exit boundary across 22 fields. The clean full runner exited 0; its direct-session tally is corrected from 140 to 142 to include ABORTLP compile/run. E2-03 remains partial; no case or fixture IDs were added.",
       "Generalized integrated replay snapshots to live stat counts and unique script owners; the clean Pascal suite passed 84 direct sessions and 43/43 configured differentials. The two-script, three-stat prototype matched 31,158 fields across nine checkpoints. E2-10 remains open at 0/10 fixtures.",
       "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity.",
       "Pre-transition prototype checkpoint: the integrated Pascal/production replay matched 31,260 state fields, two sound events / 20 fields, and nine cell writes / 36 fields. The later T1 checkpoint addition is recorded in the latest result.",
@@ -2154,9 +2155,9 @@
     "latest_attempt": {
       "date": "2026-11-26",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "4a10f5b33963108128b6b11dae5d1646e0d09979",
+      "source_revision": "eb906fd5508c0a7cc8428cdfb7e52c44bc626ec0",
       "full_pascal_runner_exit_code": 0,
-      "direct_pascal_sessions_passed": 140,
+      "direct_pascal_sessions_passed": 142,
       "configured_differentials_passed": 62,
       "configured_differentials_failed": 0,
       "failure": null,
@@ -2166,7 +2167,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean full runner passed: 140/140 direct sessions (54 standard, 86 standalone), 62/62 direct differential invocations, integrated F01-F10 (238 checkpoints / 824,821 fields / 169 logical cycles), successful and refused title P/R paths including empty-save R refusal, 7/7 player-abort decisions, 3/3 title-quit decisions, missing-world title-P preservation, and runtime suite. Empty RESTORE.SAV matched 3,384/3,386 comparable fields with ZOO_ERROR_INVAL (-2); no unexplained comparable mismatches. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
+      "status": "Clean full runner passed: 142/142 direct sessions (54 standard, 88 standalone), 62/62 direct differential invocations, integrated F01-F10 (238 checkpoints / 824,821 fields / 169 logical cycles), title P/R lifecycle routes and refusals, 7/7 player-abort decisions, 3/3 title-quit decisions, accepted-abort loop boundary 22/22 fields, missing-world title-P preservation, and runtime suite. The previous static direct-session offset omitted the two ABORTLP compile/run sessions and is corrected. No unexplained comparable mismatches. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path; it records the observed version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -2755,7 +2756,10 @@
         "integrated_fixtures": "10/10; 238 checkpoints; 824821 state fields; 169 logical cycles",
         "runtime_suite_exit_code": 0,
         "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
-      }
+      },
+      "accepted_abort_loop_fields_compared": 22,
+      "accepted_abort_loop_differences": 0,
+      "accepted_abort_loop_comparison_exit_code": 0
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -3255,7 +3259,32 @@
         "committed": false
       },
       "staging_intervention": "Deterministic InputProbeSetReadKeys supplies Yes/No/Escape at the existing Pascal prompt input boundary. Original GamePromptEndPlay and SidebarPromptYesNo routines are unchanged. TQUIT.OUT follows DOS 8.3 naming.",
-      "full_run_exit_code": 0
+      "full_run_exit_code": 0,
+      "accepted_player_abort_loop": {
+        "probe": "tools/pascal-compat/ABORTLP.PAS::GamePlayLoop(true)",
+        "comparator": "tools/pascal-compat/compare-player-abort.js",
+        "production_harness": "tools/runtime-compat/oop_movement.c::run_integrated_end_play_loop_check",
+        "production_boundary": "zoo_game_resolve_end_play(accepted=true, player_active=true) followed by shared zoo_tick exit transition",
+        "evidence_class": "D+DP",
+        "result": "passed",
+        "fields_compared": 22,
+        "fields_matched": 22,
+        "pascal_output": {
+          "path": "build/pascal-compat-verification/ABORTLP.OUT",
+          "size_bytes": 51,
+          "sha256": "FAEF2D8E8EE74B138178B061437AF70DACC8F792ECA498D155FB0B731C680F65",
+          "committed": false
+        },
+        "demo_fixture_sha256": "B54610B5A52B125FA3083F38F6BEEC1CF2178655575FC0D60E999E2659253831",
+        "index_mapping": "Production zero-based sound-buffer position is reported plus one to compare Pascal SoundBufferPos; no behavior field is excluded.",
+        "staging_interventions": [
+          "The direct Pascal run queues Escape and supplies Yes at the existing input boundary, seeds the logical clock schedule, and stops only after the actual GamePlayLoop returns.",
+          "Production initializes the same DEMO world, supplies the already-resolved accepted decision at the engine API boundary, and executes shared zoo_tick.",
+          "Prompt drawing, physical input routing, and frontend return-to-title presentation are not compared."
+        ],
+        "runner_exit_code": 0,
+        "integrated_fixture_credit": 0
+      }
     },
     "title_restore_empty_save": {
       "acceptance_case": "E2-03-AC001 (also partial evidence for E2-02-AC001)",
