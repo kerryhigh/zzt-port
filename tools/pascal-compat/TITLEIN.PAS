@@ -4,15 +4,30 @@ uses Crt, Video, GameVars, Elements, Sounds, Game, Input;
 
 var
 	output: text;
-	restoreScenario, generateRestoreSave: boolean;
+	restoreScenario, generateRestoreSave, badRestoreScenario: boolean;
+	fixtureFile: file;
+	malformedHeader: array[1..512] of byte;
+	malformedVersion: integer;
+	ix, iy: integer;
 
 begin
 	restoreScenario := (ParamCount > 0) and (ParamStr(1) = 'R');
 	generateRestoreSave := (ParamCount > 0) and (ParamStr(1) = 'G');
+	badRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'B');
 	New(IoTmpBuf);
 	RandSeed := 0;
 	WorldCreate;
 	World.Info.unk1 := 0;
+	if badRestoreScenario then begin
+		{ A complete 512-byte save header with unsupported world version -2. }
+		FillChar(malformedHeader, SizeOf(malformedHeader), 0);
+		malformedVersion := -2;
+		Move(malformedVersion, malformedHeader[1], SizeOf(malformedVersion));
+		Assign(fixtureFile, 'RESTORE.SAV');
+		Rewrite(fixtureFile, 1);
+		BlockWrite(fixtureFile, malformedHeader, SizeOf(malformedHeader));
+		Close(fixtureFile);
+	end;
 	if restoreScenario or generateRestoreSave then begin
 		if not WorldLoad('DEMO', '.ZZT', true) then RunError(258);
 		World.Info.Name := 'RESTORE';
@@ -38,7 +53,8 @@ begin
 	GameLoopProbeEnabled := true;
 	GameLoopProbeTitleLifecycleEnabled := true;
 	GameLoopProbeTitleLifecyclePlayerReturned := false;
-	GameLoopProbeTitleRestoreEnabled := restoreScenario;
+		GameLoopProbeTitleRestoreEnabled := restoreScenario or badRestoreScenario;
+		GameLoopProbeTitleRestoreFailureEnabled := badRestoreScenario;
 	GameLoopProbeSeedPauseBlink := true;
 	GameLoopProbeCycleClockEnabled := false;
 	GameLoopProbeStopAfter := 0;
@@ -72,16 +88,40 @@ begin
 	Close(output);
 	if restoreScenario then
 		InputProbeSetKeyBuffer('RR')
+	else if badRestoreScenario then
+		InputProbeSetKeyBuffer('R')
 	else
 		InputProbeSetKeyBuffer('PX');
 	SoundProbeSetSchedule(0, 0, 0);
 	GameTitleLoop;
-	if restoreScenario and (InputProbeGetKeyBuffer <> '') then RunError(257);
+	if (restoreScenario or badRestoreScenario) and (InputProbeGetKeyBuffer <> '') then RunError(257);
+	if badRestoreScenario then begin
+		Assign(output, 'TITLFAIL.OUT');
+		Rewrite(output);
+		{ The leading zero is GameWorldLoad's false result on the R route. }
+		Write(output, 0, ' ', World.BoardCount, ' ', World.BoardLen[0],
+			' ', ReturnBoardId, ' ', World.Info.CurrentBoard, ' ', World.Info.Ammo,
+			' ', World.Info.Gems, ' ', World.Info.Health, ' ', World.Info.Torches,
+			' ', World.Info.TorchTicks, ' ', World.Info.EnergizerTicks,
+			' ', World.Info.Score, ' ', World.Info.BoardTimeSec,
+			' ', World.Info.BoardTimeHsec, ' ', Ord(World.Info.IsSave),
+			' ', Board.StatCount, ' ', Ord(InputKeyPressed), ' ');
+		with Board.Stats[0] do
+			Write(output, X, ' ', Y, ' ', StepX, ' ', StepY, ' ', Cycle,
+				' ', P1, ' ', P2, ' ', P3, ' ', Follower, ' ', Leader,
+				' ', Under.Element, ' ', Under.Color, ' ', DataPos, ' ', DataLen, ' ');
+		for ix := 1 to 7 do Write(output, Ord(World.Info.Keys[ix]), ' ');
+		for ix := 0 to BOARD_WIDTH + 1 do
+			for iy := 0 to BOARD_HEIGHT + 1 do
+				Write(output, Board.Tiles[ix][iy].Element, ' ', Board.Tiles[ix][iy].Color, ' ');
+		WriteLn(output);
+		Close(output);
+	end;
 	if not restoreScenario then begin
 		FreeMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 		GameLoopProbeCellWriteEvents := nil;
 	end;
-	WorldUnload;
+	if not badRestoreScenario then WorldUnload;
 	end;
 	Dispose(IoTmpBuf);
 end.

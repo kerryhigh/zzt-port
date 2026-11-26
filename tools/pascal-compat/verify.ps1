@@ -401,7 +401,7 @@ var
 	GameLoopProbeLastPaused, GameLoopProbeCycleCompleted: boolean;
 	GameLoopProbeCaptureNextBoardChange: boolean;
 	GameLoopProbeTitleLifecycleEnabled, GameLoopProbeTitleLifecyclePlayerReturned: boolean;
-	GameLoopProbeTitleRestoreEnabled: boolean;
+	GameLoopProbeTitleRestoreEnabled, GameLoopProbeTitleRestoreFailureEnabled: boolean;
 	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
 	GameLoopProbeCellWriteCount: longint;
 	GameLoopProbeCellWriteEvents: PGameLoopProbeCellWriteEventArray;
@@ -646,6 +646,20 @@ if ([regex]::Matches($gameTitleLoop, [regex]::Escape($saveRestoreAnchor)).Count 
 # Test-only deterministic selector input. The reference GameWorldLoad and TextWindowSelect routines remain unchanged.
 $gameTitleLoop = $gameTitleLoop.Replace($saveRestoreAnchor,
     "if GameLoopProbeTitleRestoreEnabled then InputProbeSetKeyBuffer(KEY_ENTER);`r`n`t`t`t`t`t" + $saveRestoreAnchor)
+$restoreFailurePattern = "(?s)if GameWorldLoad\('\.SAV'\) then begin\s+ReturnBoardId := World\.Info\.CurrentBoard;\s+BoardChange\(ReturnBoardId\);\s+startPlay := true;\s+end;"
+if ([regex]::Matches($gameTitleLoop, $restoreFailurePattern).Count -ne 1) {
+    throw 'Could not uniquely locate the GameTitleLoop restore result branch for malformed-save capture.'
+}
+$restoreFailureReplacement = @'
+if GameWorldLoad('.SAV') then begin
+							ReturnBoardId := World.Info.CurrentBoard;
+							BoardChange(ReturnBoardId);
+							startPlay := true;
+						end else if GameLoopProbeTitleRestoreFailureEnabled then begin
+							GameTitleExitRequested := true;
+						end;
+'@
+$gameTitleLoop = [regex]::Replace($gameTitleLoop, $restoreFailurePattern, $restoreFailureReplacement, 1)
 $stagedGame = $stagedGame.Substring(0, $gameTitleLoopStart) + $gameTitleLoop + $stagedGame.Substring($gameTitleLoopEnd)
 [IO.File]::WriteAllText($stagedGamePath, $stagedGame, [Text.UTF8Encoding]::new($false))
 
@@ -2665,11 +2679,30 @@ end;
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
         $titleRestoreSave
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production .SAV restore lifecycle replay failed with exit code $LASTEXITCODE." }
+
+    $titleFailureRoot = Join-Path $stageRoot 'TITLFAIL'
+    New-Item -ItemType Directory -Force -Path $titleFailureRoot | Out-Null
+    Write-Host 'Running the direct GameTitleLoop unsupported-version .SAV refusal replay: TITLEFAIL'
+    Invoke-DosboxSession 'TITLEIN-BAD-RESTORE' @('CD \TITLFAIL', '..\BIN\TITLEIN.EXE B')
+    $titleFailureOutput = Join-Path $titleFailureRoot 'TITLFAIL.OUT'
+    $titleFailureSave = Join-Path $titleFailureRoot 'RESTORE.SAV'
+    if (-not (Test-Path -LiteralPath $titleFailureOutput -PathType Leaf)) {
+        throw "Pascal GameTitleLoop malformed .SAV replay did not write TITLFAIL.OUT. See $stageRoot\TITLEIN-BAD-RESTORE.LOG."
+    }
+    if (-not (Test-Path -LiteralPath $titleFailureSave -PathType Leaf)) {
+        throw "Pascal GameTitleLoop malformed .SAV replay did not create RESTORE.SAV. See $stageRoot\TITLEIN-BAD-RESTORE.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        $titleFailureOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        '--restore-failure' `
+        $titleFailureSave
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production malformed .SAV restore differential failed with exit code $LASTEXITCODE." }
 }
 finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 76 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures, the TITLEIN compile/run pair plus isolated restore-save generation and restore runs, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, TITLEIN-COMPILE, TITLEIN, TITLEIN-SAVE, TITLEIN-RESTORE, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 77 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09/F10 integrated fixtures, the TITLEIN compile/run pair plus isolated restore-save generation, restore, and malformed-version refusal runs, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, F10IN-COMPILE, F10IN-RUN, TITLEIN-COMPILE, TITLEIN, TITLEIN-SAVE, TITLEIN-RESTORE, TITLEIN-BAD-RESTORE, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

@@ -90,7 +90,15 @@ int zoo_world_play(zoo_state *state) {
 }
 
 int zoo_world_restore(zoo_state *state, zoo_io_handle *h) {
-	int ret = zoo_world_load(state, h, false);
+	int ret;
+	if (state->game_state == GS_TITLE) {
+		/* Pascal's GamePlayLoop restores the player tile before GameTitleLoop
+		   handles the R key. Preserve that state if the selected save is refused. */
+		state->board.tiles[state->board.stats[0].x][state->board.stats[0].y].element = ZOO_E_PLAYER;
+		state->board.tiles[state->board.stats[0].x][state->board.stats[0].y].color
+			= zoo_element_defs[ZOO_E_PLAYER].color;
+	}
+	ret = zoo_world_load(state, h, false);
 	if (ret) return ret;
 
 	/* Pascal's GameTitleLoop R branch reopens the saved current board, then

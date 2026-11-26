@@ -60,6 +60,7 @@ static char scroll_touch_lines[2][51];
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY 16384
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_STRIDE 4
 #define INTEGRATED_GAMEPLAY_SAVE_CAPACITY 65536
+#define INTEGRATED_TITLE_RESTORE_FAILURE_FIELD_CAPACITY 4000
 static int32_t integrated_gameplay_snapshots[
 	INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY][INTEGRATED_GAMEPLAY_MAX_FIELDS];
 static int32_t integrated_gameplay_snapshot_lengths[INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY];
@@ -94,6 +95,9 @@ static int32_t integrated_gameplay_roundtrip_save_length_value;
 static int32_t integrated_gameplay_roundtrip_save_result_value;
 static int32_t integrated_gameplay_roundtrip_save_overflow_value;
 static uint8_t integrated_demo_world_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
+static int32_t integrated_title_restore_failure_fields[INTEGRATED_TITLE_RESTORE_FAILURE_FIELD_CAPACITY];
+static int32_t integrated_title_restore_failure_field_count_value;
+static int32_t integrated_title_restore_failure_error_value;
 static uint8_t integrated_editor_brd_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_editor_brd_length_value;
 static uint8_t integrated_f10_bad_world_bytes[512];
@@ -4630,6 +4634,94 @@ int32_t run_integrated_title_restore_checks(int32_t save_length) {
 	force_elapsed_for_tick_check = false;
 	integrated_schedule_enabled = false;
 	return 0;
+}
+
+static void integrated_title_restore_failure_append(int32_t value) {
+	if (integrated_title_restore_failure_field_count_value < INTEGRATED_TITLE_RESTORE_FAILURE_FIELD_CAPACITY) {
+		integrated_title_restore_failure_fields[integrated_title_restore_failure_field_count_value++] = value;
+	}
+}
+
+int32_t run_integrated_title_restore_failure_checks(int32_t save_length) {
+	zoo_io_handle save_handle;
+	int result;
+	int16_t ix, iy;
+	zoo_stat *player;
+
+	if (save_length <= 0 || save_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 38;
+	integrated_gameplay_capture_reset();
+	memset(integrated_title_restore_failure_fields, 0,
+		sizeof(integrated_title_restore_failure_fields));
+	integrated_title_restore_failure_field_count_value = 0;
+	integrated_title_restore_failure_error_value = 0;
+	state.d_video = &video;
+	state.func_draw_sidebar = test_sidebar_update;
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	zoo_world_create(&state);
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	zoo_game_start(&state, GS_TITLE);
+	state.input.key_pressed = '\r';
+	save_handle = zoo_io_open_file_mem(integrated_demo_world_bytes, (size_t) save_length, MODE_READ);
+	result = zoo_world_restore(&state, &save_handle);
+	if (save_handle.func_close != NULL) save_handle.func_close(&save_handle);
+	integrated_title_restore_failure_error_value = result;
+
+	/* Field 0 corresponds to Pascal GameWorldLoad's Boolean result. */
+	integrated_title_restore_failure_append(result == 0 ? 1 : 0);
+	integrated_title_restore_failure_append(state.world.board_count);
+	integrated_title_restore_failure_append(state.world.board_len[0]);
+	integrated_title_restore_failure_append(state.return_board_id);
+	integrated_title_restore_failure_append(state.world.info.current_board);
+	integrated_title_restore_failure_append(state.world.info.ammo);
+	integrated_title_restore_failure_append(state.world.info.gems);
+	integrated_title_restore_failure_append(state.world.info.health);
+	integrated_title_restore_failure_append(state.world.info.torches);
+	integrated_title_restore_failure_append(state.world.info.torch_ticks);
+	integrated_title_restore_failure_append(state.world.info.energizer_ticks);
+	integrated_title_restore_failure_append(state.world.info.score);
+	integrated_title_restore_failure_append(state.world.info.board_time_sec);
+	integrated_title_restore_failure_append(state.world.info.board_time_hsec);
+	integrated_title_restore_failure_append(state.world.info.is_save ? 1 : 0);
+	integrated_title_restore_failure_append(state.board.stat_count);
+	integrated_title_restore_failure_append(state.input.key_pressed);
+	player = &state.board.stats[0];
+	integrated_title_restore_failure_append(player->x);
+	integrated_title_restore_failure_append(player->y);
+	integrated_title_restore_failure_append(player->step_x);
+	integrated_title_restore_failure_append(player->step_y);
+	integrated_title_restore_failure_append(player->cycle);
+	integrated_title_restore_failure_append(player->p1);
+	integrated_title_restore_failure_append(player->p2);
+	integrated_title_restore_failure_append(player->p3);
+	integrated_title_restore_failure_append(player->follower);
+	integrated_title_restore_failure_append(player->leader);
+	integrated_title_restore_failure_append(player->under.element);
+	integrated_title_restore_failure_append(player->under.color);
+	integrated_title_restore_failure_append(player->data_pos);
+	integrated_title_restore_failure_append(player->data_len);
+	for (ix = 0; ix < 7; ix++)
+		integrated_title_restore_failure_append(state.world.info.keys[ix] ? 1 : 0);
+	for (ix = 0; ix <= ZOO_BOARD_WIDTH + 1; ix++) {
+		for (iy = 0; iy <= ZOO_BOARD_HEIGHT + 1; iy++) {
+			integrated_title_restore_failure_append(state.board.tiles[ix][iy].element);
+			integrated_title_restore_failure_append(state.board.tiles[ix][iy].color);
+		}
+	}
+	return 0;
+}
+
+uint32_t integrated_title_restore_failure_fields_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_title_restore_failure_fields;
+}
+
+int32_t integrated_title_restore_failure_field_count(void) {
+	return integrated_title_restore_failure_field_count_value;
+}
+
+int32_t integrated_title_restore_failure_error(void) {
+	return integrated_title_restore_failure_error_value;
 }
 
 int32_t run_integrated_gameplay_checks(void) {
