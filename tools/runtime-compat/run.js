@@ -123,7 +123,11 @@ function pascalSoundParse(input) {
   console.log('Text-window links: case-insensitive label prefixes jump in-document; missing labels close; selection links are preserved');
 
   const reloadModule = await WebAssembly.compile(fs.readFileSync(process.argv[4]));
-  const reloadInstance = await WebAssembly.instantiate(reloadModule, {});
+  // zoo_world_play's success-only continuation is linked from zoo_game.c.
+  // This fixture deliberately takes the missing-file return before those
+  // imported success-path services can be called.
+  const reloadEnv = new Proxy({}, { get: () => () => 0 });
+  const reloadInstance = await WebAssembly.instantiate(reloadModule, { env: reloadEnv });
   const reloadResult = reloadInstance.exports.run_world_reload_checks();
   if (reloadResult !== 0) throw new Error(`World reload check returned ${reloadResult}`);
   console.log('Save reload: empty and embedded-NUL names follow Pascal path truncation; CP437 bytes and case survive; missing files fail and handles close');

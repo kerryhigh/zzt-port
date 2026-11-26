@@ -33,8 +33,11 @@ function context(expected, actual, index) {
   if (expected[18] !== 1) throw new Error('Pascal probe did not retain the selected MISSFILE world name.');
 
   const module = await WebAssembly.compile(fs.readFileSync(wasmPath));
-  const instance = await WebAssembly.instantiate(module, {});
-  const result = instance.exports.run_world_reload_missing_capture();
+  // Imports reachable only from zoo_world_play's successful-load branch are
+  // inert here; the fixture requires the missing-file error path to return.
+  const env = new Proxy({}, { get: () => () => 0 });
+  const instance = await WebAssembly.instantiate(module, { env });
+  const result = instance.exports.run_world_play_missing_reload_capture();
   if (result !== 0) throw new Error(`Production missing-world reload harness returned ${result}.`);
   const count = instance.exports.world_reload_missing_output_count();
   if (count !== fieldNames.length) throw new Error(`Production emitted ${count} fields; expected ${fieldNames.length}.`);
@@ -48,5 +51,5 @@ function context(expected, actual, index) {
       throw new Error(`First missing-world reload divergence at field ${index} (${fieldNames[index]}): Pascal=${expected[index]}, production=${actual[index]}; nearby=${JSON.stringify(context(expected, actual, index))}`);
     }
   }
-  console.log(`Missing WorldLoad/WorldReload path matched: Pascal returned false, LibZoo returned ZOO_ERROR_INVAL (-2), and all ${fieldNames.length - 1} preserved world/board fields matched.`);
+  console.log(`Missing title-P reload path matched: Pascal WorldLoad returned false, LibZoo zoo_world_play returned ZOO_ERROR_INVAL (-2) without starting play, and all ${fieldNames.length - 1} preserved world/board fields matched.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

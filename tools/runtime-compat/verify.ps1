@@ -48,6 +48,7 @@ $statMoveFunction = Join-Path $buildDir 'zoo_stat_move_production.inc'
 $source = Join-Path $PSScriptRoot 'tick_exit.c'
 $windowSource = Join-Path $PSScriptRoot 'window_label.c'
 $reloadSource = Join-Path $PSScriptRoot 'world_reload.c'
+$zooGameSource = Join-Path $repoRoot 'third_party\libzoo\src\libzoo\zoo_game.c'
 $soundSource = Join-Path $PSScriptRoot 'sound_parse.c'
 $soundTickSource = Join-Path $PSScriptRoot 'sound_tick.c'
 $gameClockSource = Join-Path $PSScriptRoot 'game_clock.c'
@@ -107,10 +108,11 @@ $reloadArgs = @(
     '-I', (Join-Path $repoRoot 'third_party\libzoo\include'),
     '-I', (Join-Path $repoRoot 'third_party\libzoo\src'),
     '-Wl,--no-entry', '-Wl,--export=run_world_reload_checks',
-    '-Wl,--export=run_world_reload_missing_capture', '-Wl,--export=world_reload_missing_output_ptr',
+    '-Wl,--export=run_world_play_missing_reload_capture', '-Wl,--export=world_reload_missing_output_ptr',
     '-Wl,--export=world_reload_missing_output_count', '-Wl,--export-memory', '-Wl,--gc-sections',
+    '-Wl,--allow-undefined',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
-    $reloadSource, '-o', $reloadWasm
+    $reloadSource, $zooGameSource, '-o', $reloadWasm
 )
 & $clang @reloadArgs
 if ($LASTEXITCODE -ne 0) { throw "WASM world-reload harness compilation failed with exit code $LASTEXITCODE." }

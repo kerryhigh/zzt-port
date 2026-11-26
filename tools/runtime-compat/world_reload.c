@@ -140,13 +140,14 @@ int run_world_reload_checks(void) {
     return 0;
 }
 
-int32_t run_world_reload_missing_capture(void) {
+int32_t run_world_play_missing_reload_capture(void) {
     int result;
 
     reset_case();
     open_succeeds = false;
     state.world.info.current_board = 0;
     state.world.info.is_save = true;
+    state.game_state = GS_TITLE;
     state.world.info.ammo = 17;
     state.world.info.gems = 23;
     state.world.info.health = 37;
@@ -163,7 +164,9 @@ int32_t run_world_reload_missing_capture(void) {
     state.board.tiles[10][12].element = ZOO_E_SOLID;
     state.board.tiles[10][12].color = 0x2E;
 
-    result = zoo_world_reload(&state);
+    /* The title P route enters zoo_world_play; a failed backing-world reload
+       must return before the shared engine starts a player session. */
+    result = zoo_world_play(&state);
     missing_reload_output[0] = result;
     missing_reload_output[1] = state.return_board_id;
     missing_reload_output[2] = state.world.board_count;
