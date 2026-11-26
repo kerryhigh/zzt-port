@@ -2375,28 +2375,201 @@
     {
       "id": "E2-10-F10",
       "scenario": "malformed-file recovery and high-score insertion path",
-      "status": "pending",
+      "status": "complete",
       "evidence_classes": [
         "D",
         "DP",
         "I"
       ],
       "source_locations": [
-        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:WorldLoad,GamePlayLoop",
-        "third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:HighScoresAdd"
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:WorldLoad,GameTitleLoop,GamePlayLoop,WorldSave",
+        "third_party/reconstruction-of-zzt/SRC/EDITOR.PAS:HighScoresLoad,HighScoresAdd,HighScoresSave"
       ],
       "production_implementation": [
-        "third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_world_load",
-        "third_party/libzoo/src/libzoo/zoo_high_scores.c:zoo_highscores_add",
-        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_tick"
+        "third_party/libzoo/src/libzoo/zoo_game_io.c:zoo_world_load,zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_game.c:zoo_world_create,zoo_board_enter,zoo_tick",
+        "third_party/libzoo/src/libzoo/zoo_high_scores.c:zoo_high_score_table_load,zoo_high_score_insert_at,zoo_high_score_table_save",
+        "tools/runtime-compat/oop_movement.c:run_integrated_f10_checks"
       ],
-      "test_fixture": null,
-      "oracle_probe": null,
+      "test_fixture": "tools/pascal-compat/F10IN.PAS; deterministic generated F10BAD.ZZT; missing F10ROOM.HI",
+      "oracle_probe": "tools/pascal-compat/F10IN.PAS",
       "comparison_tool": "tools/pascal-compat/compare-integrated-gameplay.js",
       "verification": {
-        "result": "pending",
-        "fixture_completion_credit": 0
-      }
+        "result": "passed",
+        "date": "2026-11-26",
+        "tested_local_revision": "315573177c1bd4f0e7c20f5525d03b16f23dd5ab",
+        "clean_runner_exit_code": 0,
+        "direct_pascal_sessions_in_clean_run": 126,
+        "pascal_to_production_differential_invocations_in_clean_run": "54/54",
+        "checkpoints": [
+          "L0",
+          "S0",
+          "C1",
+          "C2",
+          "T2",
+          "T3",
+          "F0"
+        ],
+        "checkpoint_count": 7,
+        "fields_compared_per_checkpoint": [
+          3399,
+          3399,
+          3399,
+          3416,
+          3416,
+          3416,
+          3416
+        ],
+        "checkpoint_results": [
+          {
+            "checkpoint": "L0",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "S0",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C1",
+            "fields_compared": 3399,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "C2",
+            "fields_compared": 3416,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T2",
+            "fields_compared": 3416,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "T3",
+            "fields_compared": 3416,
+            "result": "matched"
+          },
+          {
+            "checkpoint": "F0",
+            "fields_compared": 3416,
+            "result": "matched"
+          }
+        ],
+        "state_field_comparisons": 23861,
+        "state_field_differences": 0,
+        "state_transition_count": 0,
+        "logical_sound_events": 0,
+        "logical_sound_event_fields": 0,
+        "sound_event_differences": 0,
+        "ordered_playfield_cell_writes": 29,
+        "ordered_playfield_cell_write_fields": 116,
+        "cell_write_differences": 0,
+        "malformed_startup_world": {
+          "fixture_size_bytes": 512,
+          "fixture_sha256": "378621df4e6f111e6ce670297eeb7a21a6613732b88b22d79619124cd7894c2f",
+          "pascal_world_load_result": false,
+          "production_world_load_result": -3,
+          "production_error": "ZOO_ERROR_WRONGVER"
+        },
+        "high_score_insertion": {
+          "initial_file_state": "missing",
+          "pascal_missing_file_load_reset": "passed",
+          "inserted_rank": 1,
+          "name": "KERRY",
+          "score": 1234,
+          "table_size_bytes": 1590,
+          "table_bytes_matched": 1590,
+          "table_byte_differences": 0,
+          "pascal_hi_sha256": "cd54167c2bc7722f69368d1bbc2ea74cf9589da1aeb6a422fb9972ee43aa4078"
+        },
+        "save_round_trip": {
+          "pascal_world_load_result": true,
+          "production_zoo_world_load_result": 0,
+          "generated_save_size_bytes": 866,
+          "generated_save_sha256": "0da4af3f9e7a64b0419757187688a310a637f6a9ea52e281ba4e732e004f6754",
+          "stable_serialized_bytes_compared": 610,
+          "stable_serialized_byte_differences": 0,
+          "classified_process_pointer_positions": 256,
+          "round_trip_save_size_bytes": 866,
+          "round_trip_sha256": "0da4af3f9e7a64b0419757187688a310a637f6a9ea52e281ba4e732e004f6754",
+          "round_trip_stable_serialized_bytes_compared": 858,
+          "round_trip_stable_serialized_byte_differences": 0,
+          "round_trip_classified_process_pointer_positions": 8
+        },
+        "unexplained_differences": 0,
+        "fixture_completion_credit": 1,
+        "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md",
+        "interventions": [
+          "The exact malformed fixture is 512 bytes with first word 0xFFFE; Pascal WorldLoad returns false and the production loader returns ZOO_ERROR_WRONGVER (-3).",
+          "The direct Pascal fixture supplies a missing F10ROOM.HI, seeds each 50-byte name payload with the same deterministic stale tail, and calls the original HighScoresLoad reset before gameplay.",
+          "RandSeed=0; GenerateTransitionTable runs before WorldCreate. World.Info.unk1 is seeded to zero before the malformed load and survives the failed-load/fallback-create path.",
+          "The direct Pascal program uses the same {$M 49152,163840,655360} directive as reconstructed ZZT.PAS, keeping the original high-score text-window routine within its intended stack budget.",
+          "The original GamePlayLoop executes two fixed-clock logical cycles and reaches the original HighScoresAdd death path. InputProbeSetReadKeys supplies KERRY and Enter to the existing name prompt.",
+          "The staged cell observer is disabled immediately before HighScoresAdd so modal high-score presentation writes are excluded from engine gameplay cell events; no gameplay routine or state transition is replaced.",
+          "The production fixture performs the malformed load/recovery, two real zoo_tick cycles, and the shared high-score reset/insert/save APIs. Scripted name input is supplied at the shared engine API boundary because the engine does not implement frontend name-entry UI.",
+          "Turbo Pascal compilation and execution use separate fresh DOSBox-X 2026.10.01 sessions; physical sound output is disabled while logical SoundQueue state remains captured."
+        ],
+        "oracle_outputs": [
+          {
+            "path": "build/pascal-compat-verification/F10BAD.ZZT",
+            "size_bytes": 512,
+            "sha256": "378621df4e6f111e6ce670297eeb7a21a6613732b88b22d79619124cd7894c2f"
+          },
+          {
+            "path": "build/pascal-compat-verification/F10BAD.OUT",
+            "size_bytes": 3,
+            "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+          },
+          {
+            "path": "build/pascal-compat-verification/F10ROOM.HI",
+            "size_bytes": 1590,
+            "sha256": "cd54167c2bc7722f69368d1bbc2ea74cf9589da1aeb6a422fb9972ee43aa4078"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGPR.OUT",
+            "size_bytes": 50260,
+            "sha256": "36feaa801103188b17e949fd71e94fb7ed9c5642fe855c7a3af8feb23962eb14"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSND.OUT",
+            "size_bytes": 5,
+            "sha256": "043b5ae7334040ef63298adca08912d5287ad37e66f9425316adc50d2c1ab652"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGCEL.OUT",
+            "size_bytes": 364,
+            "sha256": "c6cd5b5e0a8e85ae9ff77f552ee2c03f828ee1ef6ea967e6e0aba5335df44eac"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGSAV.SAV",
+            "size_bytes": 866,
+            "sha256": "0da4af3f9e7a64b0419757187688a310a637f6a9ea52e281ba4e732e004f6754"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEGLOD.OUT",
+            "size_bytes": 3,
+            "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+          },
+          {
+            "path": "build/pascal-compat-verification/INTEG2SV.SAV",
+            "size_bytes": 866,
+            "sha256": "0da4af3f9e7a64b0419757187688a310a637f6a9ea52e281ba4e732e004f6754"
+          }
+        ]
+      },
+      "runner": "tools/pascal-compat/verify.ps1",
+      "staging_interventions": [
+        "The exact malformed fixture is 512 bytes with first word 0xFFFE; Pascal WorldLoad returns false and the production loader returns ZOO_ERROR_WRONGVER (-3).",
+        "The direct Pascal fixture supplies a missing F10ROOM.HI, seeds each 50-byte name payload with the same deterministic stale tail, and calls the original HighScoresLoad reset before gameplay.",
+        "RandSeed=0; GenerateTransitionTable runs before WorldCreate. World.Info.unk1 is seeded to zero before the malformed load and survives the failed-load/fallback-create path.",
+        "The direct Pascal program uses the same {$M 49152,163840,655360} directive as reconstructed ZZT.PAS, keeping the original high-score text-window routine within its intended stack budget.",
+        "The original GamePlayLoop executes two fixed-clock logical cycles and reaches the original HighScoresAdd death path. InputProbeSetReadKeys supplies KERRY and Enter to the existing name prompt.",
+        "The staged cell observer is disabled immediately before HighScoresAdd so modal high-score presentation writes are excluded from engine gameplay cell events; no gameplay routine or state transition is replaced.",
+        "The production fixture performs the malformed load/recovery, two real zoo_tick cycles, and the shared high-score reset/insert/save APIs. Scripted name input is supplied at the shared engine API boundary because the engine does not implement frontend name-entry UI.",
+        "Turbo Pascal compilation and execution use separate fresh DOSBox-X 2026.10.01 sessions; physical sound output is disabled while logical SoundQueue state remains captured."
+      ]
     }
   ]
 }
