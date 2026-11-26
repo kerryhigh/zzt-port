@@ -38,11 +38,9 @@ static zoo_tick_retval zoo_ui_load_world_cb(zoo_state *zoo, zoo_ui_state *cb_sta
 	if (cb_state->window.accepted && name != NULL) {
 		// TODO: warn for long filenames (> 20 chars, minus extension);
 		h = zoo->d_io->func_open_file(zoo->d_io, name, MODE_READ);
-		ret = zoo_world_load(zoo, &h, false);
+		ret = as_save ? zoo_world_restore(zoo, &h) : zoo_world_load(zoo, &h, false);
 		if (!ret) {
-			if (as_save) {
-				zoo_game_start(zoo, GS_PLAY);
-			} else {
+			if (!as_save) {
 				zoo_board_change(zoo, 0);
 				zoo_game_start(zoo, GS_TITLE);
 			}

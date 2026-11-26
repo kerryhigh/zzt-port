@@ -4552,6 +4552,86 @@ int32_t run_integrated_title_lifecycle_checks(void) {
 	return 0;
 }
 
+int32_t run_integrated_title_restore_checks(int32_t save_length) {
+	int32_t calls;
+	int16_t previous_tick;
+	zoo_tick_retval tick_result;
+	zoo_io_handle save_handle;
+	int result;
+
+	if (save_length <= 0 || save_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 30;
+	integrated_gameplay_capture_reset();
+	state.d_video = &video;
+	state.func_draw_sidebar = test_sidebar_update;
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	state.input.repeat_start = 4;
+	state.input.repeat_end = 6;
+	state.tick_speed = 0;
+	zoo_world_create(&state);
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	zoo_game_start(&state, GS_TITLE);
+	state.input.key_pressed = '\r'; /* TextWindowSelect accepts the chosen .SAV row with Enter. */
+	integrated_schedule_enabled = true;
+	integrated_configured_tick_speed = 0;
+	integrated_elapsed_nanos = 0;
+	integrated_fixed_clock_enabled = false;
+	force_elapsed_for_tick_check = true;
+	save_handle = zoo_io_open_file_mem(integrated_demo_world_bytes, (size_t) save_length, MODE_READ);
+	result = zoo_world_restore(&state, &save_handle);
+	if (save_handle.func_close != NULL) save_handle.func_close(&save_handle);
+	if (result != 0 || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 31 - (result != 0 ? result : state.error_value);
+	}
+	if (!capture_integrated_gameplay_snapshot(0, 'P', 0)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 32;
+	}
+	/* The compiled Pascal title-R replay polls 5 then 10 hsecs before its first
+	   paused cycle boundary. Seed the production clock tape so its two polls
+	   reach the same logical boundary independent of host polling cadence. */
+	integrated_elapsed_nanos = 50000000;
+	previous_tick = state.current_tick;
+	for (calls = 0; calls < 1000; calls++) {
+		tick_result = zoo_tick(&state);
+		if (tick_result == ERROR) {
+			force_elapsed_for_tick_check = false;
+			integrated_schedule_enabled = false;
+			return 33 - state.error_value;
+		}
+		if (state.current_stat_tick == 0 && state.current_tick != previous_tick) break;
+	}
+	if (calls == 1000) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 34;
+	}
+	state.game_play_exit_requested = true;
+	if (!capture_integrated_gameplay_snapshot(1, 'C', 1)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 35;
+	}
+	result = zoo_world_return_title(&state);
+	if (result != 0 || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 36 - (result != 0 ? result : state.error_value);
+	}
+	if (!capture_integrated_gameplay_snapshot(2, 'T', 0)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 37;
+	}
+	force_elapsed_for_tick_check = false;
+	integrated_schedule_enabled = false;
+	return 0;
+}
+
 int32_t run_integrated_gameplay_checks(void) {
 	static const char script[] = "#GIVE GEMS 1\r#IDLE\r";
 	static const char script2[] = "#GIVE AMMO 1\r#IDLE\r";

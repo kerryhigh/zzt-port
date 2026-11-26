@@ -55,23 +55,27 @@ int zoo_world_reload(zoo_state *state) {
 	return ret;
 }
 
-int zoo_world_play(zoo_state *state) {
-	int ret = 0;
+static void zoo_game_start_preserving_input(zoo_state *state, zoo_game_state game_state) {
 	uint8_t key_pressed = state->input.key_pressed;
 	uint8_t key_buffer_head = state->input.key_buffer_head;
 	uint8_t key_buffer_count = state->input.key_buffer_count;
+
+	zoo_game_start(state, game_state);
+	/* GameTitleLoop calls GamePlayLoop directly and leaves these input fields intact. */
+	state->input.key_pressed = key_pressed;
+	state->input.key_buffer_head = key_buffer_head;
+	state->input.key_buffer_count = key_buffer_count;
+}
+
+int zoo_world_play(zoo_state *state) {
+	int ret = 0;
 
 	if (state->world.info.is_save && !state->debug_enabled) {
 		ret = zoo_world_reload(state);
 	}
 
 	if (!ret) {
-		zoo_game_start(state, GS_PLAY);
-		/* Pascal enters GamePlayLoop without clearing InputKeyPressed or the
-		   remaining InputKeyBuffer bytes consumed by the title menu. */
-		state->input.key_pressed = key_pressed;
-		state->input.key_buffer_head = key_buffer_head;
-		state->input.key_buffer_count = key_buffer_count;
+		zoo_game_start_preserving_input(state, GS_PLAY);
 
 		zoo_board_change(state, state->return_board_id);
 		// Pascal calls BoardEnter after selecting a board to play. Keep it here,
@@ -83,6 +87,17 @@ int zoo_world_play(zoo_state *state) {
 	}
 
 	return ret;
+}
+
+int zoo_world_restore(zoo_state *state, zoo_io_handle *h) {
+	int ret = zoo_world_load(state, h, false);
+	if (ret) return ret;
+
+	/* Pascal's GameTitleLoop R branch reopens the saved current board, then
+	   enters GamePlayLoop directly; it does not reload the .ZZT or BoardEnter. */
+	zoo_board_change(state, state->return_board_id);
+	zoo_game_start_preserving_input(state, GS_PLAY);
+	return 0;
 }
 
 int zoo_world_return_title(zoo_state *state) {

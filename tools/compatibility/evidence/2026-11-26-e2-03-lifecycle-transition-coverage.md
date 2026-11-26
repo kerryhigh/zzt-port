@@ -6,31 +6,42 @@
 
 | Transition or condition | Existing evidence | AC001 status |
 |---|---|---|
-| Initial/full world load | F01 loads `DEMO.ZZT` through Pascal `WorldLoad` and production `zoo_world_load`; F10 directly exercises the malformed-load failure and explicit fallback `WorldCreate` used by startup. | Partial: startup title-only load is only a direct probe; malformed retry is absent. |
-| Title-to-play | `TITLEIN.PAS` enters the original Pascal `GameTitleLoop`, supplies the deterministic queued keys `P`, `X`, and records the actual player-start `P/0` checkpoint. The production replay calls `zoo_world_play` and compares the same full state. | Partial: the `P` branch is now D/DP covered. The replay exposed that production discarded `key_pressed` and the remaining input buffer across `zoo_game_start`; `zoo_world_play` now preserves the Pascal-observable key, queue head, and queue count. The `R`/restore branch and successful/refused load outcomes remain open. |
-| Board entry/change | `BOARDENT.PAS`, `BOARDIN.PAS`, F01, F05, and F08 exercise selected board entry/change paths. | Partial: cases are not yet one complete transition matrix with checkpoints for every success/refusal branch. |
+| Initial/full world load | F01 loads `DEMO.ZZT` through Pascal `WorldLoad` and production `zoo_world_load`; F10 directly exercises malformed-load failure and the explicit fallback `WorldCreate` used by startup. | Partial: title-only startup and malformed retry do not form a complete transition matrix. |
+| Title-to-play | `TITLEIN.PAS` enters the original `GameTitleLoop`, sends queued `P`/`X` input, and captures player-start `P/0`, one real cycle `C/1`, and return `T/0`. The production replay calls `zoo_world_play`. | Covered for the successful P route. The differential exposed that production discarded the Pascal-pending key and queued input across `zoo_game_start`; `zoo_world_play` now preserves `key_pressed`, `key_buffer_head`, and `key_buffer_count`. |
+| Title-menu restore | A separate compiled-Pascal process generates `RESTORE.SAV` through `WorldSave`; a fresh process loads the title-only DEMO setup, enters the original `GameTitleLoop` R branch, selects the only `.SAV` row, and loads those exact bytes. It captures player-start `P/0`, one real paused cycle `C/1`, and return `T/0`. Production consumes the same Pascal `.SAV` through `zoo_world_restore`. | Covered for a successful R selection and restored-game return-to-title route. Refusal, cancel, and retry outcomes remain open. |
+| Board entry/change | `BOARDENT.PAS`, `BOARDIN.PAS`, F01, F05, and F08 exercise selected board-entry/change paths. | Partial: these are not yet a complete transition matrix with checkpoints for every success/refusal branch. |
 | Passage travel | F05 runs west-neighbor entry and the original passage callback through the real Pascal game loop and compares production. | Covered for the F05 route; other lifecycle interactions remain open. |
-| Death | F06 runs the real loop through timer processing and death, with state, sound, and cell output compared. | Covered for the exercised death route; return/quit aftermath remains open. |
-| Restore | F08 saves, mutates live state, reloads `.SAV`, reloads baseline `.ZZT`, and compares snapshots and stable serialized bytes. | Covered for restore/reload operations; not for selecting Restore in the original title menu. |
+| Death | F06 runs the real loop through timer processing and death, with state, sound, and cell output compared. | Covered for the exercised death route; quit aftermath remains open. |
+| Restore and save | F08 saves, mutates live state, reloads `.SAV`, reloads baseline `.ZZT`, and compares snapshots and stable serialized bytes. The title R replay separately verifies the real title-menu selection and restored start state. | Covered for the exercised save/restore and title R routes; other prompt and failure outcomes remain open. |
 | Pause/resume | F07 runs the original loop with delayed pause input, movement while paused, and resume; the production loop is compared. | Covered for the exercised pause/resume route. |
-| Save/return and return-to-title | F08 verifies save and restore bytes/state. `TITLEIN.PAS` captures `C1` after one real player cycle and `T/0` after the original title loop regains control; production uses `zoo_world_return_title`. | Partial: direct D/DP covers one player-cycle/return-to-title route. Saving before return and the actual title-loop save/return aftermath remain open. |
-| Quit/abort | Existing probes cover selected monitor/player key and pause behavior. | Open: no D/DP replay of `GamePromptEndPlay` yes/no/escape behavior or title-loop quit confirmation/cancel. |
-| Malformed-load failure | F10 directly runs Pascal `WorldLoad` on the malformed startup fixture and compares the production error class and fallback state. | Covered for the startup failure/fallback route. |
+| Save/return and return-to-title | F08 verifies save/restore bytes/state. Both `TITLEIN` P and R routes capture a real player cycle followed by `T/0` after the original title loop regains control; production uses `zoo_world_return_title`. | Partial: the tested P/R return routes are D/DP covered; title save prompts and the remaining save/return transitions are open. |
+| Quit/abort | Existing probes cover selected monitor/player keys and pause behavior. | Open: no D/DP replay of `GamePromptEndPlay` yes/no/escape or title-loop quit confirmation/cancel. |
+| Malformed-load failure | F10 directly runs Pascal `WorldLoad` on a malformed startup fixture and compares the production error class and fallback state. | Covered for the tested startup failure/fallback route. |
 | Retry | No current direct differential re-enters the load selection path after a failed load. | Open. |
-| Successful and refused/blocked transitions | `BOARDENT.PAS` and `BOARDIN.PAS` cover selected entry and rollback cases; F05/F08 cover successful changes. | Partial: successful and refused cases are not yet captured under a consistent D/DP transition replay. |
+| Successful and refused/blocked transitions | `BOARDENT.PAS` and `BOARDIN.PAS` cover selected entry and rollback cases; F05/F08 cover successful changes. | Partial: success and refusal are not captured under a consistent D/DP transition replay. |
+
+## Title lifecycle replay details
+
+`TITLEIN.PAS` uses `{$M 49152,163840,655360}`, matching the memory directive in reconstructed `ZZT.PAS`; the smaller Turbo Pascal default stack caused runtime error 202 in the nested title selector/load path and did not model the original executable's stack. The R fixture is generated by direct Pascal `WorldSave('RESTORE', '.SAV')` from a title-only DEMO load, then consumed by the original `GameWorldLoad('.SAV')` path in a fresh DOSBox-X session.
+
+Staging-only hooks suppress the blocking About modal, inject Enter at the existing `.SAV` selector boundary, and stop/capture the real loops at the chosen checkpoints. The source `TextWindowSelect`, `GameWorldLoad`, `WorldLoad`, `WorldUnload`, `BoardClose`, and `GamePlayLoop` bodies run unchanged. The selector hook makes the single generated save row deterministic; cancel/refusal cases are not claimed. RNG is seeded, logical time uses the existing SoundProbe clock, and sound output is captured without physical hardware.
+
+| Route | Direct Pascal output | Result |
+|---|---|---|
+| Title P → play → cycle → title | `build/pascal-compat-verification/INTEGPR.OUT`, 50,437 bytes, SHA-256 `fc4d432a6ccbf007b95d50114cb7e3a8cccfd18c9eec2060d088210e0a1d62f1` | 3 checkpoints / 10,242 state fields matched. |
+| Title R → restore exact Pascal `.SAV` → cycle → title | `build/pascal-compat-verification/TITLER/INTEGPR.OUT`, 69,715 bytes, SHA-256 `1ec2b9ed36354468804e57d7a2c7c0179ed175fea128eadafc7f941f10e0e0ea` | 3 checkpoints / 10,287 state fields matched. The source `.SAV` was 1,649 bytes, SHA-256 `f1b86edd83a2d0d8a0d8ff3279ddbb75afb9fd072188e78968b0036f8a5c498611`. |
+
+The Pascal restore replay's first paused-cycle boundary observes a 10-hsec counter after two deterministic 5-hsec clock steps. The production test harness seeds the corresponding logical clock tape at 5 hsec so its two polls reach the same boundary. This normalizes polling cadence for comparison; no production engine timing semantics are changed.
 
 ## Reused verification
 
-The latest clean Pascal/production run on 2026-11-26 exited 0 with 128/128 direct Turbo Pascal sessions, 55/55 configured differentials, and all ten frozen integrated fixtures passing. F01–F10 matched 238 checkpoints, 824,821 state fields, and 169/169 logical-cycle snapshots. The same clean run includes the compiled-Pascal `TITLEIN` differential: P/player-start, C1/one actual gameplay cycle, and T/title-return matched at 3 checkpoints and 10,242 state fields. Its generated `build/pascal-compat-verification/INTEGPR.OUT` was 50,437 bytes with SHA-256 `fc4d432a6ccbf007b95d50114cb7e3a8cccfd18c9eec2060d088210e0a1d62f1`. These run totals do not mean every AC001 branch passed.
+The clean Pascal/production run on 2026-11-26 exited 0 with **130/130** direct Turbo Pascal sessions, **56/56** configured Pascal-to-production differential invocations, and all ten frozen integrated fixtures passing. F01–F10 matched 238 checkpoints, 824,821 state fields, and 169/169 logical-cycle snapshots. The P title replay matched at 3 checkpoints / 10,242 fields, and the R restore replay matched at 3 checkpoints / 10,287 fields. The frozen integrated corpus remains 10/10; no additional fixtures or acceptance IDs were added.
 
-The staged oracle hook suppresses only the blocking About modal for this replay and stops the original loops immediately after the recorded lifecycle checkpoints. `TITLEIN.PAS` initializes deterministic RNG, tick, sound, and memory capture state and sends the actual queued `P`/`X` input through the reconstructed input path. `InputUpdate`'s original buffer truncation leaves/repeats the first queued key in this case; that behavior is retained in both Pascal and production. Instrumentation captures state and bounds the run; it does not replace title or gameplay semantics.
-
-The current production-only `run_game_start_enter_checks` in `tools/runtime-compat/tick_exit.c` is supplemental evidence for title/play initialization and preserved clock fields. It is not counted as D or DP because it has no compiled-Pascal counterpart.
+The P route's queued `P`/`X` behavior preserves the original `InputUpdate` buffer truncation in both implementations. The R route's deterministic Enter input is injected only at the selection boundary; it does not replace the title menu or loading routines. `tools/runtime-compat/tick_exit.c::run_game_start_enter_checks` remains supplemental production-only evidence and is not counted as D or DP.
 
 ## Remaining work for AC001
 
-- Add direct D/DP checkpoints through the original `GameTitleLoop` `R` branch, including successful and refused loads.
-- Compare the saved play-to-title aftermath and title-quit paths, including accepted and canceled confirmation prompts and player abort behavior.
-- Exercise failure followed by retry using deterministic input and file availability tapes.
-- Compare transition snapshots and ordered engine side effects; reuse the existing integrated snapshot, sound, cell-write, and serialization comparators rather than introducing a separate game model.
-
+- Compare title restore cancellation, refused/malformed save selection, and retry through the original menu/load path.
+- Compare accepted and canceled title quit confirmation plus player abort confirmation.
+- Complete the consistent successful/refused board and world transition matrix, including remaining save/return aftermath.
+- Reuse the integrated snapshot, sound, cell-write, and serialization comparators; do not introduce a separate game model.

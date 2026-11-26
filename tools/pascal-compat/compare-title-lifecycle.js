@@ -2,8 +2,9 @@ const fs = require('node:fs');
 
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
+const restoreSavePath = process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT> <integrated_gameplay.wasm>');
+  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT> <integrated_gameplay.wasm> [restore.SAV]');
 }
 
 const scalarNames = [
@@ -117,7 +118,17 @@ function readProductionSnapshots(instance) {
     },
   });
   instance = await WebAssembly.instantiate(module, { env });
-  const result = instance.exports.run_integrated_title_lifecycle_checks();
+  let result;
+  if (restoreSavePath) {
+    const save = fs.readFileSync(restoreSavePath);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (save.length > capacity) throw new Error(`Restore fixture exceeds production harness capacity: ${save.length}/${capacity}`);
+    const pointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, pointer, save.length).set(save);
+    result = instance.exports.run_integrated_title_restore_checks(save.length);
+  } else {
+    result = instance.exports.run_integrated_title_lifecycle_checks();
+  }
   if (result !== 0) throw new Error(`Production title lifecycle returned ${result}`);
   const actual = readProductionSnapshots(instance);
   let comparedFields = 0;
@@ -143,5 +154,8 @@ function readProductionSnapshots(instance) {
       comparedFields++;
     }
   }
-  console.log(`Title lifecycle replay: P-to-play, one real paused cycle, and return-to-title matched at ${expected.length} checkpoints (${comparedFields} state fields); first-divergence context includes neighboring fields.`);
+  const scenario = restoreSavePath
+    ? 'R-to-restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
+    : 'P-to-play, one real paused cycle, and return-to-title';
+  console.log(`Title lifecycle replay: ${scenario} matched at ${expected.length} checkpoints (${comparedFields} state fields); first-divergence context includes neighboring fields.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

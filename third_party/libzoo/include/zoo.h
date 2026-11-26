@@ -549,6 +549,7 @@ void zoo_state_init(zoo_state *state);
 void zoo_redraw(zoo_state *state);
 int zoo_world_reload(zoo_state *state);
 int zoo_world_play(zoo_state *state);
+int zoo_world_restore(zoo_state *state, zoo_io_handle *h);
 int zoo_world_return_title(zoo_state *state);
 
 void* zoo_store_display(zoo_state *state, int16_t x, int16_t y, int16_t width, int16_t height);

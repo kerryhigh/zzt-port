@@ -340,6 +340,7 @@ $integratedGameplayArgs = @(
     '-I', $buildDir,
 	'-Wl,--no-entry', '-Wl,--export=run_integrated_gameplay_checks',
 	'-Wl,--export=run_integrated_title_lifecycle_checks',
+	'-Wl,--export=run_integrated_title_restore_checks',
 	'-Wl,--export=integrated_demo_world_bytes_ptr', '-Wl,--export=integrated_demo_world_bytes_capacity',
 	'-Wl,--export=run_integrated_demo_gameplay_checks',
 	'-Wl,--export=run_integrated_wall_pusher_duplicator_checks',
