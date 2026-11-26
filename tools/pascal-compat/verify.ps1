@@ -2354,6 +2354,101 @@ end;
         (Join-Path $stageRoot 'INTEGWRL.OUT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F08 save/restore/world-reload/board-change replay failed with exit code $LASTEXITCODE." }
 
+    Write-Host 'Compiling and running the F09 editor/.BRD round-trip/gameplay replay: EDITORIN'
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'EDITORIN.PAS') -Destination (Join-Path $stageRoot 'EDITORIN.PAS')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'ABCGH.BRD')) {
+        Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'EDITORIN.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'EDITORIN.EXE') -Force -ErrorAction SilentlyContinue
+
+    $stagedInput = $stagedInputWithoutNormalizedTape
+    $editorTapeInterfaceAnchor = 'function InputProbeGetKeyBuffer: string;'
+    $editorTapeInterfaceIndex = $stagedInput.IndexOf($editorTapeInterfaceAnchor, [StringComparison]::Ordinal)
+    if ($editorTapeInterfaceIndex -lt 0) {
+        throw 'Could not locate the staged Input unit interface for the F09 editor key tape.'
+    }
+    $stagedInput = $stagedInput.Insert(
+        $editorTapeInterfaceIndex + $editorTapeInterfaceAnchor.Length,
+        "`r`n`t`tprocedure InputProbeSetEditorTape(tape: string);`r`n`t`tfunction InputProbeGetEditorTape: string;"
+    )
+    $editorTapeStateAnchor = "`tInputProbeReadKeys: string[50];"
+    if (-not $stagedInput.Contains($editorTapeStateAnchor)) {
+        throw 'Could not locate the staged Input unit state for the F09 editor key tape.'
+    }
+    $stagedInput = $stagedInput.Replace($editorTapeStateAnchor,
+        $editorTapeStateAnchor + "`r`n`tInputProbeEditorTape: string[50];`r`n`tInputProbeEditorTapeEnabled: boolean;")
+    $editorTapeHelpers = @'
+procedure InputProbeSetEditorTape(tape: string);
+begin
+	InputProbeEditorTape := tape;
+	InputProbeEditorTapeEnabled := Length(tape) <> 0;
+end;
+
+function InputProbeGetEditorTape: string;
+begin
+	InputProbeGetEditorTape := InputProbeEditorTape;
+end;
+
+'@
+    $stagedInput = $stagedInput.Replace($implementationAnchor, $editorTapeHelpers + $implementationAnchor)
+    $inputUpdateStart = $stagedInput.LastIndexOf('procedure InputUpdate;', [StringComparison]::Ordinal)
+    $inputUpdateNextRoutine = $stagedInput.IndexOf('procedure InputProbeSetKeyBuffer(buffer: string);', $inputUpdateStart, [StringComparison]::Ordinal)
+    if ($inputUpdateStart -lt 0 -or $inputUpdateNextRoutine -lt 0) {
+        throw 'Could not locate staged InputUpdate for the F09 editor key tape.'
+    }
+    $inputUpdateSource = $stagedInput.Substring($inputUpdateStart, $inputUpdateNextRoutine - $inputUpdateStart)
+    $inputUpdateEndOffset = $inputUpdateSource.LastIndexOf('end;', [StringComparison]::Ordinal)
+    if ($inputUpdateEndOffset -lt 0) { throw 'Could not locate the end of staged InputUpdate for F09.' }
+    $editorTapeHook = @'
+		if InputProbeEditorTapeEnabled then begin
+			InputDeltaX := 0;
+			InputDeltaY := 0;
+			InputShiftPressed := false;
+			if Length(InputProbeEditorTape) <> 0 then begin
+				InputKeyPressed := InputProbeEditorTape[1];
+				if Length(InputProbeEditorTape) = 1 then
+					InputProbeEditorTape := ''
+				else
+					InputProbeEditorTape := Copy(InputProbeEditorTape, 2, Length(InputProbeEditorTape) - 1);
+				case InputKeyPressed of
+					KEY_UP: InputDeltaY := -1;
+					KEY_DOWN: InputDeltaY := 1;
+					KEY_LEFT: InputDeltaX := -1;
+					KEY_RIGHT: InputDeltaX := 1;
+				end;
+			end else
+				InputKeyPressed := #0;
+		end;
+'@
+    $stagedInput = $stagedInput.Insert($inputUpdateStart + $inputUpdateEndOffset, $editorTapeHook)
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
+    Invoke-DosboxSession 'EDITORIN-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC EDITORIN.PAS > EDITORCOMP.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'EDITORIN.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\EDITORIN.EXE. See $stageRoot\EDITORCOMP.LOG and $stageRoot\EDITORIN-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'EDITORIN' @('BIN\EDITORIN.EXE')
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'ABCGH.BRD')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
+            throw "Pascal F09 editor/.BRD replay did not write $fixtureOutput. See $stageRoot\EDITORIN.LOG."
+        }
+    }
+    $stagedInput = $stagedInputWithoutNormalizedTape
+    [IO.File]::WriteAllText($stagedInputPath, $stagedInput, [Text.UTF8Encoding]::new($false))
+    & node 'tools/pascal-compat/compare-integrated-gameplay.js' `
+        (Join-Path $stageRoot 'INTEGPR.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        (Join-Path $stageRoot 'INTEGSND.OUT') `
+        (Join-Path $stageRoot 'INTEGCEL.OUT') `
+        (Join-Path $stageRoot 'INTEGSAV.SAV') `
+        (Join-Path $stageRoot 'INTEGLOD.OUT') `
+        (Join-Path $stageRoot 'INTEG2SV.SAV') `
+        'editor-brd-roundtrip-play' `
+        (Join-Path $stageRoot 'ABCGH.BRD')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F09 editor/.BRD round-trip/gameplay replay failed with exit code $LASTEXITCODE." }
+
     & node 'tools/pascal-compat/check-integrated-diagnostics.js' `
         'tools/pascal-compat/compare-integrated-gameplay.js' `
         (Join-Path $syntheticReplayRoot 'INTEGPR.OUT') `
@@ -2370,6 +2465,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 68 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08 integrated fixtures, four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
+$directProbeCount = $probeFiles.Count + 70 # Includes twelve separate compile/run probes, BINDALIA and BINDORDR separate compile/run sessions, eleven isolated BINDSIZE cases, the DEMO/F02/F03/F04/F05/F06/F07/F08/F09 integrated fixtures (F09 uses separate compile and run sessions), four isolated OBJTIK cases, and isolated OOPPARSE runtime; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus EDITORFL, EDFLDOVR, EDFLDQ17, EDFLDFUL, EDPLACE, EDSTAT, BRDXFER-COMPILE, BRDXFER-RUN, NEGLEN-COMPILE, NEGLEN-RUN, NEGBRD-COMPILE, NEGBRD-RUN, STARPRB-COMPILE, STARPRB-RUN, CENTIPR-COMPILE, CENTIPR-RUN, PUSHDUP-COMPILE, PUSHDUP-RUN, BINDPROB-COMPILE, BINDPROB-RUN, SLIMEPRB-COMPILE, SLIMEPRB-RUN, DRAWPRB-COMPILE, DRAWPRB-RUN, MSGTIK-COMPILE, MSGTIK-RUN, TORCHPR-COMPILE, TORCHPR-RUN, SOUNDTIK, SOUNDCLK, INTEGPRB, DEMOINT, MOTIONIN, COMBATIN, STATORD, BOARDPASSIN, DARKIN, PAUSEIN, SAVEIN, EDITORIN-COMPILE, EDITORIN, BINDALIA-COMPILE, BINDALIA-RUN, BINDREUS, BINDORDR-COMPILE, BINDORDR-RUN, BINDSIZE-COMPILE, BINDSIZE-SML, BINDSIZE-MED, BINDSIZE-LRG, BINDSIZE-XL, BINDSIZE-F41, BINDSIZE-F45, BINDSIZE-F50, BINDSIZE-F55, BINDSIZE-F60, BINDSIZE-F63, BINDSIZE-F64, BINDTAIL, BINDSEL, BINDWIN, SOUNDFRQ, OOPIFPRB, OOPGIVPRB, OOPCHARPRB, OOPPUTPRB, OOPCHGPRB, OOPFLAGPRB, OOPSEND-COMPILE, OOPSENDPRB, OBJTIK-COMPILE, OBJTIK01, OBJTIK02, OBJTIK03, OBJTIK04, OBJTOUCHPRB, OOPFLOWPRB, OOPPARSE-COMPILE, OOPPARSEPRB, OOPANYPRB)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

@@ -347,6 +347,8 @@ $integratedGameplayArgs = @(
 	'-Wl,--export=run_integrated_dark_room_torch_energizer_timers_death_checks',
 	'-Wl,--export=run_integrated_pause_scheduler_checks',
 	'-Wl,--export=run_integrated_save_restore_world_reload_checks',
+	'-Wl,--export=run_integrated_editor_brd_roundtrip_checks',
+	'-Wl,--export=integrated_editor_brd_bytes_ptr', '-Wl,--export=integrated_editor_brd_bytes_length',
     '-Wl,--export=integrated_gameplay_output_ptr', '-Wl,--export=integrated_gameplay_trace_ptr',
     '-Wl,--export=integrated_gameplay_snapshots_ptr', '-Wl,--export=integrated_gameplay_checkpoint_headers_ptr',
     '-Wl,--export=integrated_gameplay_snapshot_count', '-Wl,--export=integrated_gameplay_snapshot_lengths_ptr',

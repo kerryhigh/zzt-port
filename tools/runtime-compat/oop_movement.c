@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "zoo_internal.h"
+#include "zoo_editor_brd.h"
 #include "zoo_random.h"
 
 static zoo_state state;
@@ -92,6 +93,8 @@ static int32_t integrated_gameplay_roundtrip_save_length_value;
 static int32_t integrated_gameplay_roundtrip_save_result_value;
 static int32_t integrated_gameplay_roundtrip_save_overflow_value;
 static uint8_t integrated_demo_world_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
+static uint8_t integrated_editor_brd_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
+static int32_t integrated_editor_brd_length_value;
 static bool integrated_schedule_enabled;
 static int32_t integrated_elapsed_nanos;
 static int16_t integrated_configured_tick_speed;
@@ -233,6 +236,7 @@ static void capture_window_append(const char *text) {
 #include "../../third_party/libzoo/src/libzoo/zoo_game_io.c"
 #ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
 #include "../../third_party/libzoo/src/libzoo/zoo_callstack.c"
+#include "../../third_party/libzoo/src/libzoo/zoo_editor_brd.c"
 #endif
 #include "../../third_party/libzoo/src/libzoo/zoo_io.c"
 #define zoo_board_change zoo_board_change_actual
@@ -4917,6 +4921,72 @@ int32_t run_integrated_save_restore_world_reload_checks(void) {
 			|| state.board.stats[0].x != 23 || state.board.stats[0].y != 17
 			|| state.board.stat_count != 2 || state.game_paused) return 45;
 	return 0;
+}
+
+int32_t run_integrated_editor_brd_roundtrip_checks(void) {
+	int16_t i, random_index;
+	uint16_t swap;
+	size_t body_length = 0;
+	zoo_editor_brd_transfer_outcome outcome = ZOO_EDITOR_BRD_TRANSFER_IMPORTED;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	memset(integrated_editor_brd_bytes, 0, sizeof(integrated_editor_brd_bytes));
+	integrated_editor_brd_length_value = 0;
+	/* Match Pascal startup: GenerateTransitionTable runs before WorldCreate. */
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		state.transition_order[i] = (uint16_t) i;
+	}
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		random_index = integrated_gameplay_random(&state, ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT);
+		swap = state.transition_order[random_index];
+		state.transition_order[random_index] = state.transition_order[i];
+		state.transition_order[i] = swap;
+	}
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	/* Match a world with a created playable board 1 before entering EditorLoop. */
+	result = zoo_board_close(&state);
+	if (result != 0) return 60;
+	state.world.board_count = 1;
+	state.world.info.current_board = 1;
+	state.world.board_len[1] = 0;
+	state.world.board_data[1] = NULL;
+	state.world.board_external[1] = false;
+	zoo_board_create(&state);
+	zoo_io_pstring_assign_pascal(state.board.name, sizeof(state.board.name) - 1,
+		state.board.io_name_data, &state.board.io_name_length,
+		&state.board.io_name_valid, "ROOM", 4);
+	/* This is the exact text tile produced by EditorLoop's F4 text-entry path. */
+	state.board.tiles[31][12].element = ZOO_E_TEXT_MIN + 5;
+	state.board.tiles[31][12].color = (uint8_t) 'A';
+	if (zoo_editor_brd_serialize(&state.board, integrated_editor_brd_bytes + 2,
+			sizeof(integrated_editor_brd_bytes) - 2, &body_length) != 0) return 61;
+	if (body_length > 0xFFFFu || body_length + 2 > sizeof(integrated_editor_brd_bytes)) return 62;
+	integrated_editor_brd_bytes[0] = (uint8_t) body_length;
+	integrated_editor_brd_bytes[1] = (uint8_t) (body_length >> 8);
+	integrated_editor_brd_length_value = (int32_t) body_length + 2;
+	result = zoo_editor_brd_transfer(&state, integrated_editor_brd_bytes,
+		(size_t) integrated_editor_brd_length_value, &outcome);
+	if (result != 0 || outcome != ZOO_EDITOR_BRD_TRANSFER_IMPORTED) return 63;
+	if (state.board.name[0] != 'R' || state.board.name[1] != 'O'
+			|| state.board.name[2] != 'O' || state.board.name[3] != 'M'
+			|| state.board.tiles[31][12].element != ZOO_E_TEXT_MIN + 5
+			|| state.board.tiles[31][12].color != (uint8_t) 'A') return 64;
+	zoo_board_enter(&state);
+	state.game_state = GS_PLAY;
+	state.game_paused = true;
+	state.game_play_exit_requested = false;
+	return integrated_gameplay_run_ticks("888888", 6, NULL, 0, 6,
+		false, false, false, true);
+}
+
+uint32_t integrated_editor_brd_bytes_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_editor_brd_bytes;
+}
+
+int32_t integrated_editor_brd_bytes_length(void) {
+	return integrated_editor_brd_length_value;
 }
 
 int32_t integrated_gameplay_mutate_for_f08_restore(void) {

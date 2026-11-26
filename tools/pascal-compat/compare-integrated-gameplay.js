@@ -10,10 +10,12 @@ const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
 const worldLoadResultPath = process.argv[11];
+const editorBrdPath = process.argv[10];
 if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death|pause-positive-scheduler-delayed-input|save-restore-world-reload-board-change [DEMO.ZZT] [INTEGWRL.OUT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input', 'save-restore-world-reload-board-change'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'pause-positive-scheduler-delayed-input', 'save-restore-world-reload-board-change', 'editor-brd-roundtrip-play'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 if (scenario === 'save-restore-world-reload-board-change' && (!demoWorldPath || !worldLoadResultPath)) throw new Error('F08 save/restore/world reload comparison requires INTEGWRL.ZZT and INTEGWRL.OUT');
+if (scenario === 'editor-brd-roundtrip-play' && !editorBrdPath) throw new Error('F09 editor/.BRD comparison requires the Pascal-exported .BRD file');
 
 const cellCount = 62 * 27;
 const tileFieldCount = cellCount * 2;
@@ -21,9 +23,11 @@ const statFieldCount = 14;
 const schedulerFieldCount = 11;
 const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/);
 const checkpointSpecs = [];
-const replayTransitionCount = ['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario) ? 4 : 3;
+const replayTransitionCount = scenario === 'editor-brd-roundtrip-play' ? 1
+  : ['board-neighbors-passages', 'save-restore-world-reload-board-change'].includes(scenario) ? 4 : 3;
 const postCycleStateIds = scenario === 'board-neighbors-passages'
-    || scenario === 'pause-positive-scheduler-delayed-input' ? [2, 3]
+    || scenario === 'pause-positive-scheduler-delayed-input'
+    || scenario === 'editor-brd-roundtrip-play' ? [2, 3]
     : scenario === 'save-restore-world-reload-board-change' ? [2, 3, 4, 5] : [];
 const expectedCycleCount = scenario === 'dark-room-torch-energizer-timers-death' ? 120
   : scenario === 'pause-positive-scheduler-delayed-input' ? 5 : 6;
@@ -391,6 +395,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_pause_scheduler_checks();
     } else if (scenario === 'save-restore-world-reload-board-change') {
       result = instance.exports.run_integrated_save_restore_world_reload_checks();
+    } else if (scenario === 'editor-brd-roundtrip-play') {
+      result = instance.exports.run_integrated_editor_brd_roundtrip_checks();
     } else {
       result = instance.exports.run_integrated_script_stat_order_checks();
     }
@@ -426,6 +432,25 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       }
     }
     throw new Error(`Production integrated replay returned ${result}; captured checkpoints=[${snapshots.join('; ')}]; recent tick slots=[${trace.join('; ')}]`);
+  }
+
+  let comparedBrdBytes = 0;
+  if (scenario === 'editor-brd-roundtrip-play') {
+    const pascalBrd = fs.readFileSync(editorBrdPath);
+    const productionBrdLength = instance.exports.integrated_editor_brd_bytes_length();
+    const productionBrd = new Uint8Array(instance.exports.memory.buffer,
+      instance.exports.integrated_editor_brd_bytes_ptr(), productionBrdLength);
+    if (productionBrdLength !== pascalBrd.length) {
+      throw new Error(`First .BRD byte divergence: Pascal length=${pascalBrd.length}, production length=${productionBrdLength}`);
+    }
+    for (let offset = 0; offset < pascalBrd.length; offset++) {
+      if (productionBrd[offset] !== pascalBrd[offset]) {
+        const from = Math.max(0, offset - 4);
+        const to = Math.min(pascalBrd.length, offset + 5);
+        throw new Error(`First .BRD byte divergence at offset ${offset}: Pascal=${pascalBrd[offset]}, production=${productionBrd[offset]}; Pascal context=${pascalBrd.subarray(from, to).toString('hex')}, production context=${Buffer.from(productionBrd.subarray(from, to)).toString('hex')}`);
+      }
+    }
+    comparedBrdBytes = pascalBrd.length;
   }
 
   const pascalSave = fs.readFileSync(savePath);
@@ -870,5 +895,5 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   const cellWriteSummary = ['board-neighbors-passages', 'dark-room-torch-energizer-timers-death', 'save-restore-world-reload-board-change'].includes(scenario)
     ? `${expectedCells.count} playfield cell changes matched (${cellComparedFields} event fields); ${expectedCells.idempotentWriteCount} Pascal and ${actualIdempotentWriteCount} production identical-value redraws were reported separately`
     : `${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields)`;
-  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary}; generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0${scenario === 'save-restore-world-reload-board-change' ? ' for both SAV restore and ZZT world reload' : ''}; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
+  console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary};${scenario === 'editor-brd-roundtrip-play' ? ` exact ${comparedBrdBytes}-byte Pascal/production .BRD export matched;` : ''} generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0${scenario === 'save-restore-world-reload-board-change' ? ' for both SAV restore and ZZT world reload' : ''}; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
