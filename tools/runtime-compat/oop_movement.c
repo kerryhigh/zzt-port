@@ -51,8 +51,8 @@ static uint8_t message_row_colors[60];
 static bool capture_scroll_touch_lines;
 static int scroll_touch_line_count;
 static char scroll_touch_lines[2][51];
-#define INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY 16
-#define INTEGRATED_GAMEPLAY_MAX_FIELDS 65536
+#define INTEGRATED_GAMEPLAY_CHECKPOINT_CAPACITY 160
+#define INTEGRATED_GAMEPLAY_MAX_FIELDS 8192
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_CAPACITY 64
 #define INTEGRATED_GAMEPLAY_SOUND_EVENT_STRIDE 516
 #define INTEGRATED_GAMEPLAY_CELL_EVENT_CAPACITY 16384
@@ -98,6 +98,8 @@ static const char *integrated_normalized_input_tape;
 static int16_t integrated_normalized_input_tape_length;
 static int16_t integrated_normalized_input_tape_position;
 static bool integrated_normalized_input_at_update;
+static bool integrated_torch_action_pending;
+static bool integrated_cycle_clock_enabled;
 static bool integrated_capture_first_board_change_checkpoint;
 static bool integrated_board_change_checkpoint_captured;
 static bool integrated_board_change_checkpoint_failed;
@@ -296,6 +298,13 @@ void zoo_input_update(zoo_input_state *input) {
 		case 'D': input->delta_y = 1; break;
 		case 'L': input->delta_x = -1; break;
 		case 'R': input->delta_x = 1; break;
+		case 'T':
+			/* Preserve Pascal's observable key byte in snapshots while translating
+			   the same logical input to LibZoo's mapped torch action. */
+			input->key_pressed = 'T';
+			integrated_torch_action_pending = true;
+			break;
+		case 'N': input->key_pressed = 0; break;
 	}
 }
 #include "../../third_party/libzoo/src/libzoo/zoo_oop.c"
@@ -4235,9 +4244,10 @@ static void integrated_gameplay_set_normalized_input(char command) {
 
 static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_length,
 	const char *normalized_tape, int16_t normalized_length,
-	bool normalized_input_at_update) {
+	int16_t cycle_limit, bool normalized_input_at_update, bool use_fixed_clock,
+	bool pause_transition_input_guard, bool cycle_clock) {
 	int16_t cycles = 0;
-	int16_t calls = 0;
+	int32_t calls = 0;
 	int16_t previous_stat;
 	int16_t previous_tick;
 	int16_t tick_result;
@@ -4251,12 +4261,15 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	integrated_normalized_input_tape_length = normalized_length;
 	integrated_normalized_input_tape_position = 0;
 	integrated_normalized_input_at_update = normalized_input_at_update;
-	integrated_fixed_clock_enabled = normalized_input_at_update;
-	integrated_fixed_clock_hsecs = 30;
-	integrated_capture_first_board_change_checkpoint = normalized_input_at_update;
+	integrated_torch_action_pending = false;
+	integrated_cycle_clock_enabled = cycle_clock;
+	integrated_fixed_clock_enabled = use_fixed_clock || cycle_clock;
+	integrated_fixed_clock_hsecs = cycle_clock ? 0 : 30;
+	integrated_capture_first_board_change_checkpoint = normalized_input_at_update
+		&& use_fixed_clock && pause_transition_input_guard;
 	integrated_board_change_checkpoint_captured = false;
 	integrated_board_change_checkpoint_failed = false;
-	integrated_pause_transition_checkpoint_pending = normalized_input_at_update;
+	integrated_pause_transition_checkpoint_pending = pause_transition_input_guard;
 	state.tick_speed = 0;
 	state.game_paused = true;
 	if (!capture_integrated_gameplay_snapshot(0, 'L', 0)) return 4;
@@ -4270,7 +4283,7 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	integrated_gameplay_sound_capture_enabled = true;
 	integrated_gameplay_cell_capture_enabled = true;
 
-	while (cycles < 6 && calls < 2000) {
+	while (cycles < cycle_limit && calls < 200000) {
 		if (!integrated_normalized_input_at_update
 				&& integrated_normalized_input_tape != NULL
 				&& integrated_normalized_input_tape_position < integrated_normalized_input_tape_length
@@ -4282,6 +4295,14 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 		previous_stat = state.current_stat_tick;
 		previous_tick = state.current_tick;
 		tick_result = (int16_t) zoo_tick(&state);
+		/* Pascal's InputUpdate leaves T available until the next PlayerTick.
+		   LibZoo represents that key mapping as a one-shot action. Set it after
+		   the end-of-cycle zoo_input_clear so the real player callback consumes
+		   it on the following cycle, matching the staged Pascal hook boundary. */
+		if (integrated_torch_action_pending) {
+			zoo_input_action_set(&state.input, ZOO_ACTION_TORCH, true);
+			integrated_torch_action_pending = false;
+		}
 		integrated_gameplay_trace[(calls % 24) * 15 + 0] = previous_stat;
 		integrated_gameplay_trace[(calls % 24) * 15 + 1] = state.current_stat_tick;
 		integrated_gameplay_trace[(calls % 24) * 15 + 2] = state.current_tick;
@@ -4335,8 +4356,10 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 		}
 		if (state.current_stat_tick == 0 && state.current_tick != previous_tick) {
 			cycles++;
-			if (cycles == 6) state.game_play_exit_requested = true;
-			if (cycles > 6) {
+			if (integrated_cycle_clock_enabled)
+				integrated_fixed_clock_hsecs = (int16_t) ((cycles * 12) % 6000);
+			if (cycles == cycle_limit) state.game_play_exit_requested = true;
+			if (cycles > cycle_limit) {
 				force_elapsed_for_tick_check = false;
 				integrated_schedule_enabled = false;
 				return 11;
@@ -4351,7 +4374,7 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	}
 	force_elapsed_for_tick_check = false;
 	integrated_schedule_enabled = false;
-	if (cycles != 6) return 100 + cycles;
+	if (cycles != cycle_limit) return 100 + cycles;
 	if (state.game_paused) return 200;
 	if (integrated_normalized_input_tape != NULL
 			&& integrated_normalized_input_tape_position != integrated_normalized_input_tape_length)
@@ -4374,7 +4397,7 @@ static int integrated_gameplay_run_ticks(const char *input_tape, int16_t input_l
 	if (integrated_gameplay_save_result_value != 0) return 13;
 	if (!capture_integrated_gameplay_snapshot(
 			integrated_gameplay_snapshot_count_value, 'T', 2)) return 4;
-	return cycles == 6 ? 0 : 3;
+	return cycles == cycle_limit ? 0 : 3;
 }
 
 int32_t run_integrated_gameplay_checks(void) {
@@ -4415,7 +4438,7 @@ int32_t run_integrated_gameplay_checks(void) {
 	state.board.stats[stat_id].data = (char *) script2;
 	state.board.stats[stat_id].data_len = (int16_t) (sizeof(script2) - 1);
 	state.board.stats[stat_id].data_pos = 0;
-	result = integrated_gameplay_run_ticks("66", 2, NULL, 0, false);
+	result = integrated_gameplay_run_ticks("66", 2, NULL, 0, 6, false, false, false, false);
 	if (result != 0) return result;
 	return state.world.info.ammo == 1 && state.world.info.gems == 1 ? 0 : 20;
 }
@@ -4444,7 +4467,7 @@ int32_t run_integrated_demo_gameplay_checks(int32_t demo_world_length) {
 	state.game_state = GS_PLAY;
 	state.game_paused = true;
 	state.game_play_exit_requested = false;
-	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0, false);
+	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0, 6, false, false, false, false);
 	return result;
 }
 
@@ -4509,7 +4532,7 @@ int32_t run_integrated_wall_pusher_duplicator_checks(void) {
 	state.board.tiles[19][15].element = ZOO_E_EMPTY;
 	state.board.tiles[19][15].color = 0x70;
 
-	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0, false);
+	result = integrated_gameplay_run_ticks("666666", 6, NULL, 0, 6, false, false, false, false);
 	return result;
 }
 
@@ -4551,7 +4574,7 @@ int32_t run_integrated_combat_key_pickup_checks(void) {
 	state.board.tiles[10][5].element = ZOO_E_AMMO;
 	state.board.tiles[10][5].color = zoo_element_defs[ZOO_E_AMMO].color;
 
-	result = integrated_gameplay_run_ticks(NULL, 0, "RFRRRRR", 7, false);
+	result = integrated_gameplay_run_ticks(NULL, 0, "RFRRRRR", 7, 6, false, false, false, false);
 	if (result != 0) return result;
 	if (state.board.stats[0].x != 10 || state.board.stats[0].y != 5) return 41;
 	if (state.world.info.ammo != 5) return 100 + state.world.info.ammo;
@@ -4622,7 +4645,7 @@ int32_t run_integrated_script_stat_order_checks(void) {
 	state.board.stats[second_id].data_in_heap = true;
 	state.board.stats[second_id].data_heap_offset = second_offset;
 
-	result = integrated_gameplay_run_ticks("66", 2, NULL, 0, false);
+	result = integrated_gameplay_run_ticks("66", 2, NULL, 0, 6, false, false, false, false);
 	if (result != 0) return result;
 	return 0;
 }
@@ -4706,12 +4729,57 @@ int32_t run_integrated_board_neighbor_passage_checks(void) {
 	/* The pause cursor can redraw its unchanged glyph on extra logical polls.
 	   The replay records actual cell changes and reports these idempotent writes separately. */
 	integrated_gameplay_cell_coalesce_idempotent_writes = true;
-	result = integrated_gameplay_run_ticks(NULL, 0, "LLLR", 4, true);
+	result = integrated_gameplay_run_ticks(NULL, 0, "LLLR", 4, 6, true, true, true, false);
 	if (result != 0) return result;
 	if (state.world.info.current_board != 2
 			|| state.board.stats[0].x != 23 || state.board.stats[0].y != 17
 			|| state.board.stat_count != 2 || state.game_paused) return 45;
 	return 0;
+}
+
+int32_t run_integrated_dark_room_torch_energizer_timers_death_checks(void) {
+	int result;
+
+	integrated_gameplay_capture_reset();
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	zoo_board_create(&state);
+	/* The Pascal startup transition shuffle advances RandSeed 0 before the loop starts. */
+	state.random_seed = (int32_t) 0x240F47C4u;
+	state.world.info.health = 10;
+	state.world.info.torches = 0;
+	state.world.info.torch_ticks = 0;
+	state.world.info.energizer_ticks = 0;
+	state.world.info.current_board = 0;
+	state.board.info.is_dark = true;
+	state.board.info.io_is_dark_byte = 1;
+	state.board.info.time_limit_sec = 10;
+	state.board.info.start_player_x = 5;
+	state.board.info.start_player_y = 5;
+	state.board.stats[0].x = 5;
+	state.board.stats[0].y = 5;
+	state.board.stats[0].step_x = 0;
+	state.board.stats[0].step_y = 0;
+	state.board.stats[0].cycle = 1;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0;
+	state.board.tiles[30][12].element = ZOO_E_EMPTY;
+	state.board.tiles[30][12].color = 0;
+	state.board.tiles[5][5].element = ZOO_E_PLAYER;
+	state.board.tiles[5][5].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.tiles[6][5].element = ZOO_E_TORCH;
+	state.board.tiles[6][5].color = zoo_element_defs[ZOO_E_TORCH].color;
+	state.board.tiles[7][5].element = ZOO_E_ENERGIZER;
+	state.board.tiles[7][5].color = zoo_element_defs[ZOO_E_ENERGIZER].color;
+	state.board.tiles[8][5].element = ZOO_E_SOLID;
+	state.board.tiles[8][5].color = zoo_element_defs[ZOO_E_SOLID].color;
+	state.board.tiles[40][20].element = ZOO_E_EMPTY;
+	state.board.tiles[40][20].color = 0x70;
+
+	/* Report only effective cell changes; identical redraws remain counted separately. */
+	integrated_gameplay_cell_coalesce_idempotent_writes = true;
+	result = integrated_gameplay_run_ticks(NULL, 0, "RTRN", 4, 120, true, false, false, true);
+	return result;
 }
 
 uint32_t integrated_gameplay_reload_input_bytes_ptr(void) {

@@ -9,8 +9,8 @@ const loadResultPath = process.argv[7];
 const roundtripSavePath = process.argv[8];
 const scenario = process.argv[9] || 'synthetic';
 const demoWorldPath = process.argv[10];
-if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages [DEMO.ZZT]]');
-if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
+if (!pascalPath || !wasmPath || !soundPath || !cellPath || !savePath || !loadResultPath || !roundtripSavePath) throw new Error('Usage: compare-integrated-gameplay.js <INTEGPR.OUT> <integrated_gameplay.wasm> <INTEGSND.OUT> <INTEGCEL.OUT> <INTEGSAV.SAV> <INTEGLOD.OUT> <INTEG2SV.SAV> [synthetic|demo-traversal|walls-pushers-duplicators|combat-keys-pickups|object-stat-order|board-neighbors-passages|dark-room-torch-energizer-timers-death [DEMO.ZZT]]');
+if (!['synthetic', 'demo-traversal', 'walls-pushers-duplicators', 'combat-keys-pickups', 'object-stat-order', 'board-neighbors-passages', 'dark-room-torch-energizer-timers-death'].includes(scenario)) throw new Error(`Unknown integrated replay scenario: ${scenario}`);
 if (scenario === 'demo-traversal' && !demoWorldPath) throw new Error('DEMO traversal comparison requires the source DEMO.ZZT file');
 
 const cellCount = 62 * 27;
@@ -21,6 +21,7 @@ const expectedLines = fs.readFileSync(pascalPath, 'ascii').trim().split(/\r?\n/)
 const checkpointSpecs = [];
 const replayTransitionCount = scenario === 'board-neighbors-passages' ? 4 : 3;
 const postCycleStateIds = scenario === 'board-neighbors-passages' ? [2, 3] : [];
+const expectedCycleCount = scenario === 'dark-room-torch-energizer-timers-death' ? 120 : 6;
 let postCycleStateIndex = 0;
 let nextTransitionId = 1;
 let nextCycleId = 1;
@@ -29,7 +30,7 @@ const checkpointHeaders = expectedLines.map((line, rowIndex) => {
   if (fields.length < 3) throw new Error(`Malformed Pascal checkpoint header at row ${rowIndex + 1}`);
   return { kind: fields[0], id: Number(fields[1]), fieldCount: Number(fields[2]), fields };
 });
-if (checkpointHeaders.length < 9
+if (checkpointHeaders.length < expectedCycleCount + 6
     || checkpointHeaders[0].kind !== 'L' || checkpointHeaders[0].id !== 0
     || checkpointHeaders[1].kind !== 'S' || checkpointHeaders[1].id !== 0) {
   throw new Error('Integrated replay must start with L0 loaded state followed by S0 game-loop start');
@@ -43,7 +44,7 @@ for (let row = 2; row < checkpointHeaders.length; row++) {
   if (header.kind === 'T' && header.id === nextTransitionId && nextTransitionId <= replayTransitionCount) {
     checkpointSpecs.push({ kind: 'T', id: header.id, name: `state transition ${header.id}` });
     nextTransitionId++;
-  } else if (header.kind === 'C' && header.id === nextCycleId && nextCycleId <= 6) {
+  } else if (header.kind === 'C' && header.id === nextCycleId && nextCycleId <= expectedCycleCount) {
     checkpointSpecs.push({ kind: 'C', id: header.id, name: `cycle ${header.id}` });
     nextCycleId++;
   } else if (nextCycleId === 7 && postCycleStateIndex < postCycleStateIds.length
@@ -57,10 +58,10 @@ for (let row = 2; row < checkpointHeaders.length; row++) {
     throw new Error(`Invalid checkpoint order or identity at row ${row + 1}: ${header.kind}/${header.id}`);
   }
 }
-if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== 7
+if (checkpointSpecs.at(-1)?.kind !== 'F' || nextCycleId !== expectedCycleCount + 1
     || nextTransitionId !== replayTransitionCount + 1
     || postCycleStateIndex !== postCycleStateIds.length) {
-  throw new Error(`Integrated replay requires ${replayTransitionCount} ordered gameplay transitions, six ordered cycles, ${postCycleStateIds.length} post-cycle save/load snapshots, and a final state; transitions=${nextTransitionId - 1}, cycles=${nextCycleId - 1}, postCycleSnapshots=${postCycleStateIndex}`);
+  throw new Error(`Integrated replay requires ${replayTransitionCount} ordered gameplay transitions, ${expectedCycleCount} ordered cycles, ${postCycleStateIds.length} post-cycle save/load snapshots, and a final state; transitions=${nextTransitionId - 1}, cycles=${nextCycleId - 1}, postCycleSnapshots=${postCycleStateIndex}`);
 }
 const expectedSnapshots = expectedLines.map((line, rowIndex) => {
   const fields = line.trim().split(/\s+/);
@@ -377,6 +378,8 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
       result = instance.exports.run_integrated_combat_key_pickup_checks();
     } else if (scenario === 'board-neighbors-passages') {
       result = instance.exports.run_integrated_board_neighbor_passage_checks();
+    } else if (scenario === 'dark-room-torch-energizer-timers-death') {
+      result = instance.exports.run_integrated_dark_room_torch_energizer_timers_death_checks();
     } else {
       result = instance.exports.run_integrated_script_stat_order_checks();
     }
@@ -491,6 +494,16 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
         const from = Math.max(0, field - 2);
         const to = Math.min(fieldCount - 1, field + 2);
         const context = [];
+        const snapshotSummary = values => {
+          const liveStats = values[11] + 1;
+          const scheduler = scalarNames.length + liveStats * statFieldCount;
+          return {
+            board: values[3], player: [values[scalarNames.length], values[scalarNames.length + 1]],
+            torches: values[4], torchTicks: values[5], energizerTicks: values[6], health: values[2],
+            paused: values[scheduler + 5], tick: values[scheduler], statTick: values[scheduler + 1],
+            key: values[scheduler + 9], keyBufferLength: values[scheduler + 10],
+          };
+        };
         for (let at = from; at <= to; at++) {
           context.push(`${describeField(at, statCount, expected)}:${expected[at]}->${actual[at]}`);
         }
@@ -504,7 +517,7 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
             recentTrace.push(`${traceRow}:tick=${traceFields[2]} stat=${traceFields[0]}->${traceFields[1]} tape=${traceFields[9]} delta=${traceFields[10]},${traceFields[11]} downR=${traceFields[12]} heldR=${traceFields[13]} heldL=${traceFields[14]}`);
           }
         }
-        throw new Error(`First divergence at ${spec.name}, field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}; context=[${context.join(', ')}]; recent input trace=[${recentTrace.join('; ')}]`);
+        throw new Error(`First divergence at ${spec.name}, field ${field} (${describeField(field, statCount, expected)}): Pascal=${expectedValue}, production=${observed}; state Pascal=${JSON.stringify(snapshotSummary(expected))}, production=${JSON.stringify(snapshotSummary(actual))}; context=[${context.join(', ')}]; recent input trace=[${recentTrace.join('; ')}]`);
       }
       comparedFields++;
     }
@@ -679,6 +692,24 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
   }
   const expectedCells = parseCellWrites(cellPath);
   if (expectedCells.overflow !== 0) throw new Error('Pascal integrated cell-write capture overflowed its fixed 8192-event buffer');
+  if (scenario === 'dark-room-torch-energizer-timers-death') {
+    const final = expectedSnapshots.at(-1).values;
+    const cycleSnapshots = checkpointSpecs
+      .map((spec, row) => ({ spec, values: expectedSnapshots[row].values }))
+      .filter(checkpoint => checkpoint.spec.kind === 'C');
+    const torchPickup = cycleSnapshots.some(checkpoint => checkpoint.values[4] === 1);
+    const torchLit = cycleSnapshots.some(checkpoint => checkpoint.values[4] === 0 && checkpoint.values[5] > 0);
+    const energizerActivated = cycleSnapshots.some(checkpoint => checkpoint.values[6] > 0);
+    const energizerExpired = energizerActivated && cycleSnapshots.some(checkpoint => checkpoint.values[6] === 0);
+    // Cell (14,4) maps to board tile (15,5), in the player's dark redraw
+    // rectangle but beyond the lit radius after moving to (6,5).
+    const darkSample = expectedCells.events.some(event => event.x === 14 && event.y === 4
+      && event.color === 0x07 && event.character === 0xB0);
+    if (!torchPickup || !torchLit || !energizerActivated || !energizerExpired
+        || final[2] !== 0 || final[5] <= 0 || final[6] !== 0 || !darkSample) {
+      throw new Error(`F06 coverage assertion failed: torchPickup=${torchPickup}, torchLit=${torchLit}, energizerActivated=${energizerActivated}, energizerExpired=${energizerExpired}, finalHealth=${final[2]}, finalTorchTicks=${final[5]}, finalEnergizerTicks=${final[6]}, darkSampleDrawn=${darkSample}`);
+    }
+  }
   const actualCellCount = instance.exports.integrated_gameplay_cell_event_count();
   const actualCellOverflow = instance.exports.integrated_gameplay_cell_event_overflow();
   const actualCellStride = instance.exports.integrated_gameplay_cell_event_stride();
@@ -745,7 +776,7 @@ function compareSerializedSave(label, pascalSave, productionSave, loadedFromFile
     .map(([field, count]) => `${field} (${count} differing byte${count === 1 ? '' : 's'})`)
     .join('; ') || 'none';
   const generatedLabel = loadedFromFile ? 'DEMO-derived SAV' : 'fresh-world SAV';
-  const cellWriteSummary = scenario === 'board-neighbors-passages'
+  const cellWriteSummary = ['board-neighbors-passages', 'dark-room-torch-energizer-timers-death'].includes(scenario)
     ? `${expectedCells.count} playfield cell changes matched (${cellComparedFields} event fields); ${expectedCells.idempotentWriteCount} Pascal and ${actualIdempotentWriteCount} production identical-value redraws were reported separately`
     : `${expectedCells.count} playfield cell writes matched (${cellComparedFields} event fields)`;
   console.log(`Integrated gameplay replay (${scenario}): ${checkpointSpecs.length} checkpoints (${checkpointFieldCounts.join(', ')} fields) matched (${comparedFields} comparisons); ${expectedSound.count} logical sound-queue events matched (${soundComparedFields} event fields); ${cellWriteSummary}; generated ${generatedLabel} matched ${generatedSaveComparison.comparedBytes} stable bytes with ${generatedSaveComparison.classifiedBytes} undefined/pointer positions classified (${classifiedDiffSummary}); loaded-file round-trip SAV matched ${roundtripSaveComparison.comparedBytes} preserved bytes with ${roundtripSaveComparison.classifiedBytes} process-pointer positions classified; Pascal WorldLoad=true matched production zoo_world_load=0; first-divergence reports identify checkpoint/event, field, tile, cell, serialized byte, and surrounding values`);

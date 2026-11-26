@@ -36,7 +36,7 @@ const result = spawnSync(process.execPath, [comparatorPath, mutatedPath, wasmPat
 });
 if (result.error) throw result.error;
 const diagnostic = `${result.stdout || ''}${result.stderr || ''}`;
-const expected = /First divergence at cycle 1, field 0 \(ammo\): Pascal=-?\d+, production=-?\d+; context=\[ammo:/;
+const expected = /First divergence at cycle 1, field 0 \(ammo\): Pascal=-?\d+, production=-?\d+;.*context=\[ammo:/;
 if (result.status !== 1 || !expected.test(diagnostic)) {
   throw new Error(`Integrated first-divergence negative control failed (exit ${result.status}): ${diagnostic.trim()}`);
 }
