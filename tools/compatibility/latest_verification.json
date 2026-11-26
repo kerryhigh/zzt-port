@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-26",
-    "root_revision": "dbf210e2b33b13ff472dbbc1e808e063ed7ebd18",
+    "root_revision": "9b7c24568b6d083ee38376ab78058bb2dd0f6c66",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26 at source revision dbf210e2b33b13ff472dbbc1e808e063ed7ebd18: 130/130 direct Turbo Pascal 5.5 sessions (54 standard, 76 standalone), 56/56 configured Pascal-to-production differentials, and integrated F01-F10 passed with 238 checkpoints, 824,821 state-field comparisons, and 169/169 logical-cycle snapshots. TITLEIN P and R routes each matched player-start, one real paused gameplay cycle, and return-to-title: 3 checkpoints / 10,242 fields for P and 3 / 10,287 fields for R. Runtime suite and first-divergence negative control passed. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean full Pascal/production runner passed on 2026-11-26 at source revision 9b7c24568b6d083ee38376ab78058bb2dd0f6c66: 131/131 direct Turbo Pascal 5.5 sessions (54 standard, 77 standalone), 57/57 configured Pascal-to-production differentials, and integrated F01-F10 passed with 238 checkpoints, 824,821 state-field comparisons, and 169/169 logical-cycle snapshots. TITLEIN P and successful R routes matched 3 checkpoints / 10,242 and 10,287 fields; unsupported-version R refusal matched 3,385/3,386 comparable fields after excluding private internal board-buffer length. Runtime suite and first-divergence negative control passed. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -58,16 +58,16 @@
       "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
-      "sessions": 130,
+      "sessions": 131,
       "standard_programs": 54,
-      "standalone_sessions": 76,
-      "session_result": "130/130 direct Turbo Pascal 5.5 sessions passed in the clean run: 54 standard programs and 76 standalone compile/run or fixture sessions, including TITLEIN compile/run, independent Pascal .SAV generation, and title-loop .SAV restore sessions."
+      "standalone_sessions": 77,
+      "session_result": "131/131 direct Turbo Pascal 5.5 sessions passed in the clean run: 54 standard programs and 77 standalone compile/run or fixture sessions, including TITLEIN compile/run, independent Pascal .SAV generation, successful restore, and unsupported-version restore refusal."
     },
     "direct_differential_comparisons": {
-      "configured": 56,
-      "passed": 56,
+      "configured": 57,
+      "passed": 57,
       "failed": 0,
-      "result": "56/56 configured Pascal-to-production differential invocations passed, including the nine-row E2-03-AC002 scheduler matrix, integrated fixtures F01-F10, and original GameTitleLoop P and R lifecycle replays; zero unexplained differences. F05/F08 identical-value redraw cadence remains separately classified."
+      "result": "57/57 configured Pascal-to-production differential invocations passed, including the nine-row E2-03-AC002 scheduler matrix, integrated fixtures F01-F10, original GameTitleLoop P and successful R lifecycle replays, and unsupported-version R refusal; zero unexplained comparable differences. F05/F08 identical-value redraw cadence remains separately classified."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2070,16 +2070,17 @@
       "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record also matched through shared .BRD import/export; short-payload DP and short-header safe-reopen P cases passed",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
       "runtime": "passed in the clean 2026-11-26 full Pascal runner: tools/runtime-compat/verify.ps1 exited 0; scheduler matrix and real shared-engine lifecycle harness built and passed.",
-      "android_compat": "passed 2026-11-26; tools/android-compat/verify.ps1 exit 0: Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
-      "android_build": "passed fresh offline 2026-11-26: GRADLE_USER_HOME=build\\gradle-home; .\\gradlew.bat --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); native engine built for arm64-v8a and x86_64.",
-      "windows_ctest": "passed fresh 2026-11-26: powershell -NoProfile -ExecutionPolicy Bypass -File windows\\build.ps1 -BuildDirectory build\\windows-engine2-check; Release x64 targets zzt_windows, zzt_windows_smoke, zzt_renderer_test, zzt_sound_pcm_test built; CTest 3/3 passed. Generated executable and build files are ignored."
+      "android_compat": "passed fresh 2026-11-26; powershell -NoProfile -ExecutionPolicy Bypass -File tools\\android-compat\\verify.ps1; exit 0: Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
+      "android_build": "passed fresh 2026-11-26; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); native engine built for arm64-v8a and x86_64. The APK build does not constitute device testing.",
+      "windows_ctest": "passed fresh 2026-11-26; powershell -NoProfile -ExecutionPolicy Bypass -File windows\\build.ps1; exit 0; Release x64 targets zzt_windows, zzt_windows_smoke, zzt_renderer_test, zzt_sound_pcm_test built; CTest 3/3 passed. Generated executable and build files are ignored."
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
       "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. Earlier short-header captures came from an invalid nine-character DOS filename and are discarded. Corrected SHORTHD attempts stall or fail with Turbo Pascal runtime error 203 at the freed-buffer BoardOpen; expected control flow and the production safe-reopen model are source-derived, not direct differentials.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
-      "F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. In F05 state-transition T3, the cumulative effective-cell counter is Pascal 6003 versus production 6004 even though the complete ordered 6006-write stream and every logical-cycle counter match; this derived counter is excluded only at intermediate T checkpoints in F05/F08 and remains recorded for E2-03 transition acceptance. Undefined and process-pointer bytes follow the checklist contract."
+      "F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. In F05 state-transition T3, the cumulative effective-cell counter is Pascal 6003 versus production 6004 even though the complete ordered 6006-write stream and every logical-cycle counter match; this derived counter is excluded only at intermediate T checkpoints in F05/F08 and remains recorded for E2-03 transition acceptance. Undefined and process-pointer bytes follow the checklist contract.",
+      "Title malformed-restore comparison: Pascal World.BoardLen[0] is 319 while LibZoo’s augmented private board buffer is 327. This implementation-specific internal size is excluded from equality; the refusal result and remaining 3,385 comparable world/board/stat/tile fields match, and external .ZZT/.SAV bytes are checked by the serializer suite."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
@@ -2116,7 +2117,8 @@
       "E2-10-F09 passed in the clean 2026-11-25 runner committed as 080cc69bf2abfa745ecc2ad37b5d27117dba8fc2: corrected ledger count 124 direct Turbo Pascal sessions and 53/53 configured differentials; the real Pascal EditorLoop exported/imported .BRD before GamePlayLoop. The integrated comparison matched 12 checkpoints / 40,788 fields, five cell writes, zero sound events, all 324 .BRD bytes, 750 stable save bytes, and 1,152 round-trip bytes; F10 remains pending (9/10).",
       "E2-03-AC002 passed in the clean 2026-11-26 run at 80fd8d8915a5ffff3795d478a7d3f598bf8ffb27: nine deterministic schedule rows / 117 fields matched direct compiled Pascal and shared production for TickSpeed 0, 1, 6, and 9 at phases 0 and 5980, plus the four-PIT stall. Existing F07 supplies pause/resume coverage. E2-03 remains open.",
       "E2-03-AC003 passed in the clean 2026-11-26 run on source commit 41409f7f2b0cc8a4278ebe426bcdccbbc3f8ca47: all ten frozen integrated fixtures passed (238 checkpoints / 824,821 state fields / 169 logical cycles), with 17 sound events and 16,470 ordered effective cell writes matched. F05/F08 T-checkpoint counter boundaries are explicitly classified; per-cycle C counters and global write streams remain exact.",
-      "E2-03-AC001 title lifecycle follow-up passed in the clean 2026-11-26 run at source revision dbf210e2b33b13ff472dbbc1e808e063ed7ebd18: 130/130 direct Pascal sessions and 56/56 differentials. Original GameTitleLoop P and R routes each matched three checkpoints (10,242 P fields; 10,287 R fields), including one real paused gameplay cycle and return-to-title. R consumed the exact 1,649-byte Pascal-generated .SAV. F01-F10 remain 10/10 at 238 checkpoints / 824,821 fields / 169 logical cycles. AC001 remains partial: refusal/cancel/retry, quit/abort, and the remaining successful/refused transition matrix are open."
+      "E2-03-AC001 title lifecycle follow-up passed in the clean 2026-11-26 run at source revision dbf210e2b33b13ff472dbbc1e808e063ed7ebd18: 130/130 direct Pascal sessions and 56/56 differentials. Original GameTitleLoop P and R routes each matched three checkpoints (10,242 P fields; 10,287 R fields), including one real paused gameplay cycle and return-to-title. R consumed the exact 1,649-byte Pascal-generated .SAV. F01-F10 remain 10/10 at 238 checkpoints / 824,821 fields / 169 logical cycles. AC001 remains partial: refusal/cancel/retry, quit/abort, and the remaining successful/refused transition matrix are open.",
+      "E2-03-AC001 title restore refusal passed in the clean 2026-11-26 run at source revision 9b7c24568b6d083ee38376ab78058bb2dd0f6c66: 131/131 direct Pascal sessions and 57/57 configured differentials. Original GameTitleLoop R refused an unsupported-version save; 3,385/3,386 comparable fields matched, and the shared restore path now preserves the source-defined title player cell. F01-F10 remain 10/10 at 238 checkpoints / 824,821 fields / 169 cycles. AC001 remains partial: cancellation, retry, quit/abort, remaining save/return routes, and the consistent transition matrix are open."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -2145,10 +2147,10 @@
     "latest_attempt": {
       "date": "2026-11-26",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>; exit 0",
-      "source_revision": "dbf210e2b33b13ff472dbbc1e808e063ed7ebd18",
+      "source_revision": "9b7c24568b6d083ee38376ab78058bb2dd0f6c66",
       "full_pascal_runner_exit_code": 0,
-      "direct_pascal_sessions_passed": 130,
-      "configured_differentials_passed": 56,
+      "direct_pascal_sessions_passed": 131,
+      "configured_differentials_passed": 57,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "For BRDXFER only, staged GAME.PAS replaces TextWindowSelect at the DisplayIOError acknowledgement boundary with TextWindowRejected := true; InputKeyPressed := #0. This skips the blocking modal interaction; the short-payload file reads, IOResult checks, DisplayIOError return, BoardCreate, and editor cleanup run in reconstructed Pascal.",
@@ -2157,7 +2159,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean full runner passed: 130/130 direct sessions, 56/56 configured differentials, integrated F01-F10, title P and R lifecycle differentials, and standalone runtime suite. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
+      "status": "Clean full runner passed: 131/131 direct sessions, 57/57 configured differentials, integrated F01-F10, title P and R lifecycle differentials including unsupported-version refusal, and standalone runtime suite. E2-03-AC001 remains partial; E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path; it records the observed version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -2557,6 +2559,42 @@
             "sha256": "f1b86edd83a2d0d8a0d8ff3279ddbb75afb9fd072188e78968b0036f8a5c498611",
             "committed": false
           }
+        },
+        "refused_restore_route": {
+          "probe": "tools/pascal-compat/TITLEIN.PAS",
+          "comparator": "tools/pascal-compat/compare-title-lifecycle.js",
+          "production_harness": "tools/runtime-compat/oop_movement.c::run_integrated_title_restore_failure_checks",
+          "production_entry": "third_party/libzoo/src/libzoo/zoo.c::zoo_world_restore",
+          "evidence_class": "D+DP",
+          "result": "passed",
+          "comparison_exit_code": 0,
+          "save_version": -2,
+          "production_error": "ZOO_ERROR_WRONGVER (-3)",
+          "captured_state_fields": 3386,
+          "comparable_state_fields": 3385,
+          "normalized_fields": [
+            "World.BoardLen[0]: Pascal=319 raw board-record bytes; LibZoo=327 augmented private-buffer bytes"
+          ],
+          "input_tape": "R then Enter at the original .SAV selector boundary; complete 512-byte unsupported-version header; staged hook exits after original GameWorldLoad returns false.",
+          "staging_interventions": [
+            "The probe itself writes a complete 512-byte version -2 .SAV and runs the original GameTitleLoop, TextWindowSelect, GameWorldLoad, WorldLoad, WorldUnload, BoardClose, and GamePlayLoop routines.",
+            "A staged GameTitleLoop hook sets the exit request only after the original GameWorldLoad refusal, making the otherwise repeating title loop state capturable; no Pascal gameplay code was modified.",
+            "The same original ZZT.PAS memory directive {$M 49152,163840,655360} and deterministic seeded selector path are used."
+          ],
+          "production_fix": "zoo_world_restore restores the source-defined player cell before loading when called from GS_TITLE, preserving it when an unsupported save is refused.",
+          "oracle_output": {
+            "path": "build/pascal-compat-verification/TITLFAIL/TITLFAIL.OUT",
+            "size_bytes": 7115,
+            "sha256": "52057421f0e73bf296cdb117660f20010f7317ee5ba9473c3485b024f303412c",
+            "committed": false
+          },
+          "malformed_save_fixture": {
+            "path": "build/pascal-compat-verification/TITLFAIL/RESTORE.SAV",
+            "size_bytes": 512,
+            "sha256": "378621df4e6f111e6ce670297eeb7a21a6613732b88b22d79619124cd7894c2f",
+            "committed": false
+          },
+          "full_run_exit_code": 0
         }
       }
     },

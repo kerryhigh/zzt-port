@@ -2,9 +2,10 @@ const fs = require('node:fs');
 
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
-const restoreSavePath = process.argv[4] || null;
+const restoreFailureSavePath = process.argv[4] === '--restore-failure' ? process.argv[5] || null : null;
+const restoreSavePath = restoreFailureSavePath ? null : process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT> <integrated_gameplay.wasm> [restore.SAV]');
+  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [restore.SAV|--restore-failure malformed.SAV]');
 }
 
 const scalarNames = [
@@ -42,6 +43,34 @@ function parsePascalSnapshots(path) {
     throw new Error(`Title lifecycle capture missing checkpoints: P=${Boolean(playerStart)}, player C1=${Boolean(playerCycle)}, T=${Boolean(titleReturn)}`);
   }
   return [playerStart, playerCycle, titleReturn];
+}
+
+function parsePascalRestoreFailure(path) {
+  const text = fs.readFileSync(path, 'ascii').trim();
+  const values = text.split(/\s+/).map(Number);
+  const expectedCount = 38 + (62 * 27 * 2);
+  if (values.length !== expectedCount || values.some(value => !Number.isInteger(value))) {
+    throw new Error(`Malformed Pascal title-restore failure capture: ${values.length} fields, expected ${expectedCount}`);
+  }
+  return values;
+}
+
+function describeRestoreFailureField(index) {
+  const fixed = [
+    'GameWorldLoad accepted', 'World.BoardCount', 'World.BoardLen[0]', 'ReturnBoardId',
+    'World.Info.CurrentBoard', 'ammo', 'gems', 'health', 'torches', 'torch ticks',
+    'energizer ticks', 'score', 'board time seconds', 'board time hundredths', 'save flag',
+    'Board.StatCount', 'InputKeyPressed',
+  ];
+  if (index < fixed.length) return fixed[index];
+  const statFields = [
+    'x', 'y', 'step x', 'step y', 'cycle', 'p1', 'p2', 'p3',
+    'follower', 'leader', 'under element', 'under color', 'data position', 'data length',
+  ];
+  if (index < 31) return `Board.Stats[0].${statFields[index - fixed.length]}`;
+  if (index < 38) return `World.Info.Keys[${index - 30}]`;
+  const tileIndex = Math.floor((index - 38) / 2);
+  return `tile (${Math.floor(tileIndex / 27)},${tileIndex % 27}) ${(index - 38) % 2 ? 'color' : 'element'}`;
 }
 
 function describeField(index, values) {
@@ -84,7 +113,9 @@ function readProductionSnapshots(instance) {
 }
 
 (async () => {
-  const expected = parsePascalSnapshots(pascalPath);
+  const expected = restoreFailureSavePath
+    ? parsePascalRestoreFailure(pascalPath)
+    : parsePascalSnapshots(pascalPath);
   const module = await WebAssembly.compile(fs.readFileSync(wasmPath));
   let instance;
   let heapTop = 8 * 1024 * 1024;
@@ -118,6 +149,50 @@ function readProductionSnapshots(instance) {
     },
   });
   instance = await WebAssembly.instantiate(module, { env });
+  if (restoreFailureSavePath) {
+    const save = fs.readFileSync(restoreFailureSavePath);
+    if (save.length !== 512) throw new Error(`Malformed restore fixture is ${save.length} bytes; expected the direct-Pascal 512-byte header.`);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (save.length > capacity) throw new Error(`Restore fixture exceeds production harness capacity: ${save.length}/${capacity}`);
+    const pointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, pointer, save.length).set(save);
+    const result = instance.exports.run_integrated_title_restore_failure_checks(save.length);
+    if (result !== 0) throw new Error(`Production malformed title restore harness returned ${result}`);
+    const error = instance.exports.integrated_title_restore_failure_error();
+    if (error !== -3) throw new Error(`Production malformed title restore returned ${error}; expected ZOO_ERROR_WRONGVER (-3).`);
+    const count = instance.exports.integrated_title_restore_failure_field_count();
+    if (count !== expected.length) throw new Error(`Production malformed title restore emitted ${count} fields; Pascal emitted ${expected.length}.`);
+    const actual = Array.from(new Int32Array(
+      instance.exports.memory.buffer,
+      instance.exports.integrated_title_restore_failure_fields_ptr(),
+      count,
+    ));
+    let comparedFields = 0;
+    for (let field = 0; field < expected.length; field++) {
+      // Pascal's World.BoardLen is the byte length of its raw in-memory board
+      // record. LibZoo's corresponding private buffer also carries explicit
+      // Pascal short-string preservation metadata, so that internal length is
+      // intentionally not a cross-implementation state field. The actual DOS
+      // file bytes remain covered by the serializer differential suite.
+      if (field === 2) {
+        if (actual[field] <= 0) throw new Error(`Production retained invalid internal board length ${actual[field]} after malformed restore.`);
+        continue;
+      }
+      if (expected[field] !== actual[field]) {
+        const from = Math.max(0, field - 2);
+        const to = Math.min(expected.length - 1, field + 2);
+        const context = [];
+        for (let near = from; near <= to; near++) {
+          context.push({ field: describeRestoreFailureField(near), pascal: expected[near], production: actual[near] });
+        }
+        throw new Error(`First malformed title-restore divergence at field ${field} (${describeRestoreFailureField(field)}): Pascal=${expected[field]}, production=${actual[field]}; nearby=${JSON.stringify(context)}`);
+      }
+      comparedFields++;
+    }
+    if (expected[0] !== 0) throw new Error(`Pascal GameWorldLoad accepted the malformed .SAV (result=${expected[0]}).`);
+    console.log(`Title R malformed-version refusal matched Pascal across ${comparedFields}/${count} comparable world/board/stat/tile fields; private board-buffer length was excluded from equality; LibZoo returned ZOO_ERROR_WRONGVER (-3).`);
+    return;
+  }
   let result;
   if (restoreSavePath) {
     const save = fs.readFileSync(restoreSavePath);
