@@ -80,4 +80,6 @@ begin
 		World.Info.Keys[i] := false;
 	World.Info.IsSave := true;
 	WorldSave('SAVTAIL', '.SAV');
+	World.Info.IsSave := false;
+	WorldSave('ZZTTAIL', '.ZZT');
 end.

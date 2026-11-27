@@ -2131,6 +2131,11 @@ foreach ($booleanWorldFixture in @('BLS0.SAV', 'BLS1.SAV', 'BLS2.SAV', 'BLS3.SAV
         throw "WorldSaveProbe raw-Boolean case did not write $booleanWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }
 }
+foreach ($staleTailWorldFixture in @('SAVTAIL.SAV', 'ZZTTAIL.ZZT')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $staleTailWorldFixture) -PathType Leaf)) {
+        throw "WorldSaveProbe stale-tail case did not write $staleTailWorldFixture. See $stageRoot\WORLDSAV.LOG."
+    }
+}
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASPROBE.HI') -PathType Leaf)) {
     throw "HiSaveProbe did not write PASPROBE.HI. See $stageRoot\HISAVPRB.LOG."
 }
@@ -2207,7 +2212,7 @@ try {
     & node 'tools/pascal-compat/compare-pascal-world-booleans.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV Boolean/reserved-byte and short-string-tail differential failed with exit code $LASTEXITCODE." }
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV/.ZZT Boolean/reserved-byte and short-string-tail differential failed with exit code $LASTEXITCODE." }
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `

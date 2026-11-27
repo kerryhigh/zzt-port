@@ -67,8 +67,6 @@ function compareBytes(expected, actual, label) {
     console.log(`${filename}: seven key bytes, IsSave ${rawBoolean}, 14 reserved bytes, and all ${file.length} file bytes match production.`);
   }
 
-  const tailFile = fs.readFileSync(path.join(stage, 'SAVTAIL.SAV'));
-  if (tailFile.length !== 26465) throw new Error(`SAVTAIL.SAV: expected 26465 bytes, got ${tailFile.length}.`);
   const pattern = Buffer.from(Array.from({ length: 58 }, (_, index) => String.fromCharCode(65 + (index % 26))).join(''), 'ascii');
   function assertStaleString(buffer, offset, capacity, first, label) {
     if (buffer[offset] !== 1) throw new Error(`${label}: Pascal short-string length is ${buffer[offset]}, expected 1.`);
@@ -77,42 +75,50 @@ function compareBytes(expected, actual, label) {
       throw new Error(`${label}: Pascal short-string assignment did not preserve the old payload tail.`);
     }
   }
-  assertStaleString(tailFile, 29, 20, 'N', 'SAVTAIL world name');
-  assertStaleString(tailFile, 50, 20, 'F', 'SAVTAIL first flag');
+  function compareStaleTailWorld(filename, expectedIsSave) {
+    const tailFile = fs.readFileSync(path.join(stage, filename));
+    if (tailFile.length !== 26465) throw new Error(`${filename}: expected 26465 bytes, got ${tailFile.length}.`);
+    if (tailFile.readUInt16LE(0) !== 0xFFFF) throw new Error(`${filename}: expected the DOS -1 world version marker.`);
+    if (tailFile[264] !== expectedIsSave) throw new Error(`${filename}: IsSave byte is ${tailFile[264]}, expected ${expectedIsSave}.`);
+    assertStaleString(tailFile, 29, 20, 'N', `${filename} world name`);
+    assertStaleString(tailFile, 50, 20, 'F', `${filename} first flag`);
 
-  const headerSize = 512;
-  const boardCount = tailFile.readUInt16LE(2);
-  const currentBoard = tailFile.readUInt16LE(17);
-  if (currentBoard > boardCount) throw new Error(`SAVTAIL.SAV: current board ${currentBoard} exceeds board count ${boardCount}.`);
-  let boardAtFile = headerSize;
-  let board = null;
-  for (let boardId = 0; boardId <= boardCount; boardId++) {
-    if (boardAtFile + 2 > tailFile.length) throw new Error(`SAVTAIL.SAV: missing length for board ${boardId}.`);
-    const boardLength = tailFile.readUInt16LE(boardAtFile);
-    const boardStart = boardAtFile + 2;
-    if (boardStart + boardLength > tailFile.length) throw new Error(`SAVTAIL.SAV: board ${boardId} exceeds the file.`);
-    if (boardId === currentBoard) board = tailFile.subarray(boardStart, boardStart + boardLength);
-    boardAtFile = boardStart + boardLength;
-  }
-  if (!board) throw new Error(`SAVTAIL.SAV: current board ${currentBoard} was not serialized.`);
-  assertStaleString(board, 0, 50, 'B', 'SAVTAIL board name');
-  let boardAt = 51;
-  let cells = 0;
-  while (cells < 1500) {
-    if (boardAt + 3 > board.length) throw new Error('SAVTAIL.SAV: ended inside board tile RLE.');
-    const count = board[boardAt];
-    boardAt += 3;
-    cells += count === 0 ? 1 : count;
-  }
-  if (boardAt + 86 > board.length) throw new Error('SAVTAIL.SAV: ended before Board.Info.');
-  assertStaleString(board, boardAt + 7, 58, 'M', 'SAVTAIL board message');
+    const boardCount = tailFile.readUInt16LE(2);
+    const currentBoard = tailFile.readUInt16LE(17);
+    if (currentBoard > boardCount) throw new Error(`${filename}: current board ${currentBoard} exceeds board count ${boardCount}.`);
+    let boardAtFile = 512;
+    let board = null;
+    for (let boardId = 0; boardId <= boardCount; boardId++) {
+      if (boardAtFile + 2 > tailFile.length) throw new Error(`${filename}: missing length for board ${boardId}.`);
+      const boardLength = tailFile.readUInt16LE(boardAtFile);
+      const boardStart = boardAtFile + 2;
+      if (boardStart + boardLength > tailFile.length) throw new Error(`${filename}: board ${boardId} exceeds the file.`);
+      if (boardId === currentBoard) board = tailFile.subarray(boardStart, boardStart + boardLength);
+      boardAtFile = boardStart + boardLength;
+    }
+    if (!board) throw new Error(`${filename}: current board ${currentBoard} was not serialized.`);
+    assertStaleString(board, 0, 50, 'B', `${filename} board name`);
+    let boardAt = 51;
+    let cells = 0;
+    while (cells < 1500) {
+      if (boardAt + 3 > board.length) throw new Error(`${filename}: ended inside board tile RLE.`);
+      const count = board[boardAt];
+      boardAt += 3;
+      cells += count === 0 ? 1 : count;
+    }
+    if (boardAt + 86 > board.length) throw new Error(`${filename}: ended before Board.Info.`);
+    assertStaleString(board, boardAt + 7, 58, 'M', `${filename} board message`);
 
-  new Uint8Array(memory.buffer, input_ptr(), tailFile.length).set(tailFile);
-  const tailResult = run_roundtrip(tailFile.length);
-  if (tailResult !== 0) throw new Error(`SAVTAIL.SAV: production read/board round-trip returned ${tailResult}.`);
-  const tailProduction = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
-  compareBytes(tailFile, tailProduction, 'SAVTAIL.SAV stale-string-tail full-file differential');
-  console.log('SAVTAIL.SAV: four direct Pascal short-string stale tails and all 26465 file bytes match production.');
+    new Uint8Array(memory.buffer, input_ptr(), tailFile.length).set(tailFile);
+    const result = run_roundtrip(tailFile.length);
+    if (result !== 0) throw new Error(`${filename}: production read/board round-trip returned ${result}.`);
+    const production = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
+    compareBytes(tailFile, production, `${filename} stale-string-tail full-file differential`);
+    console.log(`${filename}: IsSave ${expectedIsSave}, four direct Pascal stale tails, and all ${tailFile.length} file bytes match production.`);
+  }
+
+  compareStaleTailWorld('SAVTAIL.SAV', 1);
+  compareStaleTailWorld('ZZTTAIL.ZZT', 0);
 })().catch(error => {
   console.error(error.message);
   process.exitCode = 1;
