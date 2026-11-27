@@ -29,6 +29,18 @@
 
 #define zoo_io_read_byte(h) (h)->func_getc((h))
 
+static int16_t zoo_io_i16_from_u16(uint16_t bits) {
+	/* Map Pascal's little-endian two's-complement word without narrowing out of range. */
+	int32_t value = (bits <= 0x7FFFu) ? (int32_t) bits : (int32_t) bits - 0x10000;
+	return (int16_t) value;
+}
+
+static int8_t zoo_io_i8_from_u8(uint8_t bits) {
+	/* Packed stat steps are Pascal ShortInt values encoded as raw bytes. */
+	int16_t value = (bits <= 0x7Fu) ? (int16_t) bits : (int16_t) bits - 0x100;
+	return (int8_t) value;
+}
+
 static uint8_t zoo_io_write_bool(bool value, bool raw_valid, uint8_t raw_value) {
 	if (raw_valid && ((raw_value != 0) == value)) return raw_value;
 	return value ? 1 : 0;
@@ -79,8 +91,9 @@ void zoo_io_world_info_clear_pascal_strings(zoo_world_info *info) {
 }
 
 static int16_t zoo_io_read_short(zoo_io_handle *h) {
-	uint8_t v = h->func_getc(h);
-	return v | ((uint16_t) h->func_getc(h) << 8);
+	uint16_t low = h->func_getc(h);
+	uint16_t high = h->func_getc(h);
+	return zoo_io_i16_from_u16((uint16_t) (low | (high << 8)));
 }
 
 static zoo_tile zoo_io_read_tile(zoo_io_handle *h) {
@@ -115,8 +128,9 @@ static void zoo_io_read_pstring_fixed(zoo_io_handle *h, int p_len, char *str, in
 #define zoo_io_write_byte(h, v) (h)->func_putc((h), (v))
 
 static void zoo_io_write_short(zoo_io_handle *h, int16_t v) {
-	h->func_putc(h, (v & 0xFF));
-	h->func_putc(h, (v >> 8));
+	uint16_t bits = (uint16_t) v;
+	h->func_putc(h, (uint8_t) bits);
+	h->func_putc(h, (uint8_t) (bits >> 8));
 }
 
 static void zoo_io_write_tile(zoo_io_handle *h, zoo_tile tile) {
@@ -200,8 +214,8 @@ static void zoo_io_packed_stat_read(zoo_io_handle *h, zoo_stat *stat) {
 			stat->step_x = zoo_io_read_short(h);
 			stat->step_y = zoo_io_read_short(h);
 		} else {
-			stat->step_x = (int8_t) zoo_io_read_byte(h);
-			stat->step_y = (int8_t) zoo_io_read_byte(h);
+			stat->step_x = zoo_io_i8_from_u8(zoo_io_read_byte(h));
+			stat->step_y = zoo_io_i8_from_u8(zoo_io_read_byte(h));
 		}
 	}
 	stat->cycle = (flags & 0x08) ? zoo_io_read_short(h) : (uint8_t)zoo_io_read_byte(h);
@@ -714,10 +728,11 @@ int zoo_io_world_read(zoo_io_handle *h, zoo_world *world, bool title_only) {
 		board_length_read = h->func_tell(h) - board_length_pos;
 		/* Pascal keeps any unread bytes of the destination word unchanged. */
 		if (board_length_read == 0) {
-			world->board_len[i] = (int16_t) previous_board_len;
+			world->board_len[i] = zoo_io_i16_from_u16(previous_board_len);
 		} else if (board_length_read == 1) {
-			world->board_len[i] = (int16_t) ((previous_board_len & 0xFF00u)
+			uint16_t merged_board_len = (uint16_t) ((previous_board_len & 0xFF00u)
 				| ((uint16_t) world->board_len[i] & 0x00FFu));
+			world->board_len[i] = zoo_io_i16_from_u16(merged_board_len);
 		}
 		/* Pascal passes the signed Integer to Word-sized GetMem/BlockRead arguments. */
 		uint16_t board_data_len = (uint16_t) world->board_len[i];

@@ -29,7 +29,9 @@ static uint16_t editor_brd_u16(const uint8_t *data) {
 }
 
 static int16_t zoo_editor_brd_i16(const uint8_t *data) {
-    return (int16_t) editor_brd_u16(data);
+	uint16_t bits = editor_brd_u16(data);
+	int32_t value = (bits <= 0x7FFFu) ? (int32_t) bits : (int32_t) bits - 0x10000;
+	return (int16_t) value;
 }
 
 static bool editor_brd_write(editor_brd_writer *writer, const void *data, size_t count) {

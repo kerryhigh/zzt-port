@@ -52,6 +52,39 @@ int run_roundtrip(uint32_t input_len) {
     return 0;
 }
 
+int run_signed_serialization_codec(void) {
+    zoo_io_handle out_handle;
+    zoo_io_handle in_handle;
+    uint32_t bits;
+
+    memset(output_data, 0, sizeof(output_data));
+    out_handle = zoo_io_open_file_mem(output_data, FIXTURE_CAP, MODE_WRITE);
+    for (bits = 0; bits <= 0xFFFFu; ++bits) {
+        uint16_t raw = (uint16_t) bits;
+        int16_t expected = zoo_io_i16_from_u16(raw);
+        size_t at = (size_t) bits * 2;
+        zoo_io_write_short(&out_handle, expected);
+        if (output_data[at] != (uint8_t) raw
+                || output_data[at + 1] != (uint8_t) (raw >> 8)
+                || zoo_editor_brd_i16(output_data + at) != expected) return 1;
+    }
+    if (out_handle.func_tell(&out_handle) != FIXTURE_CAP) return 2;
+
+    in_handle = zoo_io_open_file_mem(output_data, FIXTURE_CAP, MODE_READ);
+    for (bits = 0; bits <= 0xFFFFu; ++bits) {
+        if (zoo_io_read_short(&in_handle) != zoo_io_i16_from_u16((uint16_t) bits)) return 3;
+    }
+    if (in_handle.func_tell(&in_handle) != FIXTURE_CAP) return 5;
+    for (bits = 0; bits <= 0xFFu; ++bits) {
+        uint8_t raw = (uint8_t) bits;
+        int8_t expected = (raw <= 0x7Fu)
+                ? (int8_t) raw
+                : (int8_t) ((int16_t) raw - 0x100);
+        if (zoo_io_i8_from_u8(raw) != expected) return 4;
+    }
+    return 0;
+}
+
 int run_pascal_boardclose_worldsave(uint32_t input_len) {
     zoo_io_handle in_handle;
     zoo_io_handle out_handle;

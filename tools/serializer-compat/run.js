@@ -13,7 +13,7 @@ function parseBoard(bytes, start) {
   const original = fs.readFileSync(path.resolve(__dirname, '..', '..', 'app', 'src', 'main', 'assets', 'DEMO.ZZT'));
   const module = await WebAssembly.compile(fs.readFileSync(path.resolve(process.argv[2] || path.join(__dirname, 'world_roundtrip.wasm'))));
   const instance = await WebAssembly.instantiate(module, {});
-  const { memory, input_ptr, output_ptr, output_len, run_roundtrip, run_game_save_roundtrip, run_world_read, run_world_read_preserves_tail, run_world_read_title_only, run_world_load_missing_trailing, run_world_load_partial_length, run_world_load_unsigned_board_length, run_flag_save_roundtrip, run_repeated_pstring_assignment_roundtrip, run_pstring_matches_pascal_checks, run_world_reset_string_roundtrip,
+  const { memory, input_ptr, output_ptr, output_len, run_roundtrip, run_signed_serialization_codec, run_game_save_roundtrip, run_world_read, run_world_read_preserves_tail, run_world_read_title_only, run_world_load_missing_trailing, run_world_load_partial_length, run_world_load_unsigned_board_length, run_flag_save_roundtrip, run_repeated_pstring_assignment_roundtrip, run_pstring_matches_pascal_checks, run_world_reset_string_roundtrip,
     run_board_roundtrip, run_zero_count_rle, run_final_rle_overrun, run_board_rle_writer_boundary,
     run_editor_brd_roundtrip, run_editor_brd_record_roundtrip, run_editor_brd_zero_count_rle,
     run_editor_brd_reject_truncated, run_shared_stat_data_alias } = instance.exports;
@@ -28,6 +28,9 @@ function parseBoard(bytes, start) {
     }
     if (log) console.log(`${label}: ${output.length} bytes match`);
   }
+  const signedCodecResult = run_signed_serialization_codec();
+  if (signedCodecResult !== 0) throw new Error(`Signed Pascal serialization codec returned ${signedCodecResult}`);
+  console.log('Signed Pascal serialization: all 65,536 little-endian Short bit patterns and 256 packed signed-byte values preserve their DOS interpretation');
   function externalBoards(input, label) {
     new Uint8Array(memory.buffer, input_ptr(), input.length).set(input);
     const count = input.readInt16LE(2); let pos = 512, tested = 0;
