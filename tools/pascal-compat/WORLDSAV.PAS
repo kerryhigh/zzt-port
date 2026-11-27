@@ -3,6 +3,7 @@ uses Crt, Dos, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, 
 var
 	signedValues: array[0..4] of integer;
 	signedNames: array[0..4] of string[8];
+	longText: string[58];
 	tag, i: integer;
 	rawValue: byte;
 {$F+}
@@ -62,4 +63,21 @@ begin
 			World.Info.unkPad[i] := signedValues[i mod 4];
 		WorldSave(signedNames[tag], '.SAV');
 	end;
+
+	{ Short-string assignments keep bytes from the previous longer value. }
+	longText := '';
+	for i := 1 to 58 do
+		longText := longText + Chr(Ord('A') + ((i - 1) mod 26));
+	World.Info.Name := Copy(longText, 1, 20);
+	World.Info.Name := 'N';
+	World.Info.Flags[1] := Copy(longText, 1, 20);
+	World.Info.Flags[1] := 'F';
+	Board.Name := Copy(longText, 1, 50);
+	Board.Name := 'B';
+	Board.Info.Message := longText;
+	Board.Info.Message := 'M';
+	for i := 1 to 7 do
+		World.Info.Keys[i] := false;
+	World.Info.IsSave := true;
+	WorldSave('SAVTAIL', '.SAV');
 end.

@@ -2207,7 +2207,7 @@ try {
     & node 'tools/pascal-compat/compare-pascal-world-booleans.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV raw-Boolean/reserved-byte differential failed with exit code $LASTEXITCODE." }
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV Boolean/reserved-byte and short-string-tail differential failed with exit code $LASTEXITCODE." }
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `
