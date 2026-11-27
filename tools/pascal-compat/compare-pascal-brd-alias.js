@@ -56,9 +56,10 @@ function readStats(record) {
     throw new Error('Pascal ALIAS.BRD has an invalid two-byte length prefix.');
   }
   const record = external.subarray(2);
-  const expectedLine = fs.readFileSync(outputPath, 'utf8').trim();
-  const match = /^alias (\d+) (\d+) (\d+) (\d+) (-\d+)$/.exec(expectedLine);
-  if (!match) throw new Error(`Unexpected BRDALI.OUT capture: ${JSON.stringify(expectedLine)}`);
+  const expectedLines = fs.readFileSync(outputPath, 'utf8').replace(/\r/g, '').trim().split('\n');
+  if (expectedLines.length !== 2) throw new Error(`Expected two BRDALI captures, got ${expectedLines.length}.`);
+  const match = /^alias (\d+) (\d+) (\d+) (\d+) (-\d+)$/.exec(expectedLines[0]);
+  if (!match) throw new Error(`Unexpected BRDALI alias capture: ${JSON.stringify(expectedLines[0])}`);
   const [, boardId, sourceId, targetId, aliasLength, wireAlias] = match.map((value, index) => index === 0 ? value : Number(value));
   const stats = readStats(record);
   if (!stats[sourceId] || !stats[targetId] || sourceId >= targetId) {
@@ -87,6 +88,42 @@ function readStats(record) {
     throw new Error(`Production re-encoded target stat ${targetId} DataLen=${outputStats[targetId].dataLen}; expected ${wireAlias}.`);
   }
   console.log(`Pascal BoardClose on board ${boardId}: stat ${targetId} references earlier shared script data with wire DataLen ${wireAlias}; all ${record.length} record bytes matched production.`);
+
+  const chainMatch = /^chain (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (-\d+)$/.exec(expectedLines[1]);
+  if (!chainMatch) throw new Error(`Unexpected BRDALI chained-alias capture: ${JSON.stringify(expectedLines[1])}`);
+  const [, chainBoardId, chainSourceId, chainMiddleId, chainTargetId, chainLength, chainLastId, chainWireAlias] =
+    chainMatch.map((value, index) => index === 0 ? value : Number(value));
+  const chainedExternal = fs.readFileSync(path.join(stage, 'ALIAS2.BRD'));
+  if (chainedExternal.length < 2 || chainedExternal.readUInt16LE(0) !== chainedExternal.length - 2) {
+    throw new Error('Pascal ALIAS2.BRD has an invalid two-byte length prefix.');
+  }
+  const chainedRecord = chainedExternal.subarray(2);
+  const chainedStats = readStats(chainedRecord);
+  if (chainBoardId !== boardId || chainMiddleId !== targetId
+      || chainSourceId >= chainMiddleId || chainMiddleId >= chainTargetId
+      || chainLastId < chainMiddleId || chainLastId >= chainTargetId) {
+    throw new Error(`Invalid alias chain source=${chainSourceId}, middle=${chainMiddleId}, target=${chainTargetId}, last prior alias=${chainLastId}.`);
+  }
+  if (chainedStats[chainSourceId].dataLen !== chainLength || chainLength !== aliasLength) {
+    throw new Error(`Chained source DataLen=${chainedStats[chainSourceId].dataLen}; expected ${chainLength}.`);
+  }
+  if (chainedStats[chainMiddleId].dataLen !== -chainSourceId) {
+    throw new Error(`Intermediate stat ${chainMiddleId} wire DataLen=${chainedStats[chainMiddleId].dataLen}; expected ${-chainSourceId}.`);
+  }
+  if (chainedStats[chainTargetId].dataLen !== chainWireAlias || chainWireAlias !== -chainLastId) {
+    throw new Error(`Final stat ${chainTargetId} wire DataLen=${chainedStats[chainTargetId].dataLen}; expected ${-chainLastId}.`);
+  }
+
+  new Uint8Array(e.exports.memory.buffer, e.exports.input_ptr(), chainedExternal.length).set(chainedExternal);
+  const chainResult = e.exports.run_editor_brd_record_roundtrip(chainedExternal.length);
+  if (chainResult !== 0) throw new Error(`Production rejected Pascal chained alias board ${chainBoardId} (result ${chainResult}).`);
+  const productionChain = Buffer.from(new Uint8Array(e.exports.memory.buffer, e.exports.output_ptr(), e.exports.output_len()).slice());
+  compareBytes(chainedRecord, productionChain, 'Pascal BoardClose/shared .BRD chained-alias round-trip');
+  const productionChainStats = readStats(productionChain);
+  if (productionChainStats[chainTargetId].dataLen !== chainWireAlias) {
+    throw new Error(`Production re-encoded chained target stat ${chainTargetId} DataLen=${productionChainStats[chainTargetId].dataLen}; expected ${chainWireAlias}.`);
+  }
+  console.log(`Pascal BoardClose chained aliases on board ${chainBoardId}: stat ${chainTargetId} points to latest earlier shared stat ${chainLastId} (wire DataLen ${chainWireAlias}); all ${chainedRecord.length} record bytes matched production.`);
 })().catch(error => {
   console.error(error.message);
   process.exitCode = 1;

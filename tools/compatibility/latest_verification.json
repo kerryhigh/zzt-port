@@ -7,7 +7,7 @@
     "root_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 74/74 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal WorldSave embedded-NUL/CP437 strings 00/80/82/FF in the world name, all ten flags, current board name, and message matched in both .SAV and .ZZT files (26, 52,930 total bytes); raw ZZT Boolean/reserved cases matched 105,860 bytes; BRD stat counts 0/1/149/150 matched 10,660 payload bytes; WorldSave SAV/ZZT board counts 0/1/99/100 matched 467,992 bytes; shared-script alias matched 2,025 bytes; stale-tail cases matched 26,465 bytes per SAV and ZZT. No unexplained comparable mismatch; exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 74/74 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal WorldSave embedded-NUL/CP437 strings 00/80/82/FF in the world name, all ten flags, current board name, and message matched in both .SAV and .ZZT files (26, 52,930 total bytes); raw ZZT Boolean/reserved cases matched 105,860 bytes; BRD stat counts 0/1/149/150 matched 10,660 payload bytes; WorldSave SAV/ZZT board counts 0/1/99/100 matched 467,992 bytes; chained shared-script aliases matched 4,050 bytes across two complete records (stat 3 -> 2, wire -2; stat 4 -> latest earlier shared stat 3, wire -3); stale-tail cases matched 26,465 bytes per SAV and ZZT. No unexplained comparable mismatch; exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -91,13 +91,13 @@
       "sessions": 149,
       "standard_programs": 55,
       "standalone_sessions": 94,
-      "session_result": "149 direct Turbo Pascal 5.5 compile/run sessions passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 55 standard probes and 94 standalone compile/run or fixture sessions, including BOARDENC stat-count cases and all ten integrated fixtures."
+      "session_result": "149 direct Turbo Pascal 5.5 compile/run sessions passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 55 standard probes and 94 standalone compile/run or fixture sessions, including BOARDENC stat-count cases, BRDALI baseline and chained alias captures, and all ten integrated fixtures."
     },
     "direct_differential_comparisons": {
       "configured": 74,
       "passed": 74,
       "failed": 0,
-      "result": "74/74 direct Pascal-to-production comparison invocations passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the suite includes embedded-NUL/CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message for both WorldSave .ZZT (IsSave=0) and .SAV (IsSave=1) files (26 short-string field instances and 52,930 file bytes); raw ZZT IsSave/Keys Boolean values 0/1/2/255 (105,860 bytes), BRD stat-count boundaries 0/1/149/150 (10,660 bytes), WorldSave SAV/ZZT board counts 0/1/99/100 (467,992 bytes), the BRD shared-script DataLen alias (2,025 bytes), and SAV/ZZT stale-tail checks. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
+      "result": "74/74 direct Pascal-to-production comparison invocations passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the suite includes embedded-NUL/CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message for both WorldSave .ZZT (IsSave=0) and .SAV (IsSave=1) files (26 short-string field instances and 52,930 file bytes); raw ZZT IsSave/Keys Boolean values 0/1/2/255 (105,860 bytes), BRD stat-count boundaries 0/1/149/150 (10,660 bytes), WorldSave SAV/ZZT board counts 0/1/99/100 (467,992 bytes), chained BRD shared-script aliases (4,050 bytes across two complete records: stat 3 -> 2 wire -2 and stat 4 -> latest earlier shared stat 3 wire -3), and SAV/ZZT stale-tail checks. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2189,7 +2189,8 @@
       "After the clean 140-session Pascal/production run, Android CP437/key verification and debug plus Android-test APK builds passed for arm64-v8a and x86_64; Windows Release x64 build and CTest passed 3/3 after shared-engine commit 4a10f5b33963108128b6b11dae5d1646e0d09979. No Android device test was performed.",
       "E2-02 AC002: direct Pascal and production byte differentials passed for nine .BRD short-string, raw-length, embedded NUL/CP437, and stale-tail cases; acceptance remains partial.",
       "E2-02 AC002: direct Pascal and production comparisons passed for raw .BRD Boolean bytes 0/1/2/255 and all 16 Board.Info reserved bytes; acceptance remains partial.",
-      "E2-02 AC002 .SAV Boolean/reserved boundaries passed on b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the existing compiled-Pascal WORLDSAV session emitted four WorldSave files with raw values 0, 1, 2, and 255 in all seven Keys bytes and IsSave plus a 14-byte reserved pattern. Production read/round-trip matched all 26,465 bytes in each file. Clean suite: 148 direct Pascal sessions, 70/70 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles; AC002 remains partial and no acceptance case was added. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-boolean-reserved.md."
+      "E2-02 AC002 .SAV Boolean/reserved boundaries passed on b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the existing compiled-Pascal WORLDSAV session emitted four WorldSave files with raw values 0, 1, 2, and 255 in all seven Keys bytes and IsSave plus a 14-byte reserved pattern. Production read/round-trip matched all 26,465 bytes in each file. Clean suite: 148 direct Pascal sessions, 70/70 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles; AC002 remains partial and no acceptance case was added. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-boolean-reserved.md.",
+      "E2-02 AC002 chained .BRD DataLen alias passed in the clean 2026-11-27 Turbo Pascal 5.5/DOSBox-X run: BoardClose selected the latest earlier shared stat (stat 4 -> stat 3, wire DataLen -3) after the existing stat 3 -> stat 2 (-2) case; both full 2,025-byte records matched production (4,050 bytes total). The frozen 54-case inventory and AC002 partial status are unchanged."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -3249,7 +3250,7 @@
       "integrated_checkpoint_total": 238,
       "integrated_state_field_total": 824821,
       "integrated_logical_cycle_total": 169,
-      "brd_datalen_alias_differential": "passed: board 2 stat 3 aliases stat 2; source DataLen=98, wire DataLen=-2; 2,025/2,025 record bytes matched; exit 0.",
+      "brd_datalen_alias_differential": "passed: board 2 alias record stat 3 -> stat 2 with wire DataLen -2; chained record stat 4 -> latest earlier shared stat 3 with wire DataLen -3; both 2,025-byte records matched (4,050 bytes total); exit 0.",
       "world_cp437_string_differential": {
         "evidence_class": "D+DP",
         "result": "passed",
@@ -4465,7 +4466,29 @@
       "record_byte_differences": 0,
       "comparison_exit_code": 0,
       "result": "passed",
-      "fixture_corpus_completion_credit": 0
+      "fixture_corpus_completion_credit": 0,
+      "chained_fixture_path": "build/pascal-compat-verification/ALIAS2.BRD",
+      "chained_capture_path": "build/pascal-compat-verification/BRDALI.OUT",
+      "chained_evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-datalen-alias-chain.md",
+      "chain_source_stat_id": 2,
+      "chain_intermediate_stat_id": 3,
+      "chain_target_stat_id": 4,
+      "chain_last_prior_alias_stat_id": 3,
+      "chain_script_data_len_bytes": 98,
+      "chain_wire_alias_data_len": -3,
+      "chain_external_file_size_bytes": 2027,
+      "chain_record_size_bytes": 2025,
+      "chain_record_sha256": "c3db0d1a68008fa1e54fee18eabd74b85a6359a8706a58d0e009c72d73e8ed08",
+      "chain_external_file_sha256": "b3a0b264d99f96b275c322c5fc87e6617aeece5279715b05ecfdb9bc1d7f9740",
+      "chain_capture_size_bytes": 42,
+      "chain_capture_sha256": "0258aa279d1f495c6abf6e83e9d6133305a23161bc3769ca23f1b40c3eab4eb5",
+      "layouts_matched": 2,
+      "layouts_configured": 2,
+      "records_matched": 2,
+      "record_bytes_matched_total": 4050,
+      "record_bytes_total": 4050,
+      "record_byte_differences_total": 0,
+      "reconfirmed_in_full_suite_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5"
     },
     "sav_stale_string_tail_differential": {
       "evidence_class": "D+DP",
