@@ -6197,6 +6197,54 @@ int32_t run_integrated_f10_checks(int32_t malformed_world_length) {
 		sizeof(integrated_f10_bad_world_bytes), MODE_READ);
 	integrated_f10_bad_world_load_result_value = zoo_world_load(&state, &bad_world_handle, false);
 	if (integrated_f10_bad_world_load_result_value != ZOO_ERROR_WRONGVER) return 71;
+	memset(integrated_title_restore_failure_fields, 0,
+		sizeof(integrated_title_restore_failure_fields));
+	integrated_title_restore_failure_field_count_value = 0;
+	integrated_title_restore_failure_append(
+		integrated_f10_bad_world_load_result_value == 0 ? 1 : 0);
+	integrated_title_restore_failure_append(state.world.board_count);
+	integrated_title_restore_failure_append(state.world.board_len[0]);
+	integrated_title_restore_failure_append(state.return_board_id);
+	integrated_title_restore_failure_append(state.world.info.current_board);
+	integrated_title_restore_failure_append(state.world.info.ammo);
+	integrated_title_restore_failure_append(state.world.info.gems);
+	integrated_title_restore_failure_append(state.world.info.health);
+	integrated_title_restore_failure_append(state.world.info.torches);
+	integrated_title_restore_failure_append(state.world.info.torch_ticks);
+	integrated_title_restore_failure_append(state.world.info.energizer_ticks);
+	integrated_title_restore_failure_append(state.world.info.score);
+	integrated_title_restore_failure_append(state.world.info.board_time_sec);
+	integrated_title_restore_failure_append(state.world.info.board_time_hsec);
+	integrated_title_restore_failure_append(state.world.info.is_save ? 1 : 0);
+	integrated_title_restore_failure_append(state.board.stat_count);
+	integrated_title_restore_failure_append(state.input.key_pressed);
+	{
+		zoo_stat *player = &state.board.stats[0];
+		integrated_title_restore_failure_append(player->x);
+		integrated_title_restore_failure_append(player->y);
+		integrated_title_restore_failure_append(player->step_x);
+		integrated_title_restore_failure_append(player->step_y);
+		integrated_title_restore_failure_append(player->cycle);
+		integrated_title_restore_failure_append(player->p1);
+		integrated_title_restore_failure_append(player->p2);
+		integrated_title_restore_failure_append(player->p3);
+		integrated_title_restore_failure_append(player->follower);
+		integrated_title_restore_failure_append(player->leader);
+		integrated_title_restore_failure_append(player->under.element);
+		integrated_title_restore_failure_append(player->under.color);
+		integrated_title_restore_failure_append(player->data_pos);
+		integrated_title_restore_failure_append(player->data_len);
+	}
+	for (i = 0; i < 7; i++)
+		integrated_title_restore_failure_append(state.world.info.keys[i] ? 1 : 0);
+	for (i = 0; i <= ZOO_BOARD_WIDTH + 1; i++) {
+		for (j = 0; j <= ZOO_BOARD_HEIGHT + 1; j++) {
+			integrated_title_restore_failure_append(state.board.tiles[i][j].element);
+			integrated_title_restore_failure_append(state.board.tiles[i][j].color);
+		}
+	}
+	if (integrated_title_restore_failure_field_count_value
+			!= 38 + (62 * 27 * 2)) return 76;
 
 	/* GameTitleLoop's failed startup WorldLoad falls back to WorldCreate. */
 	zoo_world_create(&state);

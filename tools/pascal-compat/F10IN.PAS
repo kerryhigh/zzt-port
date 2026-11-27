@@ -44,6 +44,32 @@ begin
 	Close(cellOutput);
 end;
 
+procedure WriteFailedWorldLoadState(filename: string; loaded: boolean);
+var
+	stateOutput: text;
+	ix, iy: integer;
+begin
+	Assign(stateOutput, filename);
+	Rewrite(stateOutput);
+	Write(stateOutput, Ord(loaded), ' ', World.BoardCount,
+		' ', World.BoardLen[0], ' ', ReturnBoardId, ' ', World.Info.CurrentBoard,
+		' ', World.Info.Ammo, ' ', World.Info.Gems, ' ', World.Info.Health,
+		' ', World.Info.Torches, ' ', World.Info.TorchTicks,
+		' ', World.Info.EnergizerTicks, ' ', World.Info.Score,
+		' ', World.Info.BoardTimeSec, ' ', World.Info.BoardTimeHsec,
+		' ', Ord(World.Info.IsSave), ' ', Board.StatCount, ' ', Ord(InputKeyPressed), ' ');
+	with Board.Stats[0] do
+		Write(stateOutput, X, ' ', Y, ' ', StepX, ' ', StepY, ' ', Cycle,
+			' ', P1, ' ', P2, ' ', P3, ' ', Follower, ' ', Leader,
+			' ', Under.Element, ' ', Under.Color, ' ', DataPos, ' ', DataLen, ' ');
+	for ix := 1 to 7 do Write(stateOutput, Ord(World.Info.Keys[ix]), ' ');
+	for ix := 0 to BOARD_WIDTH + 1 do
+		for iy := 0 to BOARD_HEIGHT + 1 do
+			Write(stateOutput, Board.Tiles[ix][iy].Element, ' ', Board.Tiles[ix][iy].Color, ' ');
+	WriteLn(stateOutput);
+	Close(stateOutput);
+end;
+
 var
 	output: text;
 	loadOutput: text;
@@ -69,6 +95,7 @@ begin
 	Rewrite(loadOutput);
 	WriteLn(loadOutput, Ord(loaded));
 	Close(loadOutput);
+	WriteFailedWorldLoadState('F10STAT.OUT', loaded);
 	if loaded then RunError(259);
 
 	{ GameTitleLoop creates a new world when its startup WorldLoad fails. }

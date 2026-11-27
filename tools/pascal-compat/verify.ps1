@@ -2697,7 +2697,7 @@ end;
 
     Write-Host 'Compiling and running the F10 malformed-load/high-score/gameplay replay: F10IN'
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'F10IN.PAS') -Destination (Join-Path $stageRoot 'F10IN.PAS')
-    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'F10BAD.OUT', 'F10ROOM.HI')) {
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'F10BAD.OUT', 'F10STAT.OUT', 'F10ROOM.HI')) {
         Remove-Item -LiteralPath (Join-Path $stageRoot $fixtureOutput) -Force -ErrorAction SilentlyContinue
     }
     Remove-Item -LiteralPath (Join-Path $stageRoot 'F10IN.LOG') -Force -ErrorAction SilentlyContinue
@@ -2715,7 +2715,7 @@ end;
         throw "Turbo Pascal did not produce BIN\F10IN.EXE. See $stageRoot\F10COMP.LOG and $stageRoot\F10IN-COMPILE.LOG."
     }
     Invoke-DosboxSession 'F10IN-RUN' @('BIN\F10IN.EXE')
-    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'F10BAD.OUT', 'F10ROOM.HI')) {
+    foreach ($fixtureOutput in @('INTEGPR.OUT', 'INTEGSND.OUT', 'INTEGCEL.OUT', 'INTEGSAV.SAV', 'INTEGLOD.OUT', 'INTEG2SV.SAV', 'F10BAD.OUT', 'F10STAT.OUT', 'F10ROOM.HI')) {
         if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $fixtureOutput) -PathType Leaf)) {
             throw "Pascal F10 malformed-load/high-score replay did not write $fixtureOutput. See $stageRoot\F10IN.LOG."
         }
@@ -2734,7 +2734,8 @@ end;
         'malformed-load-high-score-insertion' `
         (Join-Path $stageRoot 'F10BAD.ZZT') `
         (Join-Path $stageRoot 'F10BAD.OUT') `
-        (Join-Path $stageRoot 'F10ROOM.HI')
+        (Join-Path $stageRoot 'F10ROOM.HI') `
+        (Join-Path $stageRoot 'F10STAT.OUT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production F10 malformed-load/high-score/gameplay replay failed with exit code $LASTEXITCODE." }
 
     Write-Host 'Compiling and running the direct GameTitleLoop lifecycle replay: TITLEIN'
