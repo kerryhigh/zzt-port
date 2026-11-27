@@ -1855,6 +1855,10 @@ $expectedOutputs = [ordered]@{
         'signed 2 0',
         'signed 3 1',
         'signed 4 32767',
+        'boolean 0 0',
+        'boolean 1 1',
+        'boolean 2 2',
+        'boolean 3 255',
         'string 0 0',
         'string 1 1',
         'string 2 49',
@@ -2135,6 +2139,11 @@ foreach ($signedFixture in @('SIG0.BRD', 'SIG1.BRD', 'SIG2.BRD', 'SIG3.BRD', 'SI
         throw "BoardClose signed-field probe did not write $signedFixture. See $stageRoot\BOARDENC.LOG."
     }
 }
+foreach ($booleanFixture in @('BOL0.BRD', 'BOL1.BRD', 'BOL2.BRD', 'BOL3.BRD')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $booleanFixture) -PathType Leaf)) {
+        throw "BoardClose raw-Boolean probe did not write $booleanFixture. See $stageRoot\BOARDENC.LOG."
+    }
+}
 foreach ($stringFixture in @('STR0.BRD', 'STR1.BRD', 'STR2.BRD', 'STR3.BRD', 'STR4.BRD', 'STR5.BRD', 'STR6.BRD', 'STR7.BRD', 'STR8.BRD')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $stringFixture) -PathType Leaf)) {
         throw "BoardClose short-string probe did not write $stringFixture. See $stageRoot\BOARDENC.LOG."
@@ -2163,6 +2172,10 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .BRD short-string boundary differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-brd-booleans.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .BRD raw-Boolean/reserved-byte differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-brd-transfer.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')

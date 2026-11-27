@@ -84,6 +84,31 @@ begin
 		WriteLn(output, 'signed ', tag, ' ', signedValues[tag]);
 	end;
 
+	{ Capture the raw Boolean byte encodings and the reserved Board.Info tail. }
+	encoded[0] := 0;
+	encoded[1] := 1;
+	encoded[2] := 2;
+	encoded[3] := 255;
+	for tag := 0 to 3 do begin
+		Move(encoded[tag], Board.Info.IsDark, 1);
+		Move(encoded[tag], Board.Info.ReenterWhenZapped, 1);
+		for i := 0 to 15 do
+			Board.Info.unkPad[70 + i] := encoded[i mod 4];
+		BoardClose;
+		boardLength := World.BoardLen[World.Info.CurrentBoard];
+		case tag of
+			0: Assign(brdFile, 'BOL0.BRD');
+			1: Assign(brdFile, 'BOL1.BRD');
+			2: Assign(brdFile, 'BOL2.BRD');
+			3: Assign(brdFile, 'BOL3.BRD');
+		end;
+		Rewrite(brdFile, 1);
+		BlockWrite(brdFile, boardLength, SizeOf(word));
+		BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
+		Close(brdFile);
+		WriteLn(output, 'boolean ', tag, ' ', encoded[tag]);
+	end;
+
 	{ Reuse the existing byte buffer so this probe does not change the Pascal
 	  static-data/heap layout that WorldLoad and BoardClose observe. }
 	encoded[0] := 0;
