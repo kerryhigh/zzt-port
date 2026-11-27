@@ -619,6 +619,33 @@ int run_editor_brd_record_roundtrip(uint32_t input_len) {
     return result;
 }
 
+int run_editor_brd_chained_alias_topology(uint32_t input_len) {
+    int result;
+    int topology_result = 0;
+    if (input_len < 2 || input_len > FIXTURE_CAP) return -90;
+    heap_used = 0;
+    memset(&brd_test_board, 0, sizeof(brd_test_board));
+    result = zoo_editor_brd_import_record(input_data, input_len, &brd_test_board);
+    if (result != 0) return result;
+
+    /* ALIAS2.BRD's direct-Pascal fixture is stat 2 with script bytes and
+     * stats 3/4 referring to the earlier aliases at -2/-3 respectively. */
+    if (brd_test_board.stat_count < 4) {
+        topology_result = -101;
+    } else {
+        const zoo_stat *source = &brd_test_board.stats[2];
+        const zoo_stat *intermediate = &brd_test_board.stats[3];
+        const zoo_stat *chained = &brd_test_board.stats[4];
+        if (source->data == NULL || source->data_len != 98) topology_result = -102;
+        else if (intermediate->data != source->data || intermediate->data_len != 98)
+            topology_result = -103;
+        else if (chained->data != intermediate->data || chained->data_len != 98)
+            topology_result = -104;
+    }
+    zoo_editor_brd_free(&brd_test_board);
+    return topology_result;
+}
+
 int run_editor_brd_signed_field_roundtrip(uint32_t input_len, int32_t expected_raw) {
     int result;
     int16_t expected;

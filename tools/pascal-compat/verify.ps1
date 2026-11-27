@@ -2158,8 +2158,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BOARDENC.ZZT') -PathType
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'ALIAS.BRD') -PathType Leaf)) {
     throw "Direct Pascal BoardClose shared-DataLen probe did not write ALIAS.BRD. See $stageRoot\BRDALI.LOG."
 }
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'ALIAS2.BRD') -PathType Leaf)) {
+    throw "Direct Pascal BoardClose chained-DataLen probe did not write ALIAS2.BRD. See $stageRoot\BRDALI.LOG."
+}
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BRDALI.OUT') -PathType Leaf)) {
-    throw "Direct Pascal BoardClose shared-DataLen probe did not write BRDALI.OUT. See $stageRoot\BRDALI.LOG."
+    throw "Direct Pascal BoardClose shared/chained-DataLen probe did not write BRDALI.OUT. See $stageRoot\BRDALI.LOG."
 }
 foreach ($signedFixture in @('SIG0.BRD', 'SIG1.BRD', 'SIG2.BRD', 'SIG3.BRD', 'SIG4.BRD')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $signedFixture) -PathType Leaf)) {
@@ -2216,7 +2219,7 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm') `
         (Join-Path $stageRoot 'BRDALI.OUT')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal BoardClose .BRD shared-DataLen alias differential failed with exit code $LASTEXITCODE." }
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal BoardClose/BoardOpen .BRD shared/chained-DataLen alias differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-brd-transfer.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')

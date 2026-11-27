@@ -57,7 +57,7 @@ function readStats(record) {
   }
   const record = external.subarray(2);
   const expectedLines = fs.readFileSync(outputPath, 'utf8').replace(/\r/g, '').trim().split('\n');
-  if (expectedLines.length !== 2) throw new Error(`Expected two BRDALI captures, got ${expectedLines.length}.`);
+  if (expectedLines.length !== 3) throw new Error(`Expected three BRDALI captures, got ${expectedLines.length}.`);
   const match = /^alias (\d+) (\d+) (\d+) (\d+) (-\d+)$/.exec(expectedLines[0]);
   if (!match) throw new Error(`Unexpected BRDALI alias capture: ${JSON.stringify(expectedLines[0])}`);
   const [, boardId, sourceId, targetId, aliasLength, wireAlias] = match.map((value, index) => index === 0 ? value : Number(value));
@@ -114,6 +114,26 @@ function readStats(record) {
     throw new Error(`Final stat ${chainTargetId} wire DataLen=${chainedStats[chainTargetId].dataLen}; expected ${-chainLastId}.`);
   }
 
+  const loadedMatch = /^loaded (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)$/.exec(expectedLines[2]);
+  if (!loadedMatch) throw new Error(`Unexpected BRDALI loaded-alias capture: ${JSON.stringify(expectedLines[2])}`);
+  const [, loadedBoardId, loadedSourceId, loadedMiddleId, loadedTargetId, loadedLength,
+    loadedSourceLen, loadedMiddleLen, loadedTargetLen, sourceMiddleShared, middleTargetShared] =
+    loadedMatch.map((value, index) => index === 0 ? value : Number(value));
+  if (loadedBoardId !== chainBoardId || loadedSourceId !== chainSourceId
+      || loadedMiddleId !== chainMiddleId || loadedTargetId !== chainTargetId
+      || loadedLength !== chainLength || loadedSourceLen !== chainLength
+      || loadedMiddleLen !== chainLength || loadedTargetLen !== chainLength
+      || sourceMiddleShared !== 1 || middleTargetShared !== 1) {
+    throw new Error(`Pascal BoardOpen did not resolve chained stats ${chainSourceId}/${chainMiddleId}/${chainTargetId} to one ${chainLength}-byte script allocation: ${expectedLines[2]}`);
+  }
+
+  if (typeof e.exports.run_editor_brd_chained_alias_topology !== 'function') {
+    throw new Error('Shared serializer harness lacks run_editor_brd_chained_alias_topology.');
+  }
+  new Uint8Array(e.exports.memory.buffer, e.exports.input_ptr(), chainedExternal.length).set(chainedExternal);
+  const topologyResult = e.exports.run_editor_brd_chained_alias_topology(chainedExternal.length);
+  if (topologyResult !== 0) throw new Error(`Production parser did not restore the chained alias topology (result ${topologyResult}).`);
+
   new Uint8Array(e.exports.memory.buffer, e.exports.input_ptr(), chainedExternal.length).set(chainedExternal);
   const chainResult = e.exports.run_editor_brd_record_roundtrip(chainedExternal.length);
   if (chainResult !== 0) throw new Error(`Production rejected Pascal chained alias board ${chainBoardId} (result ${chainResult}).`);
@@ -123,7 +143,7 @@ function readStats(record) {
   if (productionChainStats[chainTargetId].dataLen !== chainWireAlias) {
     throw new Error(`Production re-encoded chained target stat ${chainTargetId} DataLen=${productionChainStats[chainTargetId].dataLen}; expected ${chainWireAlias}.`);
   }
-  console.log(`Pascal BoardClose chained aliases on board ${chainBoardId}: stat ${chainTargetId} points to latest earlier shared stat ${chainLastId} (wire DataLen ${chainWireAlias}); all ${chainedRecord.length} record bytes matched production.`);
+  console.log(`Pascal BoardClose/BoardOpen chained aliases on board ${chainBoardId}: stats ${chainSourceId}, ${chainMiddleId}, and ${chainTargetId} resolve to one ${chainLength}-byte script allocation; stat ${chainTargetId} points to latest earlier shared stat ${chainLastId} (wire DataLen ${chainWireAlias}); production parser topology and all ${chainedRecord.length} record bytes matched.`);
 })().catch(error => {
   console.error(error.message);
   process.exitCode = 1;

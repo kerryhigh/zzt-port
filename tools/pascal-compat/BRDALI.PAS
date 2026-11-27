@@ -118,5 +118,22 @@ begin
 	WriteLn(output, 'chain ', boardId, ' ', sourceStat, ' ', targetStat,
 		' ', alias2Stat, ' ', aliasLength, ' ', lastAliasStat, ' ',
 		Board.Stats[alias2Stat].DataLen);
+
+	{ Load the emitted chain with the original BoardOpen and verify that both
+	  negative references resolve through the prior alias to one script block. }
+	BoardOpen(boardId);
+	if Board.Stats[sourceStat].Data = nil then Halt(7);
+	if Board.Stats[sourceStat].DataLen <> aliasLength then Halt(8);
+	if (Board.Stats[targetStat].Data <> Board.Stats[sourceStat].Data) or
+		(Board.Stats[targetStat].DataLen <> aliasLength) then Halt(9);
+	if (Board.Stats[alias2Stat].Data <> Board.Stats[targetStat].Data) or
+		(Board.Stats[alias2Stat].DataLen <> aliasLength) then Halt(10);
+	WriteLn(output, 'loaded ', boardId, ' ', sourceStat, ' ', targetStat,
+		' ', alias2Stat, ' ', aliasLength, ' ',
+		Board.Stats[sourceStat].DataLen, ' ',
+		Board.Stats[targetStat].DataLen, ' ',
+		Board.Stats[alias2Stat].DataLen, ' ',
+		Ord(Board.Stats[targetStat].Data = Board.Stats[sourceStat].Data), ' ',
+		Ord(Board.Stats[alias2Stat].Data = Board.Stats[targetStat].Data));
 	Close(output);
 end.

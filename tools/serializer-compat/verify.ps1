@@ -43,7 +43,7 @@ $clangArgs = @(
     '-Wl,--export=run_roundtrip', '-Wl,--export=run_signed_serialization_codec', '-Wl,--export=run_pascal_boardclose_worldsave', '-Wl,--export=run_game_save_roundtrip', '-Wl,--export=run_world_signed_field_read', '-Wl,--export=run_game_signed_world_save', '-Wl,--export=run_world_read', '-Wl,--export=run_world_read_preserves_tail', '-Wl,--export=run_world_read_title_only', '-Wl,--export=run_world_load_missing_trailing', '-Wl,--export=run_world_load_partial_length', '-Wl,--export=run_world_load_unsigned_board_length', '-Wl,--export=run_flag_save_roundtrip', '-Wl,--export=run_repeated_pstring_assignment_roundtrip', '-Wl,--export=run_pstring_matches_pascal_checks', '-Wl,--export=run_world_reset_string_roundtrip', '-Wl,--export=run_board_roundtrip',
     '-Wl,--export=run_zero_count_rle', '-Wl,--export=run_final_rle_overrun', '-Wl,--export=run_board_rle_count',
     '-Wl,--export=run_board_rle_writer_boundary',
-    '-Wl,--export=run_editor_brd_roundtrip', '-Wl,--export=run_editor_brd_record_roundtrip',
+    '-Wl,--export=run_editor_brd_roundtrip', '-Wl,--export=run_editor_brd_record_roundtrip', '-Wl,--export=run_editor_brd_chained_alias_topology',
     '-Wl,--export=run_editor_brd_signed_field_roundtrip',
     '-Wl,--export=run_editor_brd_zero_count_rle', '-Wl,--export=run_editor_brd_reject_truncated', '-Wl,--export=run_editor_brd_transfer',
     '-Wl,--export=run_shared_stat_data_alias',
