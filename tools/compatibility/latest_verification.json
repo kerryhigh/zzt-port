@@ -3555,9 +3555,9 @@
         "disposition": "copied into clean DOS staging from the standard DEMO.ZZT fixture; not committed as an oracle output"
       },
       "staging_interventions": [
-        "TITLEIN.PAS prepares the controlled DEMO.ZZT starting state, sets RandSeed to zero, disables sound output and initializes the existing sound schedule for capture.",
-        "The existing Pascal input probe supplies W to the actual GameTitleLoop; the test harness enables state snapshots and uses TickSpeed 0 to observe one paused cycle.",
-        "Existing staging-copy hooks expose checkpoints/output and deterministic input to the probe. Reference gameplay semantics are not changed by this scenario; the reconstructed source remains separately hashed."
+        "TITLEIN.PAS prepares the controlled DEMO.ZZT starting state, sets RandSeed to zero, disables audible sound and initializes the sound capture schedule, seeds the actual GameTitleLoop with W, enables the existing snapshot hooks, and uses TickSpeed 0 for one paused-cycle observation.",
+        "tools/pascal-compat/verify.ps1 patches only the temporary staged GAME.PAS: it injects Enter immediately before the original GameWorldLoad('.ZZT') selector call, then queues P after a successful load. The original GameWorldLoad, TextWindowSelect, WorldLoad, BoardChange/BoardEnter, GamePlayLoop, and GameTitleLoop bodies run.",
+        "The production replay receives the same DEMO.ZZT bytes through its deterministic memory I/O handle. It exercises the shared world-load/play engine path but does not compare host filesystem access, DOS path resolution, directory enumeration, or selector presentation."
       ],
       "clean_runner": {
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain build/pascal-compat-run/Z -DosboxExecutable <external DOSBox-X 2026.10.01 executable>",
@@ -3573,7 +3573,7 @@
         }
       },
       "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-title-w-world-selection.md",
-      "scope_note": "Adds evidence to existing E2-03-AC001. The frozen acceptance inventory and E2-10 ten-fixture corpus are unchanged; E2-03 remains partial."
+      "scope_note": "Adds evidence to existing E2-03-AC001. The frozen acceptance inventory and E2-10 ten-fixture corpus are unchanged; E2-03 remains partial. Pascal uses its actual DOS working-directory file; the production replay receives identical bytes through memory I/O, so host filesystem/path and selector enumeration behavior remain outside this comparison."
     }
   }
 }

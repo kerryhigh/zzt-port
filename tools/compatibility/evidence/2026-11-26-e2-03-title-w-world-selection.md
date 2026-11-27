@@ -25,7 +25,11 @@ The direct comparison passed after the production correction. This preserves the
 
 ## Controlled inputs and interventions
 
-`TITLEIN.PAS` is a probe compiled against the reconstructed Pascal units. For this route it supplies the `W` key through the existing Pascal input probe, initializes `RandSeed` to zero, disables audible sound and initializes the sound capture schedule, enables the existing title/game-loop snapshot hooks, and uses `TickSpeed = 0` to make the cycle a paused single-step observation. The clean runner places the probe and world fixture in its temporary DOS staging layout. Existing capture/input hooks do not replace the Pascal title loop, board entry, or gameplay cycle. The production comparator loads the same `.ZZT` fixture into the real shared-engine replay harness.
+`TITLEIN.PAS` is a probe compiled against the reconstructed Pascal units. It prepares the controlled `DEMO.ZZT` state, sets `RandSeed` to zero, disables audible sound and initializes the sound capture schedule, seeds the actual `GameTitleLoop` with `W`, enables the existing snapshot hooks, and uses `TickSpeed = 0` for one paused-cycle observation. The clean runner stages the probe and fixture in a temporary DOS working directory.
+
+`tools/pascal-compat/verify.ps1` makes two route-specific input insertions in the temporary staged `GAME.PAS`: it injects Enter immediately before the original `GameWorldLoad('.ZZT')` selector call, then queues P after a successful load. The original `GameWorldLoad`, `TextWindowSelect`, `WorldLoad`, board entry, `GamePlayLoop`, and `GameTitleLoop` bodies execute. These are deterministic input/capture interventions; they do not replace the Pascal lifecycle routines.
+
+The production replay receives the identical `DEMO.ZZT` bytes through its deterministic memory I/O handle. It exercises the shared world-load/play engine path, but this comparison does not cover host filesystem access, DOS path resolution, directory enumeration, or selector presentation. Those remain outside this route's evidence.
 
 The oracle transcript itself is not edited to match production. Test instrumentation is maintained separately from the reconstructed source and its hashes; this route does not modify reference gameplay semantics.
 
