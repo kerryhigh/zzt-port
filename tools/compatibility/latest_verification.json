@@ -4848,6 +4848,29 @@
         "The production comparator validates all 13 fixed short-string slots per file, then reads each generated fixture and executes the shared serializer round-trip harness."
       ],
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md"
+    },
+    "board_rle_differential": {
+      "evidence_class": "D+DP",
+      "result": "passed",
+      "acceptance_case": "E2-02-AC002",
+      "acceptance_status": "partial",
+      "decoder_probe": "tools/pascal-compat/BOARDRLE.PAS::BoardOpen",
+      "decoder_comparator": "tools/serializer-compat/compare-board-rle.js",
+      "run_count_values_configured": 256,
+      "run_count_values_matched": 256,
+      "snapshot_bytes_per_case": 3001,
+      "snapshot_bytes_total": 768256,
+      "snapshot_bytes_matched": 768256,
+      "writer_probe": "tools/pascal-compat/BOARDENC.PAS::BoardClose",
+      "writer_run_lengths": [255, 255, 255, 255, 255, 225],
+      "writer_cells": 1500,
+      "brd_payload_bytes_matched": 289,
+      "world_file_bytes_matched": 25928,
+      "comparison_exit_code": 0,
+      "full_suite_comparator_invocations": 2,
+      "fixture_corpus_completion_credit": 0,
+      "source_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
+      "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-rle-boundaries.md"
     }
   }
 }
