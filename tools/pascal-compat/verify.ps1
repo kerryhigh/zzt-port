@@ -1849,7 +1849,12 @@ $expectedOutputs = [ordered]@{
     'ZEROSPD.OUT' = @('zero-speed cycles 5 delta 5 stat 0 timer 0 counter 0 exit 1')
     'BOARDENC.OUT' = @(
         'runs 255 255 255 255 255 225',
-        'tiles 0 112 0 112 0 112 0 112 0 112 0 112'
+        'tiles 0 112 0 112 0 112 0 112 0 112 0 112',
+        'signed 0 -32768',
+        'signed 1 -1',
+        'signed 2 0',
+        'signed 3 1',
+        'signed 4 32767'
     )
     'BOARDDEC.OUT' = @(
         'zero first 7 8 row-end 7 8 cell256 7 8 cell257 1 2 final 1 2',
@@ -2111,6 +2116,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BOARDENC.BRD') -PathType
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BOARDENC.ZZT') -PathType Leaf)) {
     throw "BoardClose/WorldSave probe did not write BOARDENC.ZZT. See $stageRoot\BOARDENC.LOG."
 }
+foreach ($signedFixture in @('SIG0.BRD', 'SIG1.BRD', 'SIG2.BRD', 'SIG3.BRD', 'SIG4.BRD')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $signedFixture) -PathType Leaf)) {
+        throw "BoardClose signed-field probe did not write $signedFixture. See $stageRoot\BOARDENC.LOG."
+    }
+}
 
 Push-Location $repoRoot
 try {
@@ -2126,6 +2136,10 @@ try {
         (Join-Path $repoRoot 'app\src\main\assets\DEMO.ZZT') `
         (Join-Path $stageRoot 'BOARDENC.ZZT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal BoardClose/WorldSave byte comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-signed-brd.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal signed .BRD field boundary differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-brd-transfer.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')

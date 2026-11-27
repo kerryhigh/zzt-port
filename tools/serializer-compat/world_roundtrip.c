@@ -559,6 +559,32 @@ int run_editor_brd_record_roundtrip(uint32_t input_len) {
     return result;
 }
 
+int run_editor_brd_signed_field_roundtrip(uint32_t input_len, int32_t expected_raw) {
+    int result;
+    int16_t expected;
+    if (input_len < 2 || input_len > FIXTURE_CAP) return -90;
+    if (expected_raw < -32768 || expected_raw > 32767) return -91;
+    expected = (int16_t) expected_raw;
+    heap_used = 0;
+    output_size = 0;
+    memset(&brd_test_board, 0, sizeof(brd_test_board));
+    result = zoo_editor_brd_import_record(input_data, input_len, &brd_test_board);
+    if (result != 0) return result;
+    if (brd_test_board.info.time_limit_sec != expected) return 100;
+    for (int i = 0; i <= brd_test_board.stat_count; i++) {
+        const zoo_stat *stat = &brd_test_board.stats[i];
+        if (stat->step_x != expected) return 200 + i;
+        if (stat->step_y != expected) return 300 + i;
+        if (stat->cycle != expected) return 400 + i;
+        if (stat->follower != expected) return 500 + i;
+        if (stat->leader != expected) return 600 + i;
+        if (stat->data_pos != expected) return 700 + i;
+    }
+    result = zoo_editor_brd_serialize(&brd_test_board, output_data, FIXTURE_CAP, &output_size);
+    zoo_editor_brd_free(&brd_test_board);
+    return result;
+}
+
 int run_editor_brd_reject_truncated(void) {
     static const uint8_t partial_length[] = {0x04};
     static const uint8_t short_payload[] = {0x04, 0x00, 0x10, 0x20};
