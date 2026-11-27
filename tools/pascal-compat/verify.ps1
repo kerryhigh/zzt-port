@@ -1854,7 +1854,16 @@ $expectedOutputs = [ordered]@{
         'signed 1 -1',
         'signed 2 0',
         'signed 3 1',
-        'signed 4 32767'
+        'signed 4 32767',
+        'string 0 0',
+        'string 1 1',
+        'string 2 49',
+        'string 3 50',
+        'string 4 51',
+        'string 5 127',
+        'string 6 255',
+        'string 7 50',
+        'stale 8 1'
     )
     'BOARDDEC.OUT' = @(
         'zero first 7 8 row-end 7 8 cell256 7 8 cell257 1 2 final 1 2',
@@ -2126,6 +2135,11 @@ foreach ($signedFixture in @('SIG0.BRD', 'SIG1.BRD', 'SIG2.BRD', 'SIG3.BRD', 'SI
         throw "BoardClose signed-field probe did not write $signedFixture. See $stageRoot\BOARDENC.LOG."
     }
 }
+foreach ($stringFixture in @('STR0.BRD', 'STR1.BRD', 'STR2.BRD', 'STR3.BRD', 'STR4.BRD', 'STR5.BRD', 'STR6.BRD', 'STR7.BRD', 'STR8.BRD')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $stringFixture) -PathType Leaf)) {
+        throw "BoardClose short-string probe did not write $stringFixture. See $stageRoot\BOARDENC.LOG."
+    }
+}
 
 Push-Location $repoRoot
 try {
@@ -2145,6 +2159,10 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal signed .BRD field boundary differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-brd-strings.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .BRD short-string boundary differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-brd-transfer.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')

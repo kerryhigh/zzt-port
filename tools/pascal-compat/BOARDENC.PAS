@@ -11,6 +11,8 @@ var
 	encoded: array[0..68] of byte;
 	signedValues: array[0..4] of integer;
 	signedNames: array[0..4] of string[8];
+	stringLengths: array[0..7] of byte;
+	stringNames: array[0..8] of string[8];
 	ix, iy, i, tag, boardLength: integer;
 begin
 	VideoWriteText := QuietWrite;
@@ -83,6 +85,60 @@ begin
 		Close(brdFile);
 		WriteLn(output, 'signed ', tag, ' ', signedValues[tag]);
 	end;
+
+	{ Reload the source board so these short-string cases use the original
+	  valid stat/script state rather than the signed-field mutations above. }
+	if not WorldLoad('DEMO', '.ZZT', false) then Halt(3);
+	stringLengths[0] := 0;
+	stringLengths[1] := 1;
+	stringLengths[2] := 49;
+	stringLengths[3] := 50;
+	stringLengths[4] := 51;
+	stringLengths[5] := 127;
+	stringLengths[6] := 255;
+	stringLengths[7] := 50;
+	stringNames[0] := 'STR0.BRD';
+	stringNames[1] := 'STR1.BRD';
+	stringNames[2] := 'STR2.BRD';
+	stringNames[3] := 'STR3.BRD';
+	stringNames[4] := 'STR4.BRD';
+	stringNames[5] := 'STR5.BRD';
+	stringNames[6] := 'STR6.BRD';
+	stringNames[7] := 'STR7.BRD';
+	stringNames[8] := 'STR8.BRD';
+	for tag := 0 to 7 do begin
+		Board.Name[0] := Chr(stringLengths[tag]);
+		for i := 1 to 50 do
+			Board.Name[i] := Chr(64 + (i mod 60));
+		if tag = 7 then begin
+			Board.Name[1] := 'A';
+			Board.Name[2] := Chr(0);
+			Board.Name[3] := Chr($80);
+			Board.Name[4] := Chr($82);
+			Board.Name[5] := Chr($FF);
+		end;
+		BoardClose;
+		boardLength := World.BoardLen[World.Info.CurrentBoard];
+		Assign(brdFile, stringNames[tag]);
+		Rewrite(brdFile, 1);
+		BlockWrite(brdFile, boardLength, SizeOf(word));
+		BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
+		Close(brdFile);
+		WriteLn(output, 'string ', tag, ' ', stringLengths[tag]);
+	end;
+
+	{ Pascal short-string assignment changes the length and visible prefix but
+	  leaves the previous payload tail intact; capture that source behavior. }
+	Board.Name := 'ZZT-STALE-TAIL-TEST';
+	Board.Name := 'X';
+	BoardClose;
+	boardLength := World.BoardLen[World.Info.CurrentBoard];
+	Assign(brdFile, stringNames[8]);
+	Rewrite(brdFile, 1);
+	BlockWrite(brdFile, boardLength, SizeOf(word));
+	BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
+	Close(brdFile);
+	WriteLn(output, 'stale 8 1');
 
 	Close(output);
 end.
