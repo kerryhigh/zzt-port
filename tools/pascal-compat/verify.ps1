@@ -319,6 +319,7 @@ $probeFiles = @(
     @{ Source = 'BOARDENT.PAS'; DosName = 'BOARDENT.PAS'; Program = 'BOARDENT'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'BOARDIN.PAS'; DosName = 'BOARDIN.PAS'; Program = 'BOARDIN'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'BOARDENC.PAS'; DosName = 'BOARDENC.PAS'; Program = 'BOARDENC'; CompileFlags = '/B /EBIN /UBIN' },
+    @{ Source = 'BRDALI.PAS'; DosName = 'BRDALI.PAS'; Program = 'BRDALI'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'BOARDDEC.PAS'; DosName = 'BOARDDEC.PAS'; Program = 'BOARDDEC'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'BOARDRLE.PAS'; DosName = 'BOARDRLE.PAS'; Program = 'BOARDRLE'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'WORLDTIT.PAS'; DosName = 'WORLDTIT.PAS'; Program = 'WORLDTIT'; CompileFlags = '/B /EBIN /UBIN' },
@@ -2139,6 +2140,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BOARDENC.BRD') -PathType
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BOARDENC.ZZT') -PathType Leaf)) {
     throw "BoardClose/WorldSave probe did not write BOARDENC.ZZT. See $stageRoot\BOARDENC.LOG."
 }
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'ALIAS.BRD') -PathType Leaf)) {
+    throw "Direct Pascal BoardClose shared-DataLen probe did not write ALIAS.BRD. See $stageRoot\BRDALI.LOG."
+}
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'BRDALI.OUT') -PathType Leaf)) {
+    throw "Direct Pascal BoardClose shared-DataLen probe did not write BRDALI.OUT. See $stageRoot\BRDALI.LOG."
+}
 foreach ($signedFixture in @('SIG0.BRD', 'SIG1.BRD', 'SIG2.BRD', 'SIG3.BRD', 'SIG4.BRD')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $signedFixture) -PathType Leaf)) {
         throw "BoardClose signed-field probe did not write $signedFixture. See $stageRoot\BOARDENC.LOG."
@@ -2181,6 +2188,11 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .BRD raw-Boolean/reserved-byte differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-brd-alias.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm') `
+        (Join-Path $stageRoot 'BRDALI.OUT')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal BoardClose .BRD shared-DataLen alias differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-editor-brd-transfer.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
@@ -3059,6 +3071,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 94 # Includes the previous isolated compile/run probes plus the controlled short-header BRDXFER session, one refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, title-W world selection followed by P play, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
+$directProbeCount = $probeFiles.Count + 94 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
