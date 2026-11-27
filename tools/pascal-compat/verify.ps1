@@ -452,6 +452,7 @@ var
 	GameLoopProbeTitleRestoreEnabled, GameLoopProbeTitleRestoreFailureEnabled: boolean;
 	GameLoopProbeTitleRestoreEmptyEnabled: boolean;
 	GameLoopProbeTitleRestoreCancelOnceEnabled, GameLoopProbeTitleRestoreCancelled: boolean;
+	GameLoopProbeTitleWorldSelectEnabled: boolean;
 	GameLoopProbeCellCaptureEnabled, GameLoopProbeCellWriteOverflow: boolean;
 	GameLoopProbeCellWriteCount: longint;
 	GameLoopProbeCellWriteEvents: PGameLoopProbeCellWriteEventArray;
@@ -697,6 +698,24 @@ if ([regex]::Matches($gameTitleLoop, [regex]::Escape($playerLoopAnchor)).Count -
 }
 $gameTitleLoop = $gameTitleLoop.Replace($playerLoopAnchor,
     $playerLoopAnchor + "`r`n`t`t`t`t`tif GameLoopProbeTitleLifecycleEnabled then GameLoopProbeTitleLifecyclePlayerReturned := true;")
+$worldSelectAnchor = "if GameWorldLoad('.ZZT') then begin"
+if ([regex]::Matches($gameTitleLoop, [regex]::Escape($worldSelectAnchor)).Count -ne 1) {
+    throw 'Could not uniquely locate the GameTitleLoop world selector for deterministic W-route input.'
+}
+$worldSelectInputHook = "if GameLoopProbeTitleWorldSelectEnabled then InputProbeSetKeyBuffer(KEY_ENTER);`r`n`t`t`t`t"
+$gameTitleLoop = $gameTitleLoop.Replace($worldSelectAnchor, $worldSelectInputHook + $worldSelectAnchor)
+$worldSelectBranchPattern = "(?s)if GameWorldLoad\('\.ZZT'\) then begin\s+ReturnBoardId := World\.Info\.CurrentBoard;\s+boardChanged := true;\s+end;"
+if ([regex]::Matches($gameTitleLoop, $worldSelectBranchPattern).Count -ne 1) {
+    throw 'Could not uniquely locate the GameTitleLoop world-load result branch for deterministic W-route input.'
+}
+$worldSelectBranchReplacement = @'
+if GameWorldLoad('.ZZT') then begin
+							ReturnBoardId := World.Info.CurrentBoard;
+							boardChanged := true;
+						end;
+						if GameLoopProbeTitleWorldSelectEnabled then InputProbeSetKeyBuffer('P');
+'@
+$gameTitleLoop = [regex]::Replace($gameTitleLoop, $worldSelectBranchPattern, $worldSelectBranchReplacement, 1)
 $saveRestoreAnchor = "if GameWorldLoad('.SAV') then begin"
 if ([regex]::Matches($gameTitleLoop, [regex]::Escape($saveRestoreAnchor)).Count -ne 1) {
     throw 'Could not uniquely locate the GameTitleLoop saved-game selector for deterministic restore input.'
@@ -2767,6 +2786,22 @@ end;
         (Join-Path $titleSavedWorldPlayRoot 'DEMO.ZZT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production title-P backing-world reload differential failed with exit code $LASTEXITCODE." }
 
+    $titleWorldSelectRoot = Join-Path $stageRoot 'TITLWLD'
+    New-Item -ItemType Directory -Force -Path $titleWorldSelectRoot | Out-Null
+    Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleWorldSelectRoot 'DEMO.ZZT') -Force
+    Write-Host 'Running the direct GameTitleLoop W world-select, P play, and return route: TITLWLD'
+    Invoke-DosboxSession 'TITLEIN-WORLD-SELECT-PLAY' @('CD \TITLWLD', '..\BIN\TITLEIN.EXE W')
+    $titleWorldSelectOutput = Join-Path $titleWorldSelectRoot 'INTEGPR.OUT'
+    if (-not (Test-Path -LiteralPath $titleWorldSelectOutput -PathType Leaf)) {
+        throw "Pascal GameTitleLoop W world selection did not write INTEGPR.OUT. See $stageRoot\TITLEIN-WORLD-SELECT-PLAY.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        $titleWorldSelectOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        '--world-select-play' `
+        (Join-Path $titleWorldSelectRoot 'DEMO.ZZT')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production title-W world-select differential failed with exit code $LASTEXITCODE." }
+
     $titleRestoreRoot = Join-Path $stageRoot 'TITLER'
     New-Item -ItemType Directory -Force -Path $titleRestoreRoot | Out-Null
     Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleRestoreRoot 'DEMO.ZZT') -Force
@@ -2934,6 +2969,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 92 # Includes the previous isolated compile/run probes, one refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+$directProbeCount = $probeFiles.Count + 93 # Includes the previous isolated compile/run probes, one refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, title-W world selection followed by P play, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

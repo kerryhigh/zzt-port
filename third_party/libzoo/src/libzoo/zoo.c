@@ -75,12 +75,12 @@ int zoo_world_play(zoo_state *state) {
 	}
 
 	if (!ret) {
-		zoo_game_start_preserving_input(state, GS_PLAY);
-
 		zoo_board_change(state, state->return_board_id);
-		// Pascal calls BoardEnter after selecting a board to play. Keep it here,
-		// outside zoo_game_start, so title and restored-save starts do not reset it.
+		// Pascal selects the board and runs BoardEnter before GamePlayLoop
+		// initializes its stat cursor and paused state. Keep both operations
+		// outside the title-mode lifecycle so the selected board count is used.
 		zoo_board_enter(state);
+		zoo_game_start_preserving_input(state, GS_PLAY);
 		zoo_board_draw_transition(state);
 
 		zoo_redraw(state);

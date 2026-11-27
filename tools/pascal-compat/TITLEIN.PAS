@@ -5,7 +5,8 @@ uses Crt, Video, GameVars, Elements, Sounds, Game, Input;
 var
 	output: text;
 	restoreScenario, generateRestoreSave, badRestoreScenario, cancelRetryScenario,
-	savedWorldPlayScenario, emptyRestoreScenario, refusedAbortReturnScenario: boolean;
+	savedWorldPlayScenario, worldSelectPlayScenario, emptyRestoreScenario,
+	refusedAbortReturnScenario: boolean;
 	fixtureFile: file;
 	malformedHeader: array[1..512] of byte;
 	malformedVersion: integer;
@@ -17,6 +18,7 @@ begin
 	badRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'B');
 	cancelRetryScenario := (ParamCount > 0) and (ParamStr(1) = 'C');
 	savedWorldPlayScenario := (ParamCount > 0) and (ParamStr(1) = 'S');
+	worldSelectPlayScenario := (ParamCount > 0) and (ParamStr(1) = 'W');
 	emptyRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'E');
 	refusedAbortReturnScenario := (ParamCount > 0) and (ParamStr(1) = 'A');
 	if emptyRestoreScenario then begin
@@ -38,9 +40,10 @@ begin
 		BlockWrite(fixtureFile, malformedHeader, SizeOf(malformedHeader));
 		Close(fixtureFile);
 	end;
-	if restoreScenario or generateRestoreSave or cancelRetryScenario or savedWorldPlayScenario then begin
+	if restoreScenario or generateRestoreSave or cancelRetryScenario
+		or savedWorldPlayScenario or worldSelectPlayScenario then begin
 		if not WorldLoad('DEMO', '.ZZT', true) then RunError(258);
-		if savedWorldPlayScenario then
+		if savedWorldPlayScenario or worldSelectPlayScenario then
 			World.Info.Name := 'DEMO'
 		else
 			World.Info.Name := 'RESTORE';
@@ -78,6 +81,7 @@ begin
 	GameLoopProbeTitleRestoreEmptyEnabled := emptyRestoreScenario;
 	GameLoopProbeTitleRestoreCancelOnceEnabled := cancelRetryScenario;
 	GameLoopProbeTitleRestoreCancelled := false;
+	GameLoopProbeTitleWorldSelectEnabled := worldSelectPlayScenario;
 	GameLoopProbeSeedPauseBlink := true;
 	GameLoopProbeCycleClockEnabled := false;
 	GameLoopProbeStopAfter := 0;
@@ -119,6 +123,8 @@ begin
 		InputProbeSetKeyBuffer('R')
 	else if refusedAbortReturnScenario then
 		InputProbeSetKeyBuffer('P')
+	else if worldSelectPlayScenario then
+		InputProbeSetKeyBuffer('W')
 	else
 		InputProbeSetKeyBuffer('PX');
 	SoundProbeSetSchedule(0, 0, 0);
@@ -127,6 +133,8 @@ begin
 		if (InputProbeGetKeyBuffer <> '') or (InputProbeGetReadKeys <> '') then RunError(259);
 		if InputProbeTakeFollowupEscape then RunError(260);
 	end;
+	if worldSelectPlayScenario and
+		((InputProbeGetKeyBuffer <> '') or (InputProbeGetReadKeys <> '')) then RunError(261);
 	if (restoreScenario or badRestoreScenario or cancelRetryScenario or emptyRestoreScenario) and
 		(InputProbeGetKeyBuffer <> '') then RunError(257);
 	if cancelRetryScenario and not GameLoopProbeTitleRestoreCancelled then RunError(256);

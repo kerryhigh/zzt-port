@@ -346,6 +346,7 @@ $integratedGameplayArgs = @(
 	'-Wl,--export=run_integrated_title_lifecycle_checks',
 	'-Wl,--export=run_integrated_title_refused_abort_checks',
 	'-Wl,--export=run_integrated_title_saved_world_play_checks',
+	'-Wl,--export=run_integrated_title_world_select_play_checks',
 	'-Wl,--export=run_integrated_end_play_checks',
 	'-Wl,--export=integrated_end_play_output_ptr', '-Wl,--export=integrated_end_play_output_rows',
 	'-Wl,--export=run_integrated_end_play_loop_check',

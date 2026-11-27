@@ -3,18 +3,19 @@ const fs = require('node:fs');
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
 const savedWorldPlayWorldPath = process.argv[4] === '--saved-world-play' ? process.argv[5] || null : null;
+const worldSelectPlayWorldPath = process.argv[4] === '--world-select-play' ? process.argv[5] || null : null;
 const titleAbortReturn = process.argv[4] === '--player-abort-return';
 const restoreFailureEmpty = process.argv[4] === '--restore-empty';
 const restoreFailureSavePath = process.argv[4] === '--restore-failure' || restoreFailureEmpty
   ? process.argv[5] || null
   : null;
 const restoreRetrySavePath = process.argv[4] === '--restore-retry' ? process.argv[5] || null : null;
-const restoreSavePath = savedWorldPlayWorldPath || restoreFailureSavePath || restoreRetrySavePath
+const restoreSavePath = savedWorldPlayWorldPath || worldSelectPlayWorldPath || restoreFailureSavePath || restoreRetrySavePath
 	|| titleAbortReturn
   ? null
   : process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
-  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [--saved-world-play world.ZZT|restore.SAV|--restore-failure malformed.SAV|--restore-empty empty.SAV|--restore-retry restore.SAV]');
+  throw new Error('Usage: compare-title-lifecycle.js <INTEGPR.OUT|TITLEFAIL.OUT> <integrated_gameplay.wasm> [--saved-world-play world.ZZT|--world-select-play world.ZZT|restore.SAV|--restore-failure malformed.SAV|--restore-empty empty.SAV|--restore-retry restore.SAV]');
 }
 
 const scalarNames = [
@@ -227,6 +228,13 @@ function readProductionSnapshots(instance, expectedCount) {
     const pointer = instance.exports.integrated_demo_world_bytes_ptr();
     new Uint8Array(instance.exports.memory.buffer, pointer, world.length).set(world);
     result = instance.exports.run_integrated_title_saved_world_play_checks(world.length);
+  } else if (worldSelectPlayWorldPath) {
+    const world = fs.readFileSync(worldSelectPlayWorldPath);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (world.length > capacity) throw new Error(`World fixture exceeds production harness capacity: ${world.length}/${capacity}`);
+    const pointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, pointer, world.length).set(world);
+    result = instance.exports.run_integrated_title_world_select_play_checks(world.length);
   } else if (restoreRetrySavePath) {
     const save = fs.readFileSync(restoreRetrySavePath);
     const capacity = instance.exports.integrated_demo_world_bytes_capacity();
@@ -277,6 +285,8 @@ function readProductionSnapshots(instance, expectedCount) {
     ? 'R-to-restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
     : savedWorldPlayWorldPath
     ? 'title-P reload of the backing Pascal .ZZT, one real paused cycle, and return-to-title'
+    : worldSelectPlayWorldPath
+    ? 'title-W selection of the Pascal .ZZT, title-P play, one real paused cycle, and return-to-title'
     : titleAbortReturn
     ? 'title P, refused end-play prompt, actual zero-speed boundary, accepted abort, and return-to-title'
     : 'P-to-play, one real paused cycle, and return-to-title';
