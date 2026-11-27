@@ -2136,6 +2136,11 @@ foreach ($staleTailWorldFixture in @('SAVTAIL.SAV', 'ZZTTAIL.ZZT')) {
         throw "WorldSaveProbe stale-tail case did not write $staleTailWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }
 }
+foreach ($worldBoardCountFixture in @('BCNT0.SAV', 'BCNT1.SAV', 'BCNT99.SAV', 'BCNT100.SAV', 'BCNT0.ZZT', 'BCNT1.ZZT', 'BCNT99.ZZT', 'BCNT100.ZZT')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $worldBoardCountFixture) -PathType Leaf)) {
+        throw "WorldSaveProbe board-count case did not write $worldBoardCountFixture. See $stageRoot\WORLDSAV.LOG."
+    }
+}
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASPROBE.HI') -PathType Leaf)) {
     throw "HiSaveProbe did not write PASPROBE.HI. See $stageRoot\HISAVPRB.LOG."
 }
@@ -2222,6 +2227,10 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV/.ZZT Boolean/reserved-byte and short-string-tail differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-world-board-counts.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV/.ZZT board-count boundary differential failed with exit code $LASTEXITCODE." }
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `

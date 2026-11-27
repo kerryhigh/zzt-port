@@ -3,8 +3,10 @@ uses Crt, Dos, Video, Keys, Sounds, Input, TxtWind, GameVars, Elements, Editor, 
 var
 	signedValues: array[0..4] of integer;
 	signedNames: array[0..4] of string[8];
+	boardCounts: array[0..3] of integer;
+	boardNames: array[0..3] of string[8];
 	longText: string[58];
-	tag, i: integer;
+	tag, i, boardId, sourceBoardCount: integer;
 	rawValue: byte;
 {$F+}
 procedure QuietWrite(x, y, color: byte; text: TVideoLine);
@@ -82,4 +84,38 @@ begin
 	WorldSave('SAVTAIL', '.SAV');
 	World.Info.IsSave := false;
 	WorldSave('ZZTTAIL', '.ZZT');
+
+	{ Preserve the frozen world's board records while testing WorldSave's
+	  documented 0/1/MAX_BOARD-1/MAX_BOARD count boundaries. Each slot gets
+	  its own copy because WorldSave frees and replaces the active record. }
+	BoardClose;
+	BoardOpen(0);
+	sourceBoardCount := World.BoardCount;
+	for boardId := 1 to MAX_BOARD do begin
+		if boardId <= sourceBoardCount then
+			FreeMem(World.BoardData[boardId], World.BoardLen[boardId]);
+		GetMem(World.BoardData[boardId], World.BoardLen[0]);
+		Move(World.BoardData[0]^, World.BoardData[boardId]^, World.BoardLen[0]);
+		World.BoardLen[boardId] := World.BoardLen[0];
+	end;
+	boardCounts[0] := 0;
+	boardCounts[1] := 1;
+	boardCounts[2] := MAX_BOARD - 1;
+	boardCounts[3] := MAX_BOARD;
+	boardNames[0] := 'BCNT0';
+	boardNames[1] := 'BCNT1';
+	boardNames[2] := 'BCNT99';
+	boardNames[3] := 'BCNT100';
+	for tag := 0 to 3 do begin
+		World.BoardCount := boardCounts[tag];
+		World.Info.CurrentBoard := 0;
+		for i := 1 to 7 do
+			World.Info.Keys[i] := false;
+		for i := 0 to 13 do
+			World.Info.unkPad[i] := 0;
+		World.Info.IsSave := true;
+		WorldSave(boardNames[tag], '.SAV');
+		World.Info.IsSave := false;
+		WorldSave(boardNames[tag], '.ZZT');
+	end;
 end.
