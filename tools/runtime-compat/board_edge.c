@@ -13,6 +13,7 @@ static int16_t destination_entry_y;
 static int16_t source_player_x;
 static int16_t source_player_y;
 static bool destination_player_at_edge;
+static int32_t board_edge_output[6][10];
 
 static void clear_test_state(void) {
 	unsigned char *bytes = (unsigned char *) &state;
@@ -21,6 +22,33 @@ static void clear_test_state(void) {
 	transition_count = 0;
 	board_enter_count = 0;
 	board_change_count = 0;
+}
+
+static void capture_board_edge_row(int row) {
+	int16_t x = state.board.stats[0].x;
+	int16_t y = state.board.stats[0].y;
+	board_edge_output[row][0] = state.world.info.current_board;
+	board_edge_output[row][1] = x;
+	board_edge_output[row][2] = y;
+	board_edge_output[row][3] = state.board.tiles[x][y].element;
+	board_edge_output[row][4] = state.input.delta_x;
+	board_edge_output[row][5] = state.input.delta_y;
+	board_edge_output[row][6] = state.board.info.start_player_x;
+	board_edge_output[row][7] = state.board.info.start_player_y;
+	board_edge_output[row][8] = state.world.info.board_time_sec;
+	board_edge_output[row][9] = state.game_paused ? 1 : 0;
+}
+
+uint32_t board_edge_output_ptr(void) {
+	return (uint32_t) (uintptr_t) board_edge_output;
+}
+
+int32_t board_edge_output_rows(void) {
+	return 6;
+}
+
+int32_t board_edge_output_columns(void) {
+	return 10;
 }
 
 zoo_call *zoo_call_push(zoo_call_stack *stack, zoo_call_type type, uint8_t call_state) {
@@ -113,6 +141,8 @@ static int invoke_edge_touch(int destination, bool player_at_edge, int16_t targe
 	state.board.info.neighbor_boards[neighbor_id] = target_board;
 	state.board.stats[0].x = source_x;
 	state.board.stats[0].y = source_y;
+	state.board.info.start_player_x = source_x;
+	state.board.info.start_player_y = source_y;
 	state.board.tiles[source_x][source_y].element = ZOO_E_PLAYER;
 	state.input.delta_x = dx;
 	state.input.delta_y = dy;
@@ -132,7 +162,9 @@ static int invoke_edge_touch(int destination, bool player_at_edge, int16_t targe
 }
 
 int run_board_edge_compat_checks(void) {
+	for (size_t i = 0; i < sizeof(board_edge_output); i++) ((unsigned char *) board_edge_output)[i] = 0;
 	if (invoke_edge_touch(ZOO_E_EMPTY, false, 1, 30, 1, 0, -1, 30, 25) != 0) return 1;
+	capture_board_edge_row(0);
 	if (state.world.info.current_board != 1 || state.board.stats[0].x != 30
 		|| state.board.stats[0].y != 25 || state.board.tiles[30][25].element != ZOO_E_PLAYER
 		|| state.board.tiles[30][12].element != ZOO_E_EMPTY || state.input.delta_y != 0
@@ -141,6 +173,7 @@ int run_board_edge_compat_checks(void) {
 		|| state.world.info.board_time_sec != 0) return 2;
 
 	if (invoke_edge_touch(ZOO_E_EMPTY, false, 2, 30, 25, 0, 1, 30, 1) != 0) return 3;
+	capture_board_edge_row(1);
 	if (state.world.info.current_board != 2 || state.board.stats[0].x != 30
 		|| state.board.stats[0].y != 1 || state.board.tiles[30][1].element != ZOO_E_PLAYER
 		|| state.board.tiles[30][12].element != ZOO_E_EMPTY || state.input.delta_y != 0
@@ -149,6 +182,7 @@ int run_board_edge_compat_checks(void) {
 		|| state.world.info.board_time_sec != 0) return 4;
 
 	if (invoke_edge_touch(ZOO_E_EMPTY, false, 3, 1, 12, -1, 0, 60, 12) != 0) return 5;
+	capture_board_edge_row(2);
 	if (state.world.info.current_board != 3 || state.board.stats[0].x != 60
 		|| state.board.stats[0].y != 12 || state.board.tiles[60][12].element != ZOO_E_PLAYER
 		|| state.board.tiles[30][12].element != ZOO_E_EMPTY || state.input.delta_x != 0
@@ -157,6 +191,7 @@ int run_board_edge_compat_checks(void) {
 		|| state.world.info.board_time_sec != 0) return 6;
 
 	if (invoke_edge_touch(ZOO_E_EMPTY, false, 4, 60, 12, 1, 0, 1, 12) != 0) return 7;
+	capture_board_edge_row(3);
 	if (state.world.info.current_board != 4 || state.board.stats[0].x != 1
 		|| state.board.stats[0].y != 12 || state.board.tiles[1][12].element != ZOO_E_PLAYER
 		|| state.board.tiles[30][12].element != ZOO_E_EMPTY || state.input.delta_x != 0
@@ -165,11 +200,13 @@ int run_board_edge_compat_checks(void) {
 		|| state.world.info.board_time_sec != 0) return 8;
 
 	if (invoke_edge_touch(ZOO_E_SOLID, false, 1, 30, 1, 0, -1, 30, 25) != 0) return 9;
+	capture_board_edge_row(4);
 	if (state.world.info.current_board != 0 || state.board.stats[0].x != 30
 		|| state.board.stats[0].y != 1 || state.input.delta_y != -1
 		|| transition_count != 0 || board_enter_count != 0 || board_change_count != 2) return 10;
 
 	if (invoke_edge_touch(ZOO_E_PLAYER, true, 1, 30, 1, 0, -1, 30, 25) != 0) return 11;
+	capture_board_edge_row(5);
 	if (state.world.info.current_board != 1 || state.board.stats[0].x != 30
 		|| state.board.stats[0].y != 25 || state.input.delta_y != 0
 		|| transition_count != 1 || board_enter_count != 1 || board_change_count != 1) return 12;

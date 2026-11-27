@@ -408,7 +408,9 @@ $boardEdgeArgs = @(
     '-I', (Join-Path $repoRoot 'third_party\libzoo\src'),
     '-I', (Join-Path $repoRoot 'third_party\libzoo\src\libzoo'),
     '-I', $buildDir,
-    '-Wl,--no-entry', '-Wl,--export=run_board_edge_compat_checks', '-Wl,--export-memory', '-Wl,--gc-sections',
+    '-Wl,--no-entry', '-Wl,--export=run_board_edge_compat_checks',
+    '-Wl,--export=board_edge_output_ptr', '-Wl,--export=board_edge_output_rows',
+    '-Wl,--export=board_edge_output_columns', '-Wl,--export-memory', '-Wl,--gc-sections',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
     $boardEdgeSource, '-o', $boardEdgeWasm
 )
