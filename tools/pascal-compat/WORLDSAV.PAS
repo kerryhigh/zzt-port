@@ -87,10 +87,11 @@ begin
 	World.Info.IsSave := false;
 	WorldSave('ZZTTAIL', '.ZZT');
 
-	{ Keep raw DOS CP437 payload bytes in all four WorldSave short strings. }
-	byteText := Chr($80) + Chr($82) + Chr($FF);
+	{ Keep an embedded NUL and raw DOS CP437 bytes in every WorldSave string. }
+	byteText := Chr(0) + Chr($80) + Chr($82) + Chr($FF);
 	World.Info.Name := byteText;
-	World.Info.Flags[1] := byteText;
+	for i := 1 to MAX_FLAG do
+		World.Info.Flags[i] := byteText;
 	Board.Name := byteText;
 	Board.Info.Message := byteText;
 	World.Info.IsSave := false;

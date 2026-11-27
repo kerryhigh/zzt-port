@@ -11,7 +11,7 @@ if (!process.argv[2] || !process.argv[3]) {
 const stage = path.resolve(process.argv[2]);
 const wasmPath = path.resolve(process.argv[3]);
 const files = [['CP437.ZZT', 0], ['CP437.SAV', 1]];
-const expectedBytes = Buffer.from([0x80, 0x82, 0xFF]);
+const expectedBytes = Buffer.from([0x00, 0x80, 0x82, 0xFF]);
 
 function assertStringBytes(buffer, offset, capacity, expected, label) {
   if (buffer[offset] !== expected.length) {
@@ -47,7 +47,9 @@ function compareBytes(expected, actual, label) {
     if (file.readUInt16LE(0) !== 0xFFFF) throw new Error(`${filename}: expected the DOS -1 world version marker.`);
     if (file[264] !== expectedIsSave) throw new Error(`${filename}: IsSave is ${file[264]}, expected ${expectedIsSave}.`);
     assertStringBytes(file, 29, 20, expectedBytes, `${filename} world name`);
-    assertStringBytes(file, 50, 20, expectedBytes, `${filename} first flag`);
+    for (let flag = 1; flag <= 10; flag++) {
+      assertStringBytes(file, 50 + (flag - 1) * 21, 20, expectedBytes, `${filename} flag ${flag}`);
+    }
 
     const boardCount = file.readInt16LE(2);
     const currentBoard = file.readUInt16LE(17);
@@ -87,7 +89,7 @@ function compareBytes(expected, actual, label) {
     compareBytes(file, production, `${filename} full-file CP437 differential`);
 
     const sha256 = crypto.createHash('sha256').update(file).digest('hex');
-    console.log(`${filename}: IsSave ${expectedIsSave}; world name, flag, current board name, and board message contain raw CP437 bytes ${expectedBytes.toString('hex')}; all ${file.length} file bytes match production; SHA-256 ${sha256}.`);
+    console.log(`${filename}: IsSave ${expectedIsSave}; world name, all ten flags, current board name, and board message contain raw bytes ${expectedBytes.toString('hex')}; all ${file.length} file bytes match production; SHA-256 ${sha256}.`);
   }
 })().catch(error => {
   console.error(error.message);
