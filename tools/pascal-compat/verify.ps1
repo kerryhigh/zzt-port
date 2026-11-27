@@ -2136,8 +2136,10 @@ foreach ($staleTailWorldFixture in @('SAVTAIL.SAV', 'ZZTTAIL.ZZT')) {
         throw "WorldSaveProbe stale-tail case did not write $staleTailWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }
 }
-if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'CP437.ZZT') -PathType Leaf)) {
-    throw "WorldSaveProbe CP437 short-string case did not write CP437.ZZT. See $stageRoot\WORLDSAV.LOG."
+foreach ($cp437WorldFixture in @('CP437.ZZT', 'CP437.SAV')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $cp437WorldFixture) -PathType Leaf)) {
+        throw "WorldSaveProbe CP437 short-string case did not write $cp437WorldFixture. See $stageRoot\WORLDSAV.LOG."
+    }
 }
 foreach ($worldBoardCountFixture in @('BCNT0.SAV', 'BCNT1.SAV', 'BCNT99.SAV', 'BCNT100.SAV', 'BCNT0.ZZT', 'BCNT1.ZZT', 'BCNT99.ZZT', 'BCNT100.ZZT')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $worldBoardCountFixture) -PathType Leaf)) {

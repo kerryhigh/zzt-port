@@ -95,6 +95,8 @@ begin
 	Board.Info.Message := byteText;
 	World.Info.IsSave := false;
 	WorldSave('CP437', '.ZZT');
+	World.Info.IsSave := true;
+	WorldSave('CP437', '.SAV');
 
 	{ Preserve the frozen world's board records while testing WorldSave's
 	  documented 0/1/MAX_BOARD-1/MAX_BOARD count boundaries. Each slot gets
