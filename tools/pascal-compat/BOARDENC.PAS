@@ -11,8 +11,6 @@ var
 	encoded: array[0..68] of byte;
 	signedValues: array[0..4] of integer;
 	signedNames: array[0..4] of string[8];
-	stringLengths: array[0..7] of byte;
-	stringNames: array[0..8] of string[8];
 	ix, iy, i, tag, boardLength: integer;
 begin
 	VideoWriteText := QuietWrite;
@@ -86,28 +84,18 @@ begin
 		WriteLn(output, 'signed ', tag, ' ', signedValues[tag]);
 	end;
 
-	{ Reload the source board so these short-string cases use the original
-	  valid stat/script state rather than the signed-field mutations above. }
-	if not WorldLoad('DEMO', '.ZZT', false) then Halt(3);
-	stringLengths[0] := 0;
-	stringLengths[1] := 1;
-	stringLengths[2] := 49;
-	stringLengths[3] := 50;
-	stringLengths[4] := 51;
-	stringLengths[5] := 127;
-	stringLengths[6] := 255;
-	stringLengths[7] := 50;
-	stringNames[0] := 'STR0.BRD';
-	stringNames[1] := 'STR1.BRD';
-	stringNames[2] := 'STR2.BRD';
-	stringNames[3] := 'STR3.BRD';
-	stringNames[4] := 'STR4.BRD';
-	stringNames[5] := 'STR5.BRD';
-	stringNames[6] := 'STR6.BRD';
-	stringNames[7] := 'STR7.BRD';
-	stringNames[8] := 'STR8.BRD';
+	{ Reuse the existing byte buffer so this probe does not change the Pascal
+	  static-data/heap layout that WorldLoad and BoardClose observe. }
+	encoded[0] := 0;
+	encoded[1] := 1;
+	encoded[2] := 49;
+	encoded[3] := 50;
+	encoded[4] := 51;
+	encoded[5] := 127;
+	encoded[6] := 255;
+	encoded[7] := 50;
 	for tag := 0 to 7 do begin
-		Board.Name[0] := Chr(stringLengths[tag]);
+		Board.Name[0] := Chr(encoded[tag]);
 		for i := 1 to 50 do
 			Board.Name[i] := Chr(64 + (i mod 60));
 		if tag = 7 then begin
@@ -119,12 +107,21 @@ begin
 		end;
 		BoardClose;
 		boardLength := World.BoardLen[World.Info.CurrentBoard];
-		Assign(brdFile, stringNames[tag]);
+		case tag of
+			0: Assign(brdFile, 'STR0.BRD');
+			1: Assign(brdFile, 'STR1.BRD');
+			2: Assign(brdFile, 'STR2.BRD');
+			3: Assign(brdFile, 'STR3.BRD');
+			4: Assign(brdFile, 'STR4.BRD');
+			5: Assign(brdFile, 'STR5.BRD');
+			6: Assign(brdFile, 'STR6.BRD');
+			7: Assign(brdFile, 'STR7.BRD');
+		end;
 		Rewrite(brdFile, 1);
 		BlockWrite(brdFile, boardLength, SizeOf(word));
 		BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
 		Close(brdFile);
-		WriteLn(output, 'string ', tag, ' ', stringLengths[tag]);
+		WriteLn(output, 'string ', tag, ' ', encoded[tag]);
 	end;
 
 	{ Pascal short-string assignment changes the length and visible prefix but
@@ -133,7 +130,7 @@ begin
 	Board.Name := 'X';
 	BoardClose;
 	boardLength := World.BoardLen[World.Info.CurrentBoard];
-	Assign(brdFile, stringNames[8]);
+	Assign(brdFile, 'STR8.BRD');
 	Rewrite(brdFile, 1);
 	BlockWrite(brdFile, boardLength, SizeOf(word));
 	BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
