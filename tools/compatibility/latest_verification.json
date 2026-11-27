@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-26",
-    "root_revision": "384727e091a543f204a5bcd90e228297ec7e80a0",
+    "root_revision": "c4e00d869bc22fd0c7b69bf6f65f0004b2300cfb",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean full Turbo Pascal 5.5/DOSBox-X runner passed on 2026-11-26: 146 direct sessions (54 standard, 92 standalone), 64/64 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 state-field comparisons, 169 logical-cycle snapshots). The six direct board-edge callback outcomes matched at 60/60 fields under deterministic board-change/board-enter service stubs; this does not verify file-backed transitions or production zoo_board_enter. The original GameTitleLoop P -> refused abort -> verified zero-speed cycle advance -> accepted abort -> return-to-title route matched three checkpoints / 10,242 fields. Title routes and refusals, 7/7 player-abort decisions, 3/3 title-quit decisions, accepted-abort 22/22, refused No/Escape aftermath 44/44, missing-world preservation, runtime verification, and first-divergence negative control passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean full Turbo Pascal 5.5/DOSBox-X runner passed on 2026-11-26: 146 direct sessions (54 standard, 92 standalone), 64/64 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 state-field comparisons, 169 logical-cycle snapshots). The six BOARDENT routes matched both the callback-boundary replay (60/60 fields under service stubs) and the full production replay (60/60 fields through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter). The full-path replay uses controlled allocator/video/sidebar adapters; it does not exercise external world-file access. The original GameTitleLoop P -> refused abort -> verified zero-speed cycle advance -> accepted abort -> return-to-title route matched three checkpoints / 10,242 fields. Title routes, abort/quit, runtime verification, and first-divergence negative control passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -67,7 +67,7 @@
       "configured": 64,
       "passed": 64,
       "failed": 0,
-      "result": "64/64 direct Pascal-to-production differential invocations passed in the clean run. The six-route BOARDENT callback-boundary D/DP comparison matched 60/60 fields under deterministic board-change/board-enter service stubs; the GameTitleLoop refused-abort return-to-title route matched 3 checkpoints / 10,242 fields. All ten frozen integrated fixtures and existing title, scheduler, save/load, editor, OOP, element, high-score, and abort/quit comparisons passed. Zero unexplained comparable differences; documented F05/F08 identical-value redraw cadence and classified allocator-dependent bytes remain governed by their existing contracts."
+      "result": "64/64 direct Pascal-to-production differential invocations passed in the clean run. The six-route BOARDENT callback-boundary replay matched 60/60 fields under deterministic service stubs; the same six routes also matched 60/60 fields through actual production BoardChange, serialized BoardClose/Open, TOUCH_FUNC call-stack continuation, and BoardEnter. The GameTitleLoop refused-abort return-to-title route matched 3 checkpoints / 10,242 fields. All ten frozen integrated fixtures and existing title, scheduler, save/load, editor, OOP, element, high-score, and abort/quit comparisons passed. Zero unexplained comparable differences; documented F05/F08 identical-value redraw cadence and classified allocator-dependent bytes remain governed by their existing contracts."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2085,7 +2085,7 @@
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
-      "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 fields under deterministic board-change/board-enter service stubs), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
+      "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
       "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
@@ -2095,7 +2095,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
-      "E2-03-AC001: connected the existing BOARDENT direct Pascal cases to the extracted shared production board-edge callback under deterministic board-change/board-enter service stubs. Four neighbor callback outcomes, blocked rollback, and occupied-player entry matched at 60/60 fields; file-backed transition and production zoo_board_enter parity remain open. The clean runner passed 146 direct sessions, 64/64 configured differentials, F01-F10 (10/10), runtime compatibility, and the first-divergence negative control; E2-03 remains partial and the frozen inventory is unchanged.",
+      "E2-03-AC001: connected BOARDENT direct Pascal captures to two production comparisons. The callback-boundary replay under service stubs matched 60/60 fields; a second replay through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter also matched 60/60. The clean runner passed 146 direct sessions, 64/64 differentials, F01-F10, runtime compatibility, and the first-divergence negative control. External world-file routes and the broader lifecycle matrix remain open; E2-03 stays partial and the frozen inventory is unchanged.",
       "E2-03-AC001: extended the original GameTitleLoop probe through refused abort, verified zero-speed tick advancement, accepted abort, and return-to-title. The direct Pascal/production replay matched 3 checkpoints / 10,242 fields. The clean run passed 146 direct sessions, 63/63 configured differentials, F01-F10, runtime verification, and the diagnostic negative control; the frozen 54-case inventory remains unchanged and E2-03 stays partial.",
       "E2-03-AC001: added direct compiled-Pascal refused-abort aftermath captures for N and Escape, each followed through the actual GamePlayLoop zero-speed cycle boundary to accepted exit. Both routes matched production at 44/44 fields total. The clean full runner passed 145 direct sessions, 62/62 configured differentials, and F01-F10; E2-03 remains partial and the frozen 54-case inventory is unchanged.",
       "E2-03-AC001: added a compiled-Pascal accepted player-abort GamePlayLoop capture and compared the shared-engine exit boundary across 22 fields. The clean full runner exited 0; its direct-session tally is corrected from 140 to 142 to include ABORTLP compile/run. E2-03 remains partial; no case or fixture IDs were added.",
@@ -2158,7 +2158,7 @@
     "latest_attempt": {
       "date": "2026-11-26",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "384727e091a543f204a5bcd90e228297ec7e80a0",
+      "source_revision": "c4e00d869bc22fd0c7b69bf6f65f0004b2300cfb",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 146,
       "configured_differentials_passed": 64,
@@ -2170,7 +2170,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean full Turbo Pascal 5.5/DOSBox-X runner passed on 2026-11-26: 146 direct sessions (54 standard, 92 standalone), 64/64 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 state-field comparisons, 169 logical-cycle snapshots). The six direct board-edge callback outcomes matched at 60/60 fields under deterministic board-change/board-enter service stubs; this does not verify file-backed transitions or production zoo_board_enter. The original GameTitleLoop P -> refused abort -> verified zero-speed cycle advance -> accepted abort -> return-to-title route matched three checkpoints / 10,242 fields. Title routes and refusals, 7/7 player-abort decisions, 3/3 title-quit decisions, accepted-abort 22/22, refused No/Escape aftermath 44/44, missing-world preservation, runtime verification, and first-divergence negative control passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+      "status": "Clean full Turbo Pascal 5.5/DOSBox-X runner passed on 2026-11-26: 146 direct sessions (54 standard, 92 standalone), 64/64 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 state-field comparisons, 169 logical-cycle snapshots). The six BOARDENT routes matched both the callback-boundary replay (60/60 fields under service stubs) and the full production replay (60/60 fields through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter). The full-path replay uses controlled allocator/video/sidebar adapters; it does not exercise external world-file access. The original GameTitleLoop P -> refused abort -> verified zero-speed cycle advance -> accepted abort -> return-to-title route matched three checkpoints / 10,242 fields. Title routes, abort/quit, runtime verification, and first-divergence negative control passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -2786,13 +2786,41 @@
         "pascal_output_bytes": 474,
         "pascal_output_sha256": "debe775c8bca090eba0ced94e3846aaf2c39a834419598036110c7c0ab87c84",
         "comparator": "tools/pascal-compat/compare-board-edge.js",
-        "production_harness": "tools/runtime-compat/board_edge.c::run_board_edge_compat_checks",
+        "callback_boundary": {
+          "production_harness": "tools/runtime-compat/board_edge.c::run_board_edge_compat_checks",
+          "production_implementation": [
+            "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_board_edge_touch"
+          ],
+          "state_fields_compared": 60,
+          "state_field_differences": 0,
+          "comparison_exit_code": 0,
+          "test_service_stubs": [
+            "tools/runtime-compat/board_edge.c::zoo_board_change",
+            "tools/runtime-compat/board_edge.c::zoo_board_enter"
+          ],
+          "scope_note": "Callback-boundary differential under deterministic service stubs; retained as a separate boundary check and not used as full-transition evidence."
+        },
+        "full_production_transition": {
+          "production_harness": "tools/runtime-compat/oop_movement.c::run_integrated_board_edge_actual_transition_checks",
+          "production_implementation": [
+            "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_board_edge_touch",
+            "third_party/libzoo/src/libzoo/zoo_game.c::zoo_board_change",
+            "third_party/libzoo/src/libzoo/zoo_game.c::zoo_board_enter",
+            "third_party/libzoo/src/libzoo/zoo_game.c::zoo_stat_move/zoo_board_draw_transition/zoo_call_stack_tick",
+            "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_board_close/zoo_board_open"
+          ],
+          "state_fields_compared": 60,
+          "state_field_differences": 0,
+          "comparison_exit_code": 0,
+          "allocator": "Controlled bump allocator with tracked allocations and realloc copy, matching the integrated replay runner",
+          "output_adapters": [
+            "test_video_write",
+            "test_sidebar_update"
+          ],
+          "scope_note": "Actual production BoardChange, serialized BoardClose/Open records in world.board_data[], TOUCH_FUNC call-stack continuation, stat move, transition draw, and BoardEnter. No host filesystem or external-world-file load is exercised by these six routes."
+        },
         "fixture_credit": 0,
-        "test_services": [
-          "tools/runtime-compat/board_edge.c::zoo_board_change (deterministic fixture stub)",
-          "tools/runtime-compat/board_edge.c::zoo_board_enter (deterministic fixture stub)"
-        ],
-        "scope_note": "Compares the extracted production zoo_e_board_edge_touch callback outcomes under controlled service stubs; does not verify file-backed BoardChange or actual production zoo_board_enter."
+        "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-board-edge-full-transition-differential.md"
       }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
@@ -3443,7 +3471,7 @@
     "board_edge_differential": {
       "acceptance_case": "E2-03-AC001",
       "evidence_class": "D+DP",
-      "result": "passed for six board-edge routes; acceptance case remains partial",
+      "result": "six full production board-edge routes matched; acceptance case remains partial",
       "routes": [
         "north open",
         "south open",
@@ -3457,24 +3485,49 @@
       "comparison_exit_code": 0,
       "pascal_probe": "tools/pascal-compat/BOARDENT.PAS::ElementDefs[E_BOARD_EDGE].TouchProc",
       "comparator": "tools/pascal-compat/compare-board-edge.js",
-      "production_harness": "tools/runtime-compat/board_edge.c::run_board_edge_compat_checks",
-      "production_implementation": [
-        "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_board_edge_touch"
-      ],
       "pascal_output": {
         "path": "build/pascal-compat-verification/BOARDENT.OUT",
         "size_bytes": 474,
         "sha256": "debe775c8bca090eba0ced94e3846aaf2c39a834419598036110c7c0ab87c84",
         "committed": false
       },
+      "callback_boundary": {
+        "production_harness": "tools/runtime-compat/board_edge.c::run_board_edge_compat_checks",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_board_edge_touch"
+        ],
+        "state_fields_compared": 60,
+        "state_field_differences": 0,
+        "comparison_exit_code": 0,
+        "test_service_stubs": [
+          "tools/runtime-compat/board_edge.c::zoo_board_change",
+          "tools/runtime-compat/board_edge.c::zoo_board_enter"
+        ],
+        "scope_note": "Callback-boundary differential under deterministic service stubs; retained as a separate boundary check and not used as full-transition evidence."
+      },
+      "full_production_transition": {
+        "production_harness": "tools/runtime-compat/oop_movement.c::run_integrated_board_edge_actual_transition_checks",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_board_edge_touch",
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_board_change",
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_board_enter",
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_stat_move/zoo_board_draw_transition/zoo_call_stack_tick",
+          "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_board_close/zoo_board_open"
+        ],
+        "state_fields_compared": 60,
+        "state_field_differences": 0,
+        "comparison_exit_code": 0,
+        "allocator": "Controlled bump allocator with tracked allocations and realloc copy, matching the integrated replay runner",
+        "output_adapters": [
+          "test_video_write",
+          "test_sidebar_update"
+        ],
+        "scope_note": "Actual production BoardChange, serialized BoardClose/Open records in world.board_data[], TOUCH_FUNC call-stack continuation, stat move, transition draw, and BoardEnter. No host filesystem or external-world-file load is exercised by these six routes."
+      },
       "full_clean_runner_exit_code": 0,
       "fixture_credit": 0,
-      "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-board-edge-differential.md",
-      "test_service_stubs": [
-        "tools/runtime-compat/board_edge.c::zoo_board_change",
-        "tools/runtime-compat/board_edge.c::zoo_board_enter"
-      ],
-      "scope_note": "Callback-boundary differential under deterministic service stubs; does not verify file-backed BoardChange or actual production zoo_board_enter."
+      "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-board-edge-full-transition-differential.md",
+      "scope_note": "Full production transition comparison passes six routes; external world-file behavior and the wider E2-03 lifecycle transition matrix remain open."
     }
   }
 }
