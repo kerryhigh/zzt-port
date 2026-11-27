@@ -2166,6 +2166,11 @@ foreach ($stringFixture in @('STR0.BRD', 'STR1.BRD', 'STR2.BRD', 'STR3.BRD', 'ST
         throw "BoardClose short-string probe did not write $stringFixture. See $stageRoot\BOARDENC.LOG."
     }
 }
+foreach ($statCountFixture in @('STATC0.BRD', 'STATC1.BRD', 'STATC149.BRD', 'STATC150.BRD')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $statCountFixture) -PathType Leaf)) {
+        throw "BoardClose stat-count probe did not write $statCountFixture. See $stageRoot\BOARDENC.LOG."
+    }
+}
 
 Push-Location $repoRoot
 try {
@@ -2185,6 +2190,10 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal signed .BRD field boundary differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-brd-stat-counts.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .BRD stat-count boundary differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-pascal-brd-strings.js' `
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')

@@ -11,6 +11,7 @@ var
 	encoded: array[0..68] of byte;
 	signedValues: array[0..4] of integer;
 	signedNames: array[0..4] of string[8];
+	statCounts: array[0..3] of integer;
 	ix, iy, i, tag, boardLength: integer;
 begin
 	VideoWriteText := QuietWrite;
@@ -161,6 +162,49 @@ begin
 	BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
 	Close(brdFile);
 	WriteLn(output, 'stale 8 1');
+
+	{ Capture the frozen .BRD stat-count boundaries. Every fixed stat field is
+	  initialized and DataLen is zero, so record bytes do not depend on heap
+	  residue or script allocation. }
+	statCounts[0] := 0;
+	statCounts[1] := 1;
+	statCounts[2] := MAX_STAT - 1;
+	statCounts[3] := MAX_STAT;
+	for tag := 0 to 3 do begin
+		Board.StatCount := statCounts[tag];
+		for ix := 0 to Board.StatCount do
+			with Board.Stats[ix] do begin
+				X := (ix mod BOARD_WIDTH) + 1;
+				Y := (ix mod BOARD_HEIGHT) + 1;
+				StepX := ix - 75;
+				StepY := 75 - ix;
+				Cycle := ix;
+				P1 := ix mod 256;
+				P2 := (ix + 1) mod 256;
+				P3 := (ix + 2) mod 256;
+				Follower := ix - 1;
+				Leader := ix + 1;
+				Under.Element := E_EMPTY;
+				Under.Color := $70;
+				Data := nil;
+				DataPos := ix - 1;
+				DataLen := 0;
+				unk1 := nil;
+				unk2 := nil;
+			end;
+		BoardClose;
+		boardLength := World.BoardLen[World.Info.CurrentBoard];
+		case tag of
+			0: Assign(brdFile, 'STATC0.BRD');
+			1: Assign(brdFile, 'STATC1.BRD');
+			2: Assign(brdFile, 'STATC149.BRD');
+			3: Assign(brdFile, 'STATC150.BRD');
+		end;
+		Rewrite(brdFile, 1);
+		BlockWrite(brdFile, boardLength, SizeOf(word));
+		BlockWrite(brdFile, World.BoardData[World.Info.CurrentBoard]^, boardLength);
+		Close(brdFile);
+	end;
 
 	Close(output);
 end.
