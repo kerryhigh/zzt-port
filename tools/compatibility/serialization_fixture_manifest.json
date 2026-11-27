@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "acceptance_case": "E2-02-AC001",
-  "last_verified": "2026-11-25",
+  "last_verified": "2026-11-27",
   "runner": "tools/pascal-compat/verify.ps1",
   "status": "partial",
   "note": "One compiled-Pascal source-produced sample per legacy format has a passing production byte comparison. Outputs are generated in the ignored Pascal staging directory; this manifest records their reproducible source, hashes, and comparison paths. The full serialized-field and boundary fixture matrix is incomplete.",

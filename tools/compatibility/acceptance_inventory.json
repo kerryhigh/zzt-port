@@ -136,7 +136,7 @@
         "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
       ],
       "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa. Empty RESTORE.SAV title-R refusal: zero-byte fixture SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; 3,384/3,386 comparable world/board/stat/tile fields matched (two route-specific exclusions).",
-      "verification_result": "Partial D/DP: the four-format manifest and valid source-produced .ZZT/.SAV/.BRD/.HI byte comparisons remain recorded; Pascal BoardClose and WorldSave output matches the shared serializers byte-for-byte. The latest clean 2026-11-26 run passed 147 direct Pascal sessions and 65/65 configured differentials, including the existing zero-byte .SAV refusal through GameTitleLoop R (3,384/3,386 comparable state fields; ZOO_ERROR_INVAL -2). The checked-in per-field/error-boundary matrix and remaining malformed cases are still outstanding.",
+      "verification_result": "Partial D/DP: the four-format manifest and valid source-produced .ZZT/.SAV/.BRD/.HI byte comparisons remain recorded; Pascal BoardClose and WorldSave output matches the shared serializers byte-for-byte. The latest clean 2026-11-27 run reran the existing zero-byte .SAV refusal through GameTitleLoop R within 147 direct Pascal sessions and 65/65 configured differentials (3,384/3,386 comparable state fields; ZOO_ERROR_INVAL -2). The checked-in per-field/error-boundary matrix and remaining malformed cases are still outstanding.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -169,7 +169,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-      "verification_result": "Partial: direct Pascal and production comparisons cover source save bytes, representative raw string/Boolean/stale-tail cases, all 256 RLE count bytes, and 16 complete .HI records. The full per-field and per-boundary value matrix in this requirement remains incomplete.",
+      "verification_result": "Partial: the 2026-11-27 clean full run passed 147/147 direct Pascal sessions and 65/65 configured differentials. Direct Pascal and production comparisons cover source save bytes, representative raw string/Boolean/stale-tail cases, all 256 RLE count bytes, and 16 complete .HI records. The full per-field and per-boundary value matrix in this requirement remains incomplete.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -201,8 +201,8 @@
         "tools/serializer-compat/",
         "tools/highscore-compat/"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-      "verification_result": "Partial: direct Pascal captures title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after a short editor payload. The prior SHORTHEAD output was invalid because the DOS filename exceeded 8.3; corrected SHORTHD attempts stall or report runtime error 203. Short-header final state and truncation at every boundary remain unverified.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md",
+      "verification_result": "Partial: direct Pascal captures title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after a short editor payload. BRDXFER now uses the original ZZT memory directive; a valid SHORTHD one-byte-header retry with controlled prompt hooks still timed out at 25 seconds without output and is excluded from pass counts. Short-header final state and truncation at every boundary remain unverified.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -228,8 +228,8 @@
         "tools/serializer-compat/",
         "tools/highscore-compat/"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-24-brd-ioresult-followup.md",
-      "verification_result": "Partial: a clean direct BRDXFER session ran the short-payload EditorTransferBoard path with a documented staged post-Escape modal-boundary substitution; its outcome and seven selected initialized board/player fields match shared LibZoo. A compiled-Pascal BoardClose/WorldSave case also matches all 25,928 output bytes against shared LibZoo. No stable direct Pascal final state exists for short-header BoardOpen, and untouched-buffer suffix behavior remains pending.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md",
+      "verification_result": "Partial: the 2026-11-27 clean run recompiled BRDXFER with the original ZZT memory limits and matched the short-payload transfer outcome plus seven initialized board/player fields. A compiled-Pascal BoardClose/WorldSave case also matches all 25,928 output bytes against shared LibZoo. The corrected short-header attempt still timed out without a stable Pascal final state, so no direct differential exists; untouched-buffer suffix behavior remains pending.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -254,7 +254,7 @@
         "tools/highscore-compat/"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-      "verification_result": "Partial: the latest clean 2026-11-26 run passed 65/65 configured Pascal-to-production comparisons and 16 direct .HI byte comparisons with zero unexplained mismatches in those cases. One full Pascal BoardClose/WorldSave output matched shared LibZoo for all 25,928 bytes. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
+      "verification_result": "Partial: the latest clean 2026-11-27 run passed 147/147 direct Pascal sessions and 65/65 configured Pascal-to-production comparisons, plus 16 direct .HI byte comparisons, with zero unexplained mismatches in those cases. One full Pascal BoardClose/WorldSave output matched shared LibZoo for all 25,928 bytes. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
       "required_evidence_classes": [
         "D",
         "DP"
