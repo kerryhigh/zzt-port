@@ -4573,6 +4573,114 @@ int32_t run_integrated_title_lifecycle_checks(void) {
 	return 0;
 }
 
+int32_t run_integrated_title_refused_abort_checks(void) {
+	int32_t calls;
+	int16_t previous_tick;
+	zoo_tick_retval tick_result;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	state.d_video = &video;
+	state.func_draw_sidebar = test_sidebar_update;
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	state.input.repeat_start = 4;
+	state.input.repeat_end = 6;
+	state.tick_speed = 0;
+	zoo_world_create(&state);
+	state.func_random = integrated_gameplay_random;
+	state.random_seed = 0;
+	zoo_game_start(&state, GS_TITLE);
+	integrated_schedule_enabled = true;
+	integrated_configured_tick_speed = 0;
+	integrated_elapsed_nanos = 0;
+	/* TITLEIN A holds TimerTicks at zero. Keep the production clock tape at
+	   that exact value while zero-duration cycle checks still succeed. */
+	integrated_fixed_clock_enabled = true;
+	integrated_fixed_clock_hsecs = 0;
+	force_elapsed_for_tick_check = true;
+	zoo_input_key_press(&state.input, 'P');
+	for (calls = 0; calls < 1000 && state.input.key_pressed != 'P'; calls++) {
+		tick_result = zoo_tick(&state);
+		if (tick_result == ERROR) {
+			force_elapsed_for_tick_check = false;
+			integrated_schedule_enabled = false;
+			return 68 - state.error_value;
+		}
+	}
+	if (state.input.key_pressed != 'P') {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 69;
+	}
+	result = zoo_world_play(&state);
+	if (result != 0 || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 70 - (result != 0 ? result : state.error_value);
+	}
+	if (!capture_integrated_gameplay_snapshot(0, 'P', 0)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 71;
+	}
+
+	/* Mirror the original prompt result, then let its real paused scheduler
+	   reach the next cycle boundary before replaying the queued Escape. */
+	zoo_game_resolve_end_play(&state, false, true);
+	previous_tick = state.current_tick;
+	for (calls = 0; calls < 1000; calls++) {
+		tick_result = zoo_tick(&state);
+		if (tick_result == ERROR || state.error_value != 0) {
+			force_elapsed_for_tick_check = false;
+			integrated_schedule_enabled = false;
+			return 72;
+		}
+		if (state.current_stat_tick == 0 && state.current_tick != previous_tick) break;
+	}
+	if (calls == 1000 || state.current_stat_tick != 0 || state.current_tick == previous_tick) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 74;
+	}
+
+	/* Match the staging-only follow-up Escape queued after InputUpdate at the
+	   completed-cycle boundary; capture before the following loop consumes it. */
+	zoo_input_key_press(&state.input, 27);
+	if (!capture_integrated_gameplay_snapshot(1, 'C', 1)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 75;
+	}
+	tick_result = zoo_tick(&state);
+	if (tick_result == ERROR || state.error_value != 0 || state.input.key_pressed != 27) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 76;
+	}
+	zoo_game_resolve_end_play(&state, true, true);
+	tick_result = zoo_tick(&state);
+	if (tick_result == ERROR || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 77;
+	}
+	result = zoo_world_return_title(&state);
+	if (result != 0 || state.error_value != 0) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 78 - (result != 0 ? result : state.error_value);
+	}
+	if (!capture_integrated_gameplay_snapshot(2, 'T', 0)) {
+		force_elapsed_for_tick_check = false;
+		integrated_schedule_enabled = false;
+		return 79;
+	}
+	force_elapsed_for_tick_check = false;
+	integrated_schedule_enabled = false;
+	return 0;
+}
+
 int32_t run_integrated_title_saved_world_play_checks(int32_t world_length) {
 	int32_t calls;
 	int16_t previous_tick;

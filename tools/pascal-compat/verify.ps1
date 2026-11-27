@@ -448,6 +448,7 @@ var
 	GameLoopProbeLastPaused, GameLoopProbeCycleCompleted: boolean;
 	GameLoopProbeCaptureNextBoardChange: boolean;
 	GameLoopProbeTitleLifecycleEnabled, GameLoopProbeTitleLifecyclePlayerReturned: boolean;
+	GameLoopProbeTitleAbortEnabled: boolean;
 	GameLoopProbeTitleRestoreEnabled, GameLoopProbeTitleRestoreFailureEnabled: boolean;
 	GameLoopProbeTitleRestoreEmptyEnabled: boolean;
 	GameLoopProbeTitleRestoreCancelOnceEnabled, GameLoopProbeTitleRestoreCancelled: boolean;
@@ -605,7 +606,13 @@ $titleLifecycleStartProbe = @'
 if GameLoopProbeTitleLifecycleEnabled then begin
 	if GameStateElement = E_PLAYER then begin
 		GameLoopProbeCapture('P', 0);
-		GameLoopProbeStopAfter := 1;
+		if GameLoopProbeTitleAbortEnabled then begin
+			GameLoopProbeStopAfter := 0;
+			InputProbeSetKeyBuffer(Chr(27));
+			InputProbeSetReadKeys('NY');
+			InputProbeArmFollowupEscape;
+		end else
+			GameLoopProbeStopAfter := 1;
 	end else if GameLoopProbeTitleLifecyclePlayerReturned then begin
 		GameLoopProbeCapture('T', 0);
 		GameLoopProbeTitleLifecyclePlayerReturned := false;
@@ -2725,6 +2732,20 @@ end;
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production title/menu lifecycle replay failed with exit code $LASTEXITCODE." }
 
+    $titleAbortReturnRoot = Join-Path $stageRoot 'TITLABRT'
+    New-Item -ItemType Directory -Force -Path $titleAbortReturnRoot | Out-Null
+    Write-Host 'Running the actual refused-abort and return-to-title lifecycle: TITLABRT'
+    Invoke-DosboxSession 'TITLEIN-REFUSED-ABORT-RETURN' @('CD \TITLABRT', '..\BIN\TITLEIN.EXE A')
+    $titleAbortReturnOutput = Join-Path $titleAbortReturnRoot 'INTEGPR.OUT'
+    if (-not (Test-Path -LiteralPath $titleAbortReturnOutput -PathType Leaf)) {
+        throw "Pascal GameTitleLoop refused-abort return replay did not write INTEGPR.OUT. See $stageRoot\TITLEIN-REFUSED-ABORT-RETURN.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        $titleAbortReturnOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        '--player-abort-return'
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production refused-abort return-to-title lifecycle differential failed with exit code $LASTEXITCODE." }
+
     $titleSavedWorldPlayRoot = Join-Path $stageRoot 'TITLP'
     New-Item -ItemType Directory -Force -Path $titleSavedWorldPlayRoot | Out-Null
     Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleSavedWorldPlayRoot 'DEMO.ZZT') -Force
@@ -2908,6 +2929,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 91 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+$directProbeCount = $probeFiles.Count + 92 # Includes the previous isolated compile/run probes, one refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

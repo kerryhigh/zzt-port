@@ -3,12 +3,14 @@ const fs = require('node:fs');
 const pascalPath = process.argv[2];
 const wasmPath = process.argv[3];
 const savedWorldPlayWorldPath = process.argv[4] === '--saved-world-play' ? process.argv[5] || null : null;
+const titleAbortReturn = process.argv[4] === '--player-abort-return';
 const restoreFailureEmpty = process.argv[4] === '--restore-empty';
 const restoreFailureSavePath = process.argv[4] === '--restore-failure' || restoreFailureEmpty
   ? process.argv[5] || null
   : null;
 const restoreRetrySavePath = process.argv[4] === '--restore-retry' ? process.argv[5] || null : null;
 const restoreSavePath = savedWorldPlayWorldPath || restoreFailureSavePath || restoreRetrySavePath
+	|| titleAbortReturn
   ? null
   : process.argv[4] || null;
 if (!pascalPath || !wasmPath) {
@@ -232,6 +234,8 @@ function readProductionSnapshots(instance, expectedCount) {
     const pointer = instance.exports.integrated_demo_world_bytes_ptr();
     new Uint8Array(instance.exports.memory.buffer, pointer, save.length).set(save);
     result = instance.exports.run_integrated_title_restore_retry_checks(save.length);
+  } else if (titleAbortReturn) {
+    result = instance.exports.run_integrated_title_refused_abort_checks();
   } else if (restoreSavePath) {
     const save = fs.readFileSync(restoreSavePath);
     const capacity = instance.exports.integrated_demo_world_bytes_capacity();
@@ -273,6 +277,8 @@ function readProductionSnapshots(instance, expectedCount) {
     ? 'R-to-restore from the same Pascal .SAV, one real paused cycle, and return-to-title'
     : savedWorldPlayWorldPath
     ? 'title-P reload of the backing Pascal .ZZT, one real paused cycle, and return-to-title'
+    : titleAbortReturn
+    ? 'title P, refused end-play prompt, actual zero-speed boundary, accepted abort, and return-to-title'
     : 'P-to-play, one real paused cycle, and return-to-title';
   console.log(`Title lifecycle replay: ${scenario} matched at ${expected.length} checkpoints (${comparedFields} state fields); first-divergence context includes neighboring fields.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

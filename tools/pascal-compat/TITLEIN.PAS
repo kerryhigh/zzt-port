@@ -5,7 +5,7 @@ uses Crt, Video, GameVars, Elements, Sounds, Game, Input;
 var
 	output: text;
 	restoreScenario, generateRestoreSave, badRestoreScenario, cancelRetryScenario,
-	savedWorldPlayScenario, emptyRestoreScenario: boolean;
+	savedWorldPlayScenario, emptyRestoreScenario, refusedAbortReturnScenario: boolean;
 	fixtureFile: file;
 	malformedHeader: array[1..512] of byte;
 	malformedVersion: integer;
@@ -18,6 +18,7 @@ begin
 	cancelRetryScenario := (ParamCount > 0) and (ParamStr(1) = 'C');
 	savedWorldPlayScenario := (ParamCount > 0) and (ParamStr(1) = 'S');
 	emptyRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'E');
+	refusedAbortReturnScenario := (ParamCount > 0) and (ParamStr(1) = 'A');
 	if emptyRestoreScenario then begin
 		Assign(fixtureFile, 'RESTORE.SAV');
 		Rewrite(fixtureFile, 1);
@@ -71,6 +72,7 @@ begin
 	GameLoopProbeEnabled := true;
 	GameLoopProbeTitleLifecycleEnabled := true;
 	GameLoopProbeTitleLifecyclePlayerReturned := false;
+	GameLoopProbeTitleAbortEnabled := refusedAbortReturnScenario;
 	GameLoopProbeTitleRestoreEnabled := restoreScenario or badRestoreScenario or cancelRetryScenario or emptyRestoreScenario;
 	GameLoopProbeTitleRestoreFailureEnabled := badRestoreScenario or emptyRestoreScenario;
 	GameLoopProbeTitleRestoreEmptyEnabled := emptyRestoreScenario;
@@ -89,7 +91,7 @@ begin
 	TickSpeed := 0;
 	TickTimeCounter := 0;
 	SoundTimeCheckCounter := 0;
-	UseSystemTimeForElapsed := true;
+	UseSystemTimeForElapsed := not refusedAbortReturnScenario;
 	SoundEnabled := false;
 	SoundIsPlaying := false;
 	SoundCurrentPriority := -1;
@@ -115,10 +117,16 @@ begin
 		InputProbeSetKeyBuffer('R')
 	else if emptyRestoreScenario then
 		InputProbeSetKeyBuffer('R')
+	else if refusedAbortReturnScenario then
+		InputProbeSetKeyBuffer('P')
 	else
 		InputProbeSetKeyBuffer('PX');
 	SoundProbeSetSchedule(0, 0, 0);
 	GameTitleLoop;
+	if refusedAbortReturnScenario then begin
+		if (InputProbeGetKeyBuffer <> '') or (InputProbeGetReadKeys <> '') then RunError(259);
+		if InputProbeTakeFollowupEscape then RunError(260);
+	end;
 	if (restoreScenario or badRestoreScenario or cancelRetryScenario or emptyRestoreScenario) and
 		(InputProbeGetKeyBuffer <> '') then RunError(257);
 	if cancelRetryScenario and not GameLoopProbeTitleRestoreCancelled then RunError(256);
