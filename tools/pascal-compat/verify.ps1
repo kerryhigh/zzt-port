@@ -1700,8 +1700,13 @@ Invoke-DosboxSession 'EDSTAT' @(
 # BoardOpen. The modal acknowledgement interaction is skipped.
 $shortPayloadBrd = [byte[]]@(0x04, 0x00, 0x10, 0x20)
 [IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTPAY.BRD'), $shortPayloadBrd)
+$emptyHeaderBrd = [byte[]]@()
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'EMPTY.BRD'), $emptyHeaderBrd)
 $shortHeaderBrd = [byte[]]@(0x03)
 [IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTHD.BRD'), $shortHeaderBrd)
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'PAYZERO.BRD'), [byte[]]@(0x04, 0x00))
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'PAYONE.BRD'), [byte[]]@(0x04, 0x00, 0x10))
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'PAYTHREE.BRD'), [byte[]]@(0x04, 0x00, 0x10, 0x20, 0x30))
 $stagedEditor = $editorSourceOriginal
 $transferChoiceAnchor = "SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);"
 $transferFilenameAnchor = "SidebarPromptString('Import board', '.BRD', SavedBoardFileName, PROMPT_ALPHANUM);"
@@ -1722,7 +1727,7 @@ if (-not $sinkReleaseMatch.Success) {
 }
 $sinkReleaseIndent = $sinkReleaseMatch.Groups[2].Value
 $sinkRelease = 'BoardClose;' + $sinkReleaseMatch.Groups[1].Value + $sinkReleaseIndent +
-    "if World.Info.Name = 'SHORTHD' then FreeMem(World.BoardData[1], 60000);" +
+    "if (World.Info.Name = 'SHORTHD') or (World.Info.Name = 'EMPTY') then FreeMem(World.BoardData[1], 60000);" +
     $sinkReleaseMatch.Groups[1].Value + $sinkReleaseIndent + $sinkReleaseMatch.Groups[0].Value.Substring(
         ('BoardClose;' + $sinkReleaseMatch.Groups[1].Value + $sinkReleaseIndent).Length)
 $transferRoutine = $transferRoutine.Remove($sinkReleaseMatch.Index, $sinkReleaseMatch.Length).Insert($sinkReleaseMatch.Index, $sinkRelease)
@@ -1762,6 +1767,14 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'BRDXFER.EXE') -PathType L
 Invoke-DosboxSession 'BRDXFER-RUN' @('BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT') 'max'
 Write-Host 'Running the direct Turbo Pascal one-byte .BRD header import with controlled heap history: BRDXFER'
 Invoke-DosboxSession 'BRDXFER-HEADER-RUN' @('BIN\BRDXFER.EXE SHORTHD BRDHDR.OUT') 'max'
+Write-Host 'Running direct Turbo Pascal empty-header .BRD import with controlled heap history: BRDXFER'
+Invoke-DosboxSession 'BRDXFER-EMPTY-HEADER-RUN' @('BIN\BRDXFER.EXE EMPTY EMPTY.OUT') 'max'
+Write-Host 'Running direct Turbo Pascal zero-byte .BRD payload import: BRDXFER'
+Invoke-DosboxSession 'BRDXFER-PAYLOAD-ZERO-RUN' @('BIN\BRDXFER.EXE PAYZERO PAYZERO.OUT') 'max'
+Write-Host 'Running direct Turbo Pascal one-byte .BRD payload import: BRDXFER'
+Invoke-DosboxSession 'BRDXFER-PAYLOAD-ONE-RUN' @('BIN\BRDXFER.EXE PAYONE PAYONE.OUT') 'max'
+Write-Host 'Running direct Turbo Pascal three-byte .BRD payload import: BRDXFER'
+Invoke-DosboxSession 'BRDXFER-PAYLOAD-THREE-RUN' @('BIN\BRDXFER.EXE PAYTHREE PAYTHREE.OUT') 'max'
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText($stagedGamePath, $stagedGameBeforeBrdProbe, [Text.UTF8Encoding]::new($false))
 
@@ -1879,9 +1892,20 @@ $expectedOutputs = [ordered]@{
     'SHORTLEN.OUT' = @('short-len 1 15 0 272')
     'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
     'NEGBRD.OUT' = @('negative-brd 1 -1')
-    'BRDIOPRB.OUT' = @('partial-length 100 4610 next-IOResult 0', 'short-payload 0 100 next-IOResult 0 16 32 165 165')
+    'BRDIOPRB.OUT' = @(
+        'empty-length 100 4660 next-IOResult 0',
+        'partial-length 100 4610 next-IOResult 0',
+        'short-payload 0 0 100 next-IOResult 0 165 165 165 165',
+        'short-payload 1 0 100 next-IOResult 0 16 165 165 165',
+        'short-payload 2 0 100 next-IOResult 0 16 32 165 165',
+        'short-payload 3 0 100 next-IOResult 0 16 32 48 165'
+    )
     'BRDXFER.OUT' = @('board 0 255 0 4 31 30 12 0 0 0 0 0')
     'BRDHDR.OUT' = @('board 6 41 0 21 47 30 12 259 0 0 0 0')
+    'EMPTY.OUT' = @('board 6 41 0 21 47 30 12 319 0 0 0 0')
+    'PAYZERO.OUT' = @('board 0 255 0 4 31 30 12 0 0 0 0 0')
+    'PAYONE.OUT' = @('board 0 255 0 4 31 30 12 0 0 0 0 0')
+    'PAYTHREE.OUT' = @('board 0 255 0 4 31 30 12 0 0 0 0 0')
     'PLRTORCH.OUT' = @('0 199 30 12')
     'PLAYERST.OUT' = @(
         'shoot-held-right ammo 1 input 0 0 dir 1 0 stats 1 target 18 15 sound 2 6 bullet 11 10 0 1 0 100 under 0 0 64 1 48 1 32 1',

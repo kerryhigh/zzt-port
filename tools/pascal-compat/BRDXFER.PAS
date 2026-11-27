@@ -24,7 +24,7 @@ begin
 	Board.Info.NeighborBoards[3] := 4;
 	Board.Tiles[30][12].Element := E_SOLID;
 	Board.Tiles[30][12].Color := $2F;
-	if World.Info.Name = 'SHORTHD' then
+	if (World.Info.Name = 'SHORTHD') or (World.Info.Name = 'EMPTY') then
 		GetMem(World.BoardData[1], 60000);
 	GetMem(World.BoardData[0], 1);
 	World.BoardLen[0] := 1;

@@ -89,6 +89,41 @@ function compare(label, expected, actual, fields) {
       fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY', 'worldBoardLength'],
     },
     {
+      id: 'zero-byte-payload',
+      input: Buffer.from([0x04, 0x00]),
+      expectedOutcome: 2,
+      expected: readPascalSummary('PAYZERO.OUT'),
+      evidence: 'DP',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY', 'worldBoardLength'],
+    },
+    {
+      id: 'one-byte-payload',
+      input: Buffer.from([0x04, 0x00, 0x10]),
+      expectedOutcome: 2,
+      expected: readPascalSummary('PAYONE.OUT'),
+      evidence: 'DP',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY', 'worldBoardLength'],
+    },
+    {
+      id: 'three-byte-payload',
+      input: Buffer.from([0x04, 0x00, 0x10, 0x20, 0x30]),
+      expectedOutcome: 2,
+      expected: readPascalSummary('PAYTHREE.OUT'),
+      evidence: 'DP',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY', 'worldBoardLength'],
+    },
+    {
+      id: 'empty-header-controlled-reopen',
+      input: Buffer.alloc(0),
+      expectedOutcome: 1,
+      expected: {
+        ...readPascalSummary('EMPTY.OUT'),
+        name: Buffer.from('BEFORE', 'latin1'),
+      },
+      evidence: 'DP',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY'],
+    },
+    {
       id: 'short-header-controlled-reopen',
       input: Buffer.from([0x03]),
       expectedOutcome: 1,
@@ -118,6 +153,10 @@ function compare(label, expected, actual, fields) {
     }
     if (test.expected.neighbors && test.expected.neighbors.some((value, index) => value !== actual.neighbors[index])) {
       throw new Error(`${test.id}: neighbors differ; expected ${test.expected.neighbors}, production=${actual.neighbors}`);
+    }
+    if (test.id === 'empty-header-controlled-reopen'
+        && actual.worldBoardLength !== test.expected.worldBoardLength + 2) {
+      throw new Error(`${test.id}: private LibZoo board-buffer length did not include expected two-byte metadata overhead; Pascal=${test.expected.worldBoardLength}, production=${actual.worldBoardLength}`);
     }
     console.log(`BRDXFER ${test.id}: outcome ${test.expectedOutcome}; ${test.fields.length} selected state fields match (${test.evidence}).`);
   }

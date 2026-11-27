@@ -674,17 +674,24 @@ int run_editor_brd_signed_field_roundtrip(uint32_t input_len, int32_t expected_r
 
 int run_editor_brd_reject_truncated(void) {
     static const uint8_t partial_length[] = {0x04};
-    static const uint8_t short_payload[] = {0x04, 0x00, 0x10, 0x20};
+    static const uint8_t short_payload[] = {0x04, 0x00, 0x10, 0x20, 0x30};
     zoo_board test_board;
     int result;
 
     memset(&test_board, 0, sizeof(test_board));
-    result = zoo_editor_brd_import_record(partial_length, sizeof(partial_length), &test_board);
+    result = zoo_editor_brd_import_record(NULL, 0, &test_board);
     if (result != ZOO_ERROR_INVAL) return 1;
 
     memset(&test_board, 0, sizeof(test_board));
-    result = zoo_editor_brd_import_record(short_payload, sizeof(short_payload), &test_board);
+    result = zoo_editor_brd_import_record(partial_length, sizeof(partial_length), &test_board);
     if (result != ZOO_ERROR_INVAL) return 2;
+
+    for (size_t payload_length = 0; payload_length < 4; payload_length++) {
+        memset(&test_board, 0, sizeof(test_board));
+        result = zoo_editor_brd_import_record(short_payload, 2 + payload_length,
+                &test_board);
+        if (result != ZOO_ERROR_INVAL) return 3 + (int) payload_length;
+    }
     return 0;
 }
 

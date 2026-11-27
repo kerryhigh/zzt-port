@@ -167,7 +167,7 @@ function parseBoard(bytes, start) {
   console.log('Production .BRD import treats 0xFFFF as a 65535-byte Word count and ignores trailing payload padding');
   const truncatedBrdResult = run_editor_brd_reject_truncated();
   if (truncatedBrdResult !== 0) throw new Error(`Production .BRD truncation rejection differed from Pascal BlockRead errors (${truncatedBrdResult})`);
-  console.log('Production .BRD import rejects one-byte length headers and payloads shorter than their declared Word count; the Pascal probe sees error 100 for each short read');
+  console.log('Production .BRD parser rejects empty/partial length words and declared payloads truncated at 0 through 3 bytes');
   const pstringMatchResult = run_pstring_matches_pascal_checks();
   if (pstringMatchResult !== 0) throw new Error(`Pascal short-string unchanged-value check returned ${pstringMatchResult}`);
   console.log('Pascal short-string editor comparison: embedded NULs and overlong raw lengths remain unchanged; real edits are detected');
