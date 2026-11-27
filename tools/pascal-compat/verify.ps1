@@ -2107,6 +2107,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'SOUNDFRQ.OUT') -PathType
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASOUT.SAV') -PathType Leaf)) {
     throw "WorldSaveProbe did not write PASOUT.SAV. See $stageRoot\WORLDSAV.LOG."
 }
+foreach ($signedWorldFixture in @('WRS0.SAV', 'WRS1.SAV', 'WRS2.SAV', 'WRS3.SAV', 'WRS4.SAV')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $signedWorldFixture) -PathType Leaf)) {
+        throw "WorldSaveProbe signed-field case did not write $signedWorldFixture. See $stageRoot\WORLDSAV.LOG."
+    }
+}
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASPROBE.HI') -PathType Leaf)) {
     throw "HiSaveProbe did not write PASPROBE.HI. See $stageRoot\HISAVPRB.LOG."
 }
@@ -2146,6 +2151,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/shared-engine truncated .BRD editor-transfer comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-save.js' (Join-Path $stageRoot 'PASOUT.SAV')
     if ($LASTEXITCODE -ne 0) { throw "Pascal/C world-save comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-signed-world.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm') `
+        (Join-Path $repoRoot 'app\src\main\assets\DEMO.ZZT')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal signed world-field read/save differential failed with exit code $LASTEXITCODE." }
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `

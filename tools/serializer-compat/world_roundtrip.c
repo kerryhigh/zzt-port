@@ -142,6 +142,66 @@ int run_game_save_roundtrip(uint32_t input_len) {
     return 0;
 }
 
+static int signed_world_fields_match(const zoo_world_info *info, int16_t expected) {
+    return info->ammo == expected
+        && info->gems == expected
+        && info->health == expected
+        && info->torches == expected
+        && info->torch_ticks == expected
+        && info->energizer_ticks == expected
+        && info->score == expected
+        && info->board_time_sec == expected
+        && info->board_time_hsec == expected;
+}
+
+int run_world_signed_field_read(uint32_t input_len, int32_t expected_raw) {
+    zoo_io_handle in_handle;
+    int result;
+    if (input_len > FIXTURE_CAP || expected_raw < -32768 || expected_raw > 32767) return -90;
+    heap_used = 0;
+    memset(&world, 0, sizeof(world));
+    in_handle = zoo_io_open_file_mem(input_data, input_len, MODE_READ);
+    result = zoo_io_world_read(&in_handle, &world, false);
+    if (result != 0) return result;
+    return signed_world_fields_match(&world.info, (int16_t) expected_raw) ? 0 : 1;
+}
+
+int run_game_signed_world_save(uint32_t input_len, int32_t expected_raw) {
+    int result;
+    int16_t expected;
+    zoo_io_handle in_handle, out_handle;
+    if (input_len > FIXTURE_CAP || expected_raw < -32768 || expected_raw > 32767) return -90;
+    expected = (int16_t) expected_raw;
+    heap_used = 0;
+    output_size = 0;
+    memset(&world, 0, sizeof(world));
+    memset(&state, 0, sizeof(state));
+    memset(output_data, 0, sizeof(output_data));
+    in_handle = zoo_io_open_file_mem(input_data, input_len, MODE_READ);
+    result = zoo_io_world_read(&in_handle, &world, false);
+    if (result != 0) return result;
+    state.world = world;
+    result = zoo_board_open(&state, state.world.info.current_board);
+    if (result != 0) return result;
+    state.world.info.ammo = expected;
+    state.world.info.gems = expected;
+    state.world.info.health = expected;
+    state.world.info.torches = expected;
+    state.world.info.torch_ticks = expected;
+    state.world.info.energizer_ticks = expected;
+    state.world.info.score = expected;
+    state.world.info.board_time_sec = expected;
+    state.world.info.board_time_hsec = expected;
+    state.world.info.is_save = true;
+    state.world.info.io_is_save_byte = 1;
+    out_handle = zoo_io_open_file_mem(output_data, FIXTURE_CAP, MODE_WRITE);
+    result = zoo_world_save(&state, &out_handle);
+    if (result != 0) return result;
+    if (!signed_world_fields_match(&state.world.info, expected)) return 1;
+    output_size = (size_t) out_handle.func_tell(&out_handle);
+    return 0;
+}
+
 int run_world_read(uint32_t input_len) {
     zoo_io_handle in_handle;
     if (input_len > FIXTURE_CAP) return -90;
