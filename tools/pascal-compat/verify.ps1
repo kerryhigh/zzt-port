@@ -2125,6 +2125,11 @@ foreach ($signedWorldFixture in @('WRS0.SAV', 'WRS1.SAV', 'WRS2.SAV', 'WRS3.SAV'
         throw "WorldSaveProbe signed-field case did not write $signedWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }
 }
+foreach ($booleanWorldFixture in @('BLS0.SAV', 'BLS1.SAV', 'BLS2.SAV', 'BLS3.SAV')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $booleanWorldFixture) -PathType Leaf)) {
+        throw "WorldSaveProbe raw-Boolean case did not write $booleanWorldFixture. See $stageRoot\WORLDSAV.LOG."
+    }
+}
 if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'PASPROBE.HI') -PathType Leaf)) {
     throw "HiSaveProbe did not write PASPROBE.HI. See $stageRoot\HISAVPRB.LOG."
 }
@@ -2187,6 +2192,10 @@ try {
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm') `
         (Join-Path $repoRoot 'app\src\main\assets\DEMO.ZZT')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal signed world-field read/save differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-world-booleans.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV raw-Boolean/reserved-byte differential failed with exit code $LASTEXITCODE." }
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `
