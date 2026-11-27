@@ -1,3 +1,4 @@
+{$M 49152,163840,655360}
 program EditorBoardTransferProbe;
 uses Crt, Video, GameVars, Game, Input, Elements, Editor;
 {$F+}
