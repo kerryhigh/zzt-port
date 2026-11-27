@@ -110,6 +110,9 @@ static uint8_t integrated_f10_bad_world_bytes[512];
 static int32_t integrated_f10_bad_world_load_result_value;
 static zoo_high_score_table integrated_f10_high_score_table;
 static uint8_t integrated_f10_high_score_save_bytes[ZOO_HIGH_SCORE_TABLE_BYTES];
+#ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
+static int32_t integrated_board_edge_actual_output[6][10];
+#endif
 static bool integrated_gameplay_initial_paused = true;
 static uint16_t integrated_gameplay_post_loop_key_pressed;
 static bool integrated_schedule_enabled;
@@ -5628,6 +5631,150 @@ int32_t run_integrated_board_neighbor_passage_checks(void) {
 			|| state.board.stat_count != 2 || state.game_paused) return 45;
 	return 0;
 }
+
+#ifdef ZZT_INTEGRATED_GAMEPLAY_ONLY
+static void integrated_board_edge_capture(int row) {
+	int16_t x = state.board.stats[0].x;
+	int16_t y = state.board.stats[0].y;
+	int32_t *out = integrated_board_edge_actual_output[row];
+	out[0] = state.world.info.current_board;
+	out[1] = x;
+	out[2] = y;
+	out[3] = state.board.tiles[x][y].element;
+	out[4] = state.input.delta_x;
+	out[5] = state.input.delta_y;
+	out[6] = state.board.info.start_player_x;
+	out[7] = state.board.info.start_player_y;
+	out[8] = state.world.info.board_time_sec;
+	out[9] = state.game_paused ? 1 : 0;
+}
+
+static int integrated_board_edge_configure_target(int16_t element_at_entry,
+		bool player_at_entry) {
+	int result;
+	zoo_board_change(&state, 1);
+	if (state.error_value != 0) return 1;
+	zoo_board_create(&state);
+	if (player_at_entry) {
+		state.board.tiles[30][12].element = ZOO_E_EMPTY;
+		state.board.tiles[30][12].color = 0;
+		state.board.stats[0].x = 30;
+		state.board.stats[0].y = 25;
+		state.board.tiles[30][25].element = ZOO_E_PLAYER;
+		state.board.tiles[30][25].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	} else {
+		state.board.tiles[30][25].element = (uint8_t) element_at_entry;
+		state.board.tiles[30][25].color = 0x1F;
+	}
+	result = zoo_board_close(&state);
+	if (result != 0) return 2;
+	zoo_board_change(&state, 0);
+	return state.error_value == 0 ? 0 : 3;
+}
+
+static int integrated_board_edge_run_route(int row, int16_t source_x, int16_t source_y,
+		int16_t dx, int16_t dy) {
+	int16_t old_x, old_y;
+	zoo_board_change(&state, 0);
+	if (state.error_value != 0) return 1;
+	state.world.info.board_time_sec = 42;
+	state.game_paused = false;
+	old_x = state.board.stats[0].x;
+	old_y = state.board.stats[0].y;
+	state.board.tiles[old_x][old_y].element = ZOO_E_EMPTY;
+	state.board.tiles[old_x][old_y].color = 0;
+	state.board.stats[0].x = source_x;
+	state.board.stats[0].y = source_y;
+	state.board.tiles[source_x][source_y].element = ZOO_E_PLAYER;
+	state.board.tiles[source_x][source_y].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.input.delta_x = dx;
+	state.input.delta_y = dy;
+	zoo_e_board_edge_touch(&state, source_x + dx, source_y + dy, 0,
+		&state.input.delta_x, &state.input.delta_y);
+	if (state.call_stack.call != NULL) {
+		if (zoo_call_stack_tick(&state) != RETURN_IMMEDIATE) return 2;
+	}
+	if (state.call_stack.call != NULL || state.error_value != 0) return 3;
+	integrated_board_edge_capture(row);
+	return 0;
+}
+
+int32_t run_integrated_board_edge_actual_transition_checks(void) {
+	int16_t i, board_id;
+	int result;
+
+	integrated_gameplay_capture_reset();
+	integrated_capture_first_board_change_checkpoint = false;
+	integrated_board_change_checkpoint_captured = false;
+	integrated_board_change_checkpoint_failed = false;
+	memset(integrated_board_edge_actual_output, 0,
+		sizeof(integrated_board_edge_actual_output));
+	for (i = 0; i < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; i++) {
+		state.transition_order[i] = (uint16_t) i;
+	}
+	state.game_state = GS_PLAY;
+	zoo_world_create(&state);
+	if (state.error_value != 0) return 10;
+	state.world.board_count = 4;
+	state.world.info.current_board = 0;
+	zoo_board_create(&state);
+	state.board.stats[0].x = 30;
+	state.board.stats[0].y = 1;
+	state.board.tiles[30][1].element = ZOO_E_PLAYER;
+	state.board.tiles[30][1].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.info.neighbor_boards[0] = 1;
+	state.board.info.neighbor_boards[1] = 2;
+	state.board.info.neighbor_boards[2] = 3;
+	state.board.info.neighbor_boards[3] = 4;
+	state.board.info.start_player_x = 30;
+	state.board.info.start_player_y = 1;
+	result = zoo_board_close(&state);
+	if (result != 0) return 11;
+
+	for (board_id = 1; board_id <= 4; board_id++) {
+		state.world.info.current_board = board_id;
+		zoo_board_create(&state);
+		if (board_id == 1) state.board.tiles[30][25].element = ZOO_E_EMPTY;
+		else if (board_id == 2) state.board.tiles[30][1].element = ZOO_E_EMPTY;
+		else if (board_id == 3) state.board.tiles[60][12].element = ZOO_E_EMPTY;
+		else state.board.tiles[1][12].element = ZOO_E_EMPTY;
+		result = zoo_board_close(&state);
+		if (result != 0) return 12 + board_id;
+	}
+	zoo_board_change(&state, 0);
+	if (state.error_value != 0) return 20;
+
+	result = integrated_board_edge_run_route(0, 30, 1, 0, -1);
+	if (result != 0) return 20 + result;
+	result = integrated_board_edge_run_route(1, 30, 25, 0, 1);
+	if (result != 0) return 24 + result;
+	result = integrated_board_edge_run_route(2, 1, 12, -1, 0);
+	if (result != 0) return 28 + result;
+	result = integrated_board_edge_run_route(3, 60, 12, 1, 0);
+	if (result != 0) return 32 + result;
+	result = integrated_board_edge_configure_target(ZOO_E_SOLID, false);
+	if (result != 0) return 36 + result;
+	result = integrated_board_edge_run_route(4, 30, 1, 0, -1);
+	if (result != 0) return 40 + result;
+	result = integrated_board_edge_configure_target(ZOO_E_EMPTY, true);
+	if (result != 0) return 44 + result;
+	result = integrated_board_edge_run_route(5, 30, 1, 0, -1);
+	if (result != 0) return 48 + result;
+	return 0;
+}
+
+uint32_t integrated_board_edge_actual_output_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_board_edge_actual_output;
+}
+
+int32_t integrated_board_edge_actual_output_rows(void) {
+	return 6;
+}
+
+int32_t integrated_board_edge_actual_output_columns(void) {
+	return 10;
+}
+#endif
 
 int32_t run_integrated_dark_room_torch_energizer_timers_death_checks(void) {
 	int result;

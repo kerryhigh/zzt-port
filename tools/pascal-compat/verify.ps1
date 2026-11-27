@@ -2097,7 +2097,8 @@ try {
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Runtime compatibility suite failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-board-edge.js' `
         (Join-Path $stageRoot 'BOARDENT.OUT') `
-        (Join-Path $repoRoot 'build\runtime-compatibility\board_edge.wasm')
+        (Join-Path $repoRoot 'build\runtime-compatibility\board_edge.wasm') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production board-edge transition differential failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-spinning-gun.js' `
         (Join-Path $stageRoot 'SPINGUN.OUT') `

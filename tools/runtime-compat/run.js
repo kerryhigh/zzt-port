@@ -656,4 +656,14 @@ function pascalSoundParse(input) {
     throw new Error(`Integrated gameplay invariant failed: ammo=${integratedOutput[0]}, gems=${integratedOutput[1]}, stats=${integratedOutput[11]}, paused=${integratedPaused}, exit=${integratedExitRequested}`);
   }
   console.log('Integrated gameplay replay: paused start, queued movement, boulder push, live #GIVE/#IDLE object, and six deterministic cycles produce a complete production-state snapshot');
+  const actualBoardEdgeResult = integratedInstance.exports.run_integrated_board_edge_actual_transition_checks();
+  if (actualBoardEdgeResult !== 0) {
+    throw new Error(`Actual production board-edge transition replay returned ${actualBoardEdgeResult}`);
+  }
+  const actualBoardEdgeRows = integratedInstance.exports.integrated_board_edge_actual_output_rows();
+  const actualBoardEdgeColumns = integratedInstance.exports.integrated_board_edge_actual_output_columns();
+  if (actualBoardEdgeRows !== 6 || actualBoardEdgeColumns !== 10) {
+    throw new Error(`Actual production board-edge replay emitted ${actualBoardEdgeRows}x${actualBoardEdgeColumns}; expected 6x10`);
+  }
+  console.log('Board edge: full production BoardChange, serialized board open/close, call-stack continuation, and BoardEnter ran across six routes');
 })().catch(error => { console.error(error); process.exitCode = 99; });
