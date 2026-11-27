@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-27",
-    "root_revision": "45b85e49fcbb8ea3bca926c43d5b0a1d30fc8867",
+    "root_revision": "7a75959a736ad8044c1eb9b648721b4d8edd1348",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-27: 147 direct Pascal sessions (54 standard, 93 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 also captured state immediately after malformed WorldLoad and before fallback WorldCreate: 3,385/3,385 comparable fields matched, with only private World.BoardLen[0] excluded. The BRDXFER probe now uses ZZT's original memory directive; its short-payload result remains stable, while a controlled short-header retry still timed out without output and is excluded from pass counts. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-27: 148 direct Pascal sessions (54 standard, 94 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with only private World.BoardLen[0] excluded. The controlled SHORTHD.BRD one-byte 03 EditorTransferBoard case produced a stable direct state and matched production; prior uncontrolled allocator attempts are retained as nonpassing history. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -32,21 +32,19 @@
       },
       "editor_transfer_probe": {
         "probe": "tools/pascal-compat/BRDXFER.PAS",
-        "evidence_class": "D",
-        "result": "short-payload passed in the 2026-11-27 clean full run with the original ZZT memory directive and staged modal-boundary substitution; short-header unresolved",
+        "evidence_class": "D+DP",
+        "result": "Short-payload and controlled short-header EditorTransferBoard cases passed direct capture and production differential in the 2026-11-27 clean run; broader truncation and allocator-history coverage remains open.",
         "fixture": "short payload: declared length 4, two payload bytes present",
         "staging_interventions": [
           "Staged EDITOR.PAS supplies the import choice and fixture filename at existing prompt boundaries.",
           "BRDXFER.PAS declares {$M 49152,163840,655360}, matching the directive in reconstructed ZZT.PAS; only the probe executable's stack/heap limits change.",
-          "Staged GAME.PAS substitutes TextWindowRejected := true; InputKeyPressed := #0 at the TextWindowSelect acknowledgement boundary, representing the state after Escape and skipping only the blocking modal selection interaction. DisplayIOError, IOResult handling, file reads, BoardCreate, and editor cleanup remain reconstructed Pascal routines; this probe does not verify modal key handling."
+          "For SHORTHD, the probe allocates a 60,000-byte heap sink in World.BoardData[1] before import; staged EDITOR.PAS frees that sink immediately after the original BoardClose inside EditorTransferBoard, controlling subsequent DOS heap reuse while leaving the original BoardData buffer available to the Pascal short-header read.",
+          "Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. DisplayIOError, IOResult handling, file reads, BoardCreate/BoardOpen, and editor cleanup remain reconstructed Pascal routines; modal key handling is outside this probe."
         ],
-        "short_payload_output": "board 0 255 0 4 31 30 12 0",
+        "short_payload_output": "board 0 255 0 4 31 30 12 0 0 0 0 0",
         "short_header_attempt": {
           "invalid_fixture": "SHORTHEAD is nine characters and cannot be opened by the DOS 8.3 file path; prior apparent outputs were invalid.",
-          "corrected_fixture": "SHORTHD.BRD",
-          "result": "Earlier direct DOSBox-X attempts stalled or reported runtime error 203. A corrected 2026-11-27 retry with ZZT memory limits and the documented prompt/acknowledgement hooks timed out at 25 seconds and produced no output file.",
-          "counted_as_passing": false,
-          "latest_attempt": {
+          "prior_uncontrolled_attempt": {
             "date": "2026-11-27",
             "fixture": "SHORTHD.BRD contains one byte 04; valid DOS 8.3 filename",
             "memory_directive": "{$M 49152,163840,655360}",
@@ -55,10 +53,29 @@
             "output_file_produced": false,
             "counted_as_passing": false,
             "control": "The short-payload control still produced board 0 255 0 4 31 30 12 0."
+          },
+          "result": "A controlled 2026-11-27 run with the original ZZT memory limits and a 60,000-byte heap sink completed EditorTransferBoard for valid 8.3 fixture SHORTHD.BRD containing one byte 03.",
+          "counted_as_passing": true,
+          "latest_attempt": {
+            "date": "2026-11-27",
+            "source_revision": "7a75959a736ad8044c1eb9b648721b4d8edd1348",
+            "fixture": "SHORTHD.BRD contains one byte 03; valid DOS 8.3 filename; fixture SHA-256 084fed08b978af4d7d196a7446a86b58009e636b611db16211b65a9aadff29c5",
+            "memory_directive": "{$M 49152,163840,655360}",
+            "dosbox_x": "2026.10.01; fresh session; cycles=max",
+            "allocation_history": "60,000-byte heap sink allocated before BoardClose and freed immediately after BoardClose within the original EditorTransferBoard path by a staged source hook",
+            "output_file": "BRDHDR.OUT",
+            "output_file_size_bytes": 38,
+            "output_file_sha256": "5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5",
+            "output_line": "board 6 41 0 21 47 30 12 259 0 0 0 0",
+            "output_file_produced": true,
+            "counted_as_passing": true,
+            "production_comparison": "outcome 1; eight selected board/player fields, board name bytes, and four neighbor values matched (DP)",
+            "control": "Short-payload control still produced board 0 255 0 4 31 30 12 0 0 0 0 0 and matched production."
           }
         },
-        "interpretation": "Short-payload BoardCreate state is direct D/DP evidence. The short-header retry remains without a stable direct Pascal final state; BoardOpen is source-derived S evidence only, and the production safe-reopen mapping has no direct Pascal differential.",
-        "shared_engine_comparison": "short-payload outcome plus seven selected board/player fields passed; short-header pending"
+        "interpretation": "Short-payload BoardCreate state and the SHORTHD one-byte short-header/reopen state are direct D/DP evidence under their documented setups. For the short header, the visible World.BoardLen[0] is 259 (0x0103), the prior serialized board is reopened, and all four neighbor links are cleared. This establishes one controlled allocation history only; other environment-dependent allocator histories and the full boundary matrix remain open.",
+        "shared_engine_comparison": "Short-payload outcome plus eight selected board/player fields passed. Controlled short-header outcome plus eight selected fields, board-name bytes, and four neighbor values passed. Full field/error and untouched-suffix matrix remains pending.",
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md"
       }
     },
     "toolchain": {
@@ -69,10 +86,10 @@
       "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
     },
     "direct_pascal": {
-      "sessions": 147,
+      "sessions": 148,
       "standard_programs": 54,
-      "standalone_sessions": 93,
-      "session_result": "147 direct Turbo Pascal 5.5 compile/run sessions passed in the 2026-11-27 clean run: 54 standard probes and 93 standalone compile/run or fixture sessions. The run includes all ten integrated fixtures and the BRDXFER short-payload control under ZZT's original memory limits. The separate short-header attempt timed out without output and is not included in the count. F10 captured and compared the selected state after malformed WorldLoad returned and before fallback WorldCreate."
+      "standalone_sessions": 94,
+      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed in the 2026-11-27 clean run: 54 standard probes and 94 standalone compile/run or fixture sessions. Includes all ten integrated fixtures, BRDXFER short-payload, and the controlled one-byte short-header session under ZZT's original memory directive. F10 also captured and compared the selected state after malformed WorldLoad returned and before fallback WorldCreate."
     },
     "direct_differential_comparisons": {
       "configured": 65,
@@ -2090,24 +2107,24 @@
       "fixture_manifest": "tools/compatibility/integrated_replay_fixture_manifest.json"
     },
     "other_suites": {
-      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record also matched through shared .BRD import/export; short-payload DP passed; short-header safe-reopen P regression passed as a production-only test with source-derived expectations, not a direct Pascal differential",
+      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record matched through shared .BRD import/export; short-payload and controlled SHORTHD short-header EditorTransferBoard cases now have direct D/DP matches. The full per-field/error-boundary matrix remains open.",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
       "runtime": "passed fresh 2026-11-27; tools/runtime-compat/verify.ps1 exited 0, including scheduler and shared-engine lifecycle checks.",
-      "android_compat": "passed fresh after shared-engine commit 4a10f5b33963108128b6b11dae5d1646e0d09979; powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1; exit 0; Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
-      "android_build": "passed fresh after shared-engine commit 4a10f5b33963108128b6b11dae5d1646e0d09979; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); CMake built arm64-v8a and x86_64 native engine libraries. This build does not constitute Android device testing.",
-      "windows_ctest": "passed fresh after shared-engine commit 4a10f5b33963108128b6b11dae5d1646e0d09979; powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1; exit 0; Release x64 targets zzt_windows, zzt_windows_smoke, zzt_renderer_test, and zzt_sound_pcm_test built; CTest 3/3 passed, including engine I/O/80x25, sharp-bilinear scaling, and Pascal drum timing."
+      "android_compat": "passed fresh after shared-engine and E2-02 commit 7a75959a736ad8044c1eb9b648721b4d8edd1348; powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1; exit 0; Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
+      "android_build": "passed fresh after shared-engine and E2-02 commit 7a75959a736ad8044c1eb9b648721b4d8edd1348; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); CMake built arm64-v8a and x86_64 native engine libraries. No physical Android device test was performed.",
+      "windows_ctest": "passed fresh after shared-engine and E2-02 commit 7a75959a736ad8044c1eb9b648721b4d8edd1348; powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1; exit 0; Release x64 targets built; CTest 3/3 passed: Win32 engine I/O/80x25, sharp-bilinear scaling, and Pascal drum timing."
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
-      "Short-payload .BRD editor import directly reaches BoardCreate and matches seven selected production board/player fields. The corrected 2026-11-27 short-header retry used BRDXFER with the original ZZT memory directive and controlled prompt hooks, but a fresh DOSBox-X session timed out at 25 seconds without output. The attempt is excluded from pass counts; expected control flow and the production safe-reopen model remain source-derived, not direct differentials.",
+      "Short-payload .BRD editor import directly reaches BoardCreate and matches eight selected production board/player fields. A controlled SHORTHD.BRD one-byte 03 EditorTransferBoard run now captures the reopened prior board with visible BoardLen 259 and cleared neighbor links; production matches eight selected state fields, board-name bytes, and all four neighbor values. Prior uncontrolled allocator attempts remain recorded but are not counted. Other allocator histories, untouched suffix behavior, and the broader truncation/error boundary matrix remain open; see tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
       "F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. In F05 state-transition T3, the cumulative effective-cell counter is Pascal 6003 versus production 6004 even though the complete ordered 6006-write stream and every logical-cycle counter match; this derived counter is excluded only at intermediate T checkpoints in F05/F08 and remains recorded for E2-03 transition acceptance. Undefined and process-pointer bytes follow the checklist contract.",
-      "Title malformed-restore comparison: Pascal World.BoardLen[0] is 319 while LibZoo’s augmented private board buffer is 327. This implementation-specific internal size is excluded from equality; the refusal result and remaining 3,385 comparable world/board/stat/tile fields match, and external .ZZT/.SAV bytes are checked by the serializer suite."
+      "Title malformed-restore comparison: Pascal World.BoardLen[0] is 319 while LibZoo\u2019s augmented private board buffer is 327. This implementation-specific internal size is excluded from equality; the refusal result and remaining 3,385 comparable world/board/stat/tile fields match, and external .ZZT/.SAV bytes are checked by the serializer suite."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
-      "E2-02: complete the frozen byte/error boundary matrix; stabilize or otherwise directly resolve short-header EditorTransferBoard state under controlled allocation history; compare that result against the shared import/error API.",
+      "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The short-payload and controlled one-byte short-header EditorTransferBoard traces now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
       "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
       "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
@@ -2118,7 +2135,8 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
-      "E2-02-AC003/AC004: BRDXFER.PAS now uses the reconstructed ZZT {$M 49152,163840,655360} memory limits. The 2026-11-27 clean run passed 147 direct sessions, 65/65 differentials, and F01-F10; the seven-field short-payload comparison still passes. A corrected one-byte SHORTHD.BRD retry timed out at 25 seconds without output, is excluded from pass counts, and does not close the frozen short-header requirement. See tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md.",
+      "E2-02-AC003/AC004: controlled one-byte SHORTHD.BRD short-header EditorTransferBoard completed in the original Pascal path using a documented 60,000-byte heap-sink allocation history. Direct output was board 6 41 0 21 47 30 12 259 0 0 0 0; production matched eight selected fields, name bytes, and four neighbors. Clean run: 148 direct Pascal sessions (54 standard/94 standalone), 65/65 differentials, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. E2-02 remains partial and the 54-case inventory is unchanged. See tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
+      "Earlier pre-hook E2-02 checkpoint: BRDXFER used ZZT memory limits and its short-payload differential passed; the corrected one-byte header attempt then timed out without output. This was superseded by the controlled heap-sink D/DP capture in tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
       "E2-10-F10: extended the existing malformed-world replay with a pre-fallback state snapshot. Turbo Pascal 5.5 and production matched 3,385/3,385 comparable fields (BoardLen[0] excluded); the clean suite passed 147 sessions, 65/65 differentials, and all ten frozen integrated fixtures. Inventory and corpus totals did not change.",
       "E2-03-AC001: compiled the original Pascal GameTitleLoop W world-selection route, then P play, one actual paused cycle, and return-to-title; direct Pascal/production replay matched at 3 checkpoints / 10,360 fields. Corrected clean-run totals: 147 direct sessions and 65/65 differentials. E2-10 F01-F10 remain 10/10; the frozen inventory is unchanged and E2-03 remains partial.",
       "E2-03-AC001: connected BOARDENT direct Pascal captures to two production comparisons. The callback-boundary replay under service stubs matched 60/60 fields; a second replay through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter also matched 60/60. The clean runner passed 146 direct sessions, 64/64 differentials, F01-F10, runtime compatibility, and the first-divergence negative control. External world-file routes and the broader lifecycle matrix remain open; E2-03 stays partial and the frozen inventory is unchanged.",
@@ -2126,7 +2144,7 @@
       "E2-03-AC001: added direct compiled-Pascal refused-abort aftermath captures for N and Escape, each followed through the actual GamePlayLoop zero-speed cycle boundary to accepted exit. Both routes matched production at 44/44 fields total. The clean full runner passed 145 direct sessions, 62/62 configured differentials, and F01-F10; E2-03 remains partial and the frozen 54-case inventory is unchanged.",
       "E2-03-AC001: added a compiled-Pascal accepted player-abort GamePlayLoop capture and compared the shared-engine exit boundary across 22 fields. The clean full runner exited 0; its direct-session tally is corrected from 140 to 142 to include ABORTLP compile/run. E2-03 remains partial; no case or fixture IDs were added.",
       "Generalized integrated replay snapshots to live stat counts and unique script owners; the clean Pascal suite passed 84 direct sessions and 43/43 configured differentials. The two-script, three-stat prototype matched 31,158 fields across nine checkpoints. E2-10 remains open at 0/10 fixtures.",
-      "E2-02 latest clean rerun: 84 direct Pascal sessions and 43/43 configured comparisons passed. The short-payload editor transfer now matches outcome plus seven selected fields; the corrected short-header DOSBox-X attempt remains unresolved (stall/runtime error 203) and is excluded from pass counts. Offline Android debug/instrumentation APK builds passed for arm64-v8a and x86_64. A separate production-only short-header regression also passed: the safe-reopen model preserves seeded board fields and clears neighbors; it does not resolve direct Pascal parity.",
+      "Earlier E2-02 checkpoint (84 direct sessions): short-payload editor transfer matched production; corrected short-header behavior was still unresolved at that time. A later controlled allocator-history direct capture and D/DP comparison is recorded in tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
       "Pre-transition prototype checkpoint: the integrated Pascal/production replay matched 31,260 state fields, two sound events / 20 fields, and nine cell writes / 36 fields. The later T1 checkpoint addition is recorded in the latest result.",
       "Extended the integrated replay with ordered playfield cell writes. After the staged BRDXFER boundary fix, a clean full Pascal runner passed 84 direct sessions and 43/43 comparisons, with zero unexplained mismatches. The prototype remains outside E2-10 required fixtures, which are 0/10 complete.",
       "Added dynamic L/S/T/C/F replay checkpoints and normalized game-role comparison. The clean Pascal suite passed 84 direct sessions and 43/43 configured differentials; the prototype matched 34,744 fields across ten checkpoints, plus sound and cell-write traces. E2-10 remains at 0/10 required fixtures.",
@@ -2171,7 +2189,7 @@
       "result": "all direct Pascal byte comparisons passed; 256 source-model rows and five Android adapter assertions are reported separately"
     },
     "unresolved_compatibility_questions": [
-      "Does the short-header freed-buffer BoardOpen produce a repeatable final state under a controlled DOS allocator history? The corrected direct probe stalls or faults; no stable output exists."
+      "Do any supported ZZT operation cases expose materially different serialized or editor state across the remaining controlled allocator histories and truncation boundaries? The single-byte 03 short-header behavior is now directly captured for one documented allocator setup; broader matrix comparisons will determine whether further mandatory cases are needed."
     ],
     "production_only_regression_results": {
       "configured_targeted_cases": 1,
@@ -2184,19 +2202,19 @@
     "latest_attempt": {
       "date": "2026-11-27",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "45b85e49fcbb8ea3bca926c43d5b0a1d30fc8867",
+      "source_revision": "7a75959a736ad8044c1eb9b648721b4d8edd1348",
       "full_pascal_runner_exit_code": 0,
-      "direct_pascal_sessions_passed": 147,
+      "direct_pascal_sessions_passed": 148,
       "configured_differentials_passed": 65,
       "configured_differentials_failed": 0,
       "failure": null,
-      "staging_boundary_intervention": "BRDXFER uses the original ZZT {$M 49152,163840,655360} memory limits. For the short-payload direct import, staged EDITOR.PAS supplies menu/name choices and staged GAME.PAS substitutes the post-Escape state at the modal acknowledgement boundary. The separate short-header retry used a valid 8.3 fixture and these same hooks; it timed out at 25 seconds without output and is not counted.",
+      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 148 sessions.",
       "integrated_pascal_probe": "F10IN.PAS; direct malformed WorldLoad, fallback WorldCreate, HighScoresLoad/Add/Save, original GamePlayLoop, and SAV reload",
       "integrated_differential_command": "Run compare-integrated-gameplay.js for F10 against the shared malformed-world/gameplay/high-score replay harness.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-27: 147 direct Pascal sessions (54 standard, 93 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 also captured state immediately after malformed WorldLoad and before fallback WorldCreate: 3,385/3,385 comparable fields matched, with only private World.BoardLen[0] excluded. The BRDXFER probe now uses ZZT's original memory directive; its short-payload result remains stable, while a controlled short-header retry still timed out without output and is excluded from pass counts. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-27: 148 direct Pascal sessions (54 standard, 94 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields, excluding private World.BoardLen[0]. The controlled SHORTHD.BRD one-byte 03 EditorTransferBoard state and production comparison passed; prior uncontrolled allocator attempts are not counted. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -2224,7 +2242,8 @@
         "record_bytes_matched": 289,
         "record_byte_differences": 0,
         "comparison_exit_code": 0,
-        "fixture_corpus_completion_credit": 0
+        "fixture_corpus_completion_credit": 0,
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; tools/compatibility/evidence/2026-11-25-e2-02-pascal-boardclose-binary.md"
       },
       "pascal_boardclose_worldsave": {
         "evidence_class": "DP",
@@ -2236,7 +2255,8 @@
         "bytes_matched": 25928,
         "byte_differences": 0,
         "comparison_exit_code": 0,
-        "fixture_corpus_completion_credit": 0
+        "fixture_corpus_completion_credit": 0,
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; tools/compatibility/evidence/2026-11-25-e2-02-pascal-boardclose-binary.md"
       },
       "integrated_demo_fixture": {
         "fixture_id": "E2-10-F01",
@@ -3444,7 +3464,7 @@
       "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
     },
     "platform_build_checks": {
-      "source_revision": "19f38210ff3fba9e2e930eddbbd8c27406ae2851",
+      "source_revision": "7a75959a736ad8044c1eb9b648721b4d8edd1348",
       "android_compat": {
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1",
         "exit_code": 0,
@@ -3501,7 +3521,7 @@
       "logical_clock": "UseSystemTimeForElapsed=false; the staged Sounds unit does not install the hardware timer vector, leaving its zero-initialized TimerTicks fixed; production uses a fixed logical clock at 0 hsec and immediate zero-duration scheduler checks.",
       "staging_interventions": [
         "Staging hooks provide deterministic input, state capture, and termination after return to the title monitor; the original GamePromptEndPlay, GamePlayLoop, and GameTitleLoop control flow is unchanged.",
-        "The existing Pascal staging copy disables hardware interrupt installation for the sound timer and uses the direct probe’s deterministic logical clock; no hardware timing output is compared.",
+        "The existing Pascal staging copy disables hardware interrupt installation for the sound timer and uses the direct probe\u2019s deterministic logical clock; no hardware timing output is compared.",
         "Production resolves the same refused and accepted prompt results at the shared API boundary, then executes the real zoo_tick scheduler and zoo_world_return_title path."
       ],
       "oracle_output": {

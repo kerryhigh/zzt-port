@@ -135,8 +135,8 @@
         "tools/pascal-compat/TITLEIN.PAS mode E and tools/pascal-compat/compare-title-lifecycle.js (--restore-empty)",
         "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
       ],
-      "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa. Empty RESTORE.SAV title-R refusal: zero-byte fixture SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; 3,384/3,386 comparable world/board/stat/tile fields matched (two route-specific exclusions).",
-      "verification_result": "Partial D/DP: the four-format manifest and valid source-produced .ZZT/.SAV/.BRD/.HI byte comparisons remain recorded; Pascal BoardClose and WorldSave output matches the shared serializers byte-for-byte. The latest clean 2026-11-27 run reran the existing zero-byte .SAV refusal through GameTitleLoop R within 147 direct Pascal sessions and 65/65 configured differentials (3,384/3,386 comparable state fields; ZOO_ERROR_INVAL -2). The checked-in per-field/error-boundary matrix and remaining malformed cases are still outstanding.",
+      "oracle_output": "BOARDENC.BRD: 291 bytes including the length prefix, 289-byte payload, SHA-256 e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd. BOARDENC.ZZT: 25,928 bytes from compiled Pascal BoardClose/WorldSave, SHA-256 5ca053d06dbc8673c93c02e65c97bdf4692995bd1642d6341cc1b8ed24f6f9fa. Empty RESTORE.SAV title-R refusal: zero-byte fixture SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; 3,384/3,386 comparable world/board/stat/tile fields matched (two route-specific exclusions).; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0",
+      "verification_result": "Partial D/DP: latest clean run passed 148/148 direct Pascal sessions and 65/65 configured differentials. Pascal BoardClose/WorldSave matches the full 25,928-byte .ZZT and the 289-byte BoardClose record; short-payload and controlled one-byte SHORTHD.BRD editor-transfer cases also match production. The complete four-format fixture manifest and per-field/error-boundary matrix remain incomplete.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -168,8 +168,8 @@
         "tools/serializer-compat/",
         "tools/highscore-compat/"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-      "verification_result": "Partial: the 2026-11-27 clean full run passed 147/147 direct Pascal sessions and 65/65 configured differentials. Direct Pascal and production comparisons cover source save bytes, representative raw string/Boolean/stale-tail cases, all 256 RLE count bytes, and 16 complete .HI records. The full per-field and per-boundary value matrix in this requirement remains incomplete.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0",
+      "verification_result": "Partial: latest clean run passed 148/148 direct Pascal sessions and 65/65 configured differentials. Direct comparisons include source save bytes, representative raw string/Boolean/stale-tail cases, all 256 RLE count bytes, 16 complete .HI records, and controlled short-header state. The full per-field and per-boundary value matrix remains incomplete.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -201,8 +201,8 @@
         "tools/serializer-compat/",
         "tools/highscore-compat/"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md",
-      "verification_result": "Partial: direct Pascal captures title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after a short editor payload. BRDXFER now uses the original ZZT memory directive; a valid SHORTHD one-byte-header retry with controlled prompt hooks still timed out at 25 seconds without output and is excluded from pass counts. Short-header final state and truncation at every boundary remain unverified.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0",
+      "verification_result": "Partial D/DP: direct captures include title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after short editor payload. A controlled one-byte SHORTHD.BRD header now directly completes EditorTransferBoard and matches production: visible BoardLen 259, reopened prior board, cleared neighbors. Prior uncontrolled retries are not counted. Truncation at every format boundary remains unverified.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -228,8 +228,8 @@
         "tools/serializer-compat/",
         "tools/highscore-compat/"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md",
-      "verification_result": "Partial: the 2026-11-27 clean run recompiled BRDXFER with the original ZZT memory limits and matched the short-payload transfer outcome plus seven initialized board/player fields. A compiled-Pascal BoardClose/WorldSave case also matches all 25,928 output bytes against shared LibZoo. The corrected short-header attempt still timed out without a stable Pascal final state, so no direct differential exists; untouched-buffer suffix behavior remains pending.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0",
+      "verification_result": "Partial D/DP: the short-payload transfer matches outcome plus eight selected board/player fields. The controlled SHORTHD.BRD one-byte-header case matches outcome plus eight selected fields, board-name bytes, and all four neighbor values; see tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md. Pascal BoardClose/WorldSave also matches all 25,928 output bytes. Untouched-buffer suffix behavior and the complete format/error matrix remain pending.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -253,8 +253,8 @@
         "tools/serializer-compat/",
         "tools/highscore-compat/"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md",
-      "verification_result": "Partial: the latest clean 2026-11-27 run passed 147/147 direct Pascal sessions and 65/65 configured Pascal-to-production comparisons, plus 16 direct .HI byte comparisons, with zero unexplained mismatches in those cases. One full Pascal BoardClose/WorldSave output matched shared LibZoo for all 25,928 bytes. The short-header editor-state result is unresolved, and many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0",
+      "verification_result": "Partial: latest clean run passed 148/148 direct Pascal sessions and 65/65 configured comparisons, including the short-payload and controlled short-header editor-transfer D/DP cases, 16 direct .HI byte comparisons, and a full 25,928-byte BoardClose/WorldSave comparison. No unexplained mismatch exists in compared cases. Many serialized-field and malformed-read cases in AC002/AC003 remain unpaired.",
       "required_evidence_classes": [
         "D",
         "DP"
@@ -608,7 +608,7 @@
       "id": "E2-06-AC002",
       "blocker": "E2-06",
       "kind": "acceptance_requirement",
-      "requirement": "Include allocation request sizes 0, 1, 26–70, 255, and every observed script/text-window allocation boundary; exercise single and adjacent frees, multiple free blocks, first-fit/reuse order, repeated binds, self/cross-object aliases, source/recipient removal, and board change/unload.",
+      "requirement": "Include allocation request sizes 0, 1, 26\u201370, 255, and every observed script/text-window allocation boundary; exercise single and adjacent frees, multiple free blocks, first-fit/reuse order, repeated binds, self/cross-object aliases, source/recipient removal, and board change/unload.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:185",
       "status": "pending",
       "evidence_class": null,
@@ -676,7 +676,7 @@
       "id": "E2-07-AC001",
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
-      "requirement": "For the engine's normalized input queue, directly compare empty, one-byte, every buffer-length boundary 0–255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Assert consumed-byte order and exact residual buffer.",
+      "requirement": "For the engine's normalized input queue, directly compare empty, one-byte, every buffer-length boundary 0\u2013255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Assert consumed-byte order and exact residual buffer.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:192",
       "status": "pending",
       "evidence_class": null,
@@ -781,7 +781,7 @@
       "id": "E2-08-AC002",
       "blocker": "E2-08",
       "kind": "acceptance_requirement",
-      "requirement": "Cover the 80×25 logical cell coordinate/attribute range wherever shared engine code writes it; compare CP437 character byte, foreground/background/blink bits, write order, and restored underlying cells for gameplay draw, `DrawPlayerSurroundings`, message rows, Scroll/text-window title/body, label jump, append, and close/restore.",
+      "requirement": "Cover the 80\u00d725 logical cell coordinate/attribute range wherever shared engine code writes it; compare CP437 character byte, foreground/background/blink bits, write order, and restored underlying cells for gameplay draw, `DrawPlayerSurroundings`, message rows, Scroll/text-window title/body, label jump, append, and close/restore.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:201",
       "status": "pending",
       "evidence_class": null,
@@ -1146,7 +1146,7 @@
       "id": "E2-10-AC004",
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
-      "requirement": "Compare world and board fields, all 60×25 playable cells plus every source-defined border/sentinel cell, stats and order, script bytes/cursors/aliases, flags/counters/timers/RNG state, ordered effective logical cell changes (with identical-value repeats separately counted under the explicit cadence rule), sound event queue, return/error result, and generated file bytes. Apply only the explicit nondeterminism rules above.",
+      "requirement": "Compare world and board fields, all 60\u00d725 playable cells plus every source-defined border/sentinel cell, stats and order, script bytes/cursors/aliases, flags/counters/timers/RNG state, ordered effective logical cell changes (with identical-value repeats separately counted under the explicit cadence rule), sound event queue, return/error result, and generated file bytes. Apply only the explicit nondeterminism rules above.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:228",
       "status": "complete",
       "evidence_class": "DP",
@@ -1196,7 +1196,7 @@
       "id": "E2-10-AC005",
       "blocker": "E2-10",
       "kind": "acceptance_requirement",
-      "requirement": "all 10 fixtures finish deterministically under their tapes with zero unexplained per-checkpoint differences. Any mismatch is triaged as a compatibility defect or an explicitly justified environment-dependent case; it cannot be waived as “visual only” when engine state/events differ.",
+      "requirement": "all 10 fixtures finish deterministically under their tapes with zero unexplained per-checkpoint differences. Any mismatch is triaged as a compatibility defect or an explicitly justified environment-dependent case; it cannot be waived as \u201cvisual only\u201d when engine state/events differ.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:229",
       "status": "complete",
       "evidence_class": "I",
