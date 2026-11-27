@@ -572,10 +572,12 @@ int run_editor_brd_transfer(uint32_t input_len) {
             input_len, &outcome);
     if (result != 0) return result;
     output_data[0] = (uint8_t) outcome;
-    result = zoo_editor_brd_serialize(&state.board, output_data + 1,
-            FIXTURE_CAP - 1, &board_length);
+    output_data[1] = (uint8_t) state.world.board_len[0];
+    output_data[2] = (uint8_t) ((uint16_t) state.world.board_len[0] >> 8);
+    result = zoo_editor_brd_serialize(&state.board, output_data + 3,
+            FIXTURE_CAP - 3, &board_length);
     if (result != 0) return result;
-    output_size = board_length + 1;
+    output_size = board_length + 3;
     return 0;
 }
 

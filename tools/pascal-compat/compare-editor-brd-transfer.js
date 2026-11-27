@@ -8,7 +8,7 @@ function readPascalSummary(name) {
   const filePath = path.join(stageRoot, name);
   if (!fs.existsSync(filePath)) throw new Error(`Missing direct Pascal state output: ${filePath}`);
   const line = fs.readFileSync(filePath, 'utf8').replace(/\r/g, '').trim();
-  const match = /^board (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)$/.exec(line);
+  const match = /^board (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)$/.exec(line);
   if (!match) throw new Error(`${name}: malformed BRDXFER summary: ${line}`);
   const values = match.slice(1).map(Number);
   return {
@@ -20,6 +20,7 @@ function readPascalSummary(name) {
     playerX: values[5],
     playerY: values[6],
     worldBoardLength: values[7],
+    neighbors: values.slice(8, 12),
   };
 }
 
@@ -85,25 +86,18 @@ function compare(label, expected, actual, fields) {
       expectedOutcome: 2,
       expected: readPascalSummary('BRDXFER.OUT'),
       evidence: 'DP',
-      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY'],
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY', 'worldBoardLength'],
     },
     {
-      id: 'short-header-safe-reopen',
-      input: Buffer.from([0x04]),
+      id: 'short-header-controlled-reopen',
+      input: Buffer.from([0x03]),
       expectedOutcome: 1,
       expected: {
-        nameLength: 6,
+        ...readPascalSummary('BRDHDR.OUT'),
         name: Buffer.from('BEFORE', 'latin1'),
-        maxShots: 41,
-        statCount: 0,
-        centerElement: 21,
-        centerColor: 47,
-        playerX: 30,
-        playerY: 12,
-        neighbors: [0, 0, 0, 0],
       },
-      evidence: 'P/S model',
-      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY'],
+      evidence: 'DP',
+      fields: ['nameLength', 'maxShots', 'statCount', 'centerElement', 'centerColor', 'playerX', 'playerY', 'worldBoardLength'],
     },
   ];
 
@@ -112,11 +106,12 @@ function compare(label, expected, actual, fields) {
     const result = run_editor_brd_transfer(test.input.length);
     if (result !== 0) throw new Error(`${test.id}: shared transfer returned ${result}`);
     const output = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
-    if (output.length < 2) throw new Error(`${test.id}: missing outcome or production board state`);
+    if (output.length < 4) throw new Error(`${test.id}: missing outcome, board length, or production board state`);
     if (output[0] !== test.expectedOutcome) {
       throw new Error(`${test.id}: expected production outcome ${test.expectedOutcome}, got ${output[0]}`);
     }
-    const actual = parseProductionBoard(output.subarray(1));
+    const actual = parseProductionBoard(output.subarray(3));
+    actual.worldBoardLength = output.readInt16LE(1);
     compare(`BRDXFER ${test.id}`, test.expected, actual, test.fields);
     if (test.expected.name && !test.expected.name.equals(actual.name)) {
       throw new Error(`${test.id}: board name differs; expected ${test.expected.name.toString('latin1')}, production=${actual.name.toString('latin1')}`);

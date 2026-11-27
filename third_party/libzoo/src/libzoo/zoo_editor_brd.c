@@ -189,19 +189,35 @@ int zoo_editor_brd_transfer(zoo_state *state, const uint8_t *bytes, size_t lengt
     if (result != 0) return result;
 
     /*
-     * Source order in EditorTransferBoard implies that the consumed short-
-     * header IOResult lets the final check fall through to BoardOpen after the
-     * current BoardData has been freed. A direct DOSBox-X probe of that path
-     * does not produce a stable final state (the freed-buffer read stalls or
-     * faults with runtime error 203). Model the inferred reopen using the
-     * freshly closed bytes, without reading freed host memory. This is a
-     * source-derived deterministic mapping, not direct differential evidence
-     * for short headers or a claim about arbitrary DOS heap contents.
+     * EditorTransferBoard reads the two-byte length directly into the
+     * existing Pascal Integer. With a one-byte header, BlockRead updates only
+     * its low byte and leaves the high byte from the just-closed board. The
+     * error dialog consumes IOResult before the later check, so the source
+     * falls through to BoardOpen on the just-freed BoardData. A controlled
+     * Turbo Pascal/DOSBox-X allocation history keeps the dialog allocations
+     * away from that buffer and confirms the previous board is reopened. Keep
+     * the captured partial length, but use the still-owned shared buffer
+     * instead of reading freed host memory.
      */
     if (length < 2) {
+        int16_t closed_board_length = state->world.board_len[board_id];
+        int16_t pascal_board_length = closed_board_length;
+        if (length == 1) {
+            uint16_t partial_length = (uint16_t) closed_board_length;
+            partial_length = (uint16_t) ((partial_length & 0xFF00u) | bytes[0]);
+            int32_t signed_length = partial_length <= 0x7FFFu
+                    ? (int32_t) partial_length : (int32_t) partial_length - 0x10000;
+            pascal_board_length = (int16_t) signed_length;
+        }
         if (state->world.board_data[board_id] == NULL
-                || state->world.board_len[board_id] <= 0) return ZOO_ERROR_INVAL;
+                || closed_board_length <= 0) return ZOO_ERROR_INVAL;
+        /* Pascal's BoardOpen does not bound reads by BoardLen. It reopens the
+         * still-readable just-closed buffer, then retains the partial length
+         * word written by BlockRead for later operations. Use the actual
+         * closed-buffer size only during the safe shared parser call. */
+        state->world.board_len[board_id] = closed_board_length;
         result = zoo_board_open(state, board_id);
+        state->world.board_len[board_id] = pascal_board_length;
         if (result != 0) return result;
         memset(state->board.info.neighbor_boards, 0,
                 sizeof(state->board.info.neighbor_boards));

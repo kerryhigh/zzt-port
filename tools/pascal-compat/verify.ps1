@@ -1691,12 +1691,16 @@ Invoke-DosboxSession 'EDSTAT' @(
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 
 # Exercise the original nested EditorTransferBoard routine through the real
-# Pascal EditorLoop. The staging copy supplies only menu/filename choices and
-# substitutes the post-Escape state at the error-dialog boundary. The modal
-# acknowledgement interaction is skipped; import, IOResult checks, file reads,
-# BoardCreate/BoardOpen, and editor cleanup remain reconstructed Pascal code.
+# Pascal EditorLoop. The staging copy supplies menu/filename choices, releases
+# a preallocated heap sink after BoardClose only for the one-byte header case,
+# and substitutes the post-Escape state at the error-dialog boundary. The sink
+# keeps error-window allocations out of the just-freed BoardData block; it does
+# not modify EditorTransferBoard, IOResult checks, file reads, BoardCreate, or
+# BoardOpen. The modal acknowledgement interaction is skipped.
 $shortPayloadBrd = [byte[]]@(0x04, 0x00, 0x10, 0x20)
 [IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTPAY.BRD'), $shortPayloadBrd)
+$shortHeaderBrd = [byte[]]@(0x03)
+[IO.File]::WriteAllBytes((Join-Path $stageRoot 'SHORTHD.BRD'), $shortHeaderBrd)
 $stagedEditor = $editorSourceOriginal
 $transferChoiceAnchor = "SidebarPromptChoice(true, 3, 'Transfer board:', 'Import Export', i);"
 $transferFilenameAnchor = "SidebarPromptString('Import board', '.BRD', SavedBoardFileName, PROMPT_ALPHANUM);"
@@ -1705,6 +1709,23 @@ if (-not $stagedEditor.Contains($transferChoiceAnchor) -or -not $stagedEditor.Co
 }
 $stagedEditor = $stagedEditor.Replace($transferChoiceAnchor, 'i := 0;')
 $stagedEditor = $stagedEditor.Replace($transferFilenameAnchor, 'SavedBoardFileName := World.Info.Name;')
+$transferRoutineStart = $stagedEditor.IndexOf('procedure EditorTransferBoard;', [StringComparison]::Ordinal)
+if ($transferRoutineStart -lt 0) { throw 'Could not locate EditorTransferBoard for the controlled short-header allocation history.' }
+$transferRoutineEnd = $stagedEditor.IndexOf('TransferEnd:', $transferRoutineStart, [StringComparison]::Ordinal)
+if ($transferRoutineEnd -lt 0) { throw 'Could not isolate EditorTransferBoard for the controlled short-header allocation history.' }
+$transferRoutine = $stagedEditor.Substring($transferRoutineStart, $transferRoutineEnd - $transferRoutineStart)
+$sinkReleasePattern = [regex]::new('BoardClose;(\r?\n)([ \t]*)FreeMem\(World\.BoardData\[World\.Info\.CurrentBoard\], World\.BoardLen\[World\.Info\.CurrentBoard\]\);')
+$sinkReleaseMatch = $sinkReleasePattern.Match($transferRoutine)
+if (-not $sinkReleaseMatch.Success) {
+    throw 'Could not locate the import BoardClose/free boundary for the short-header heap sink.'
+}
+$sinkReleaseIndent = $sinkReleaseMatch.Groups[2].Value
+$sinkRelease = 'BoardClose;' + $sinkReleaseMatch.Groups[1].Value + $sinkReleaseIndent +
+    "if World.Info.Name = 'SHORTHD' then FreeMem(World.BoardData[1], 60000);" +
+    $sinkReleaseMatch.Groups[1].Value + $sinkReleaseIndent + $sinkReleaseMatch.Groups[0].Value.Substring(
+        ('BoardClose;' + $sinkReleaseMatch.Groups[1].Value + $sinkReleaseIndent).Length)
+$transferRoutine = $transferRoutine.Remove($sinkReleaseMatch.Index, $sinkReleaseMatch.Length).Insert($sinkReleaseMatch.Index, $sinkRelease)
+$stagedEditor = $stagedEditor.Remove($transferRoutineStart, $transferRoutineEnd - $transferRoutineStart).Insert($transferRoutineStart, $transferRoutine)
 $editorTransferCallIndex = $stagedEditor.LastIndexOf($editorFillCallAnchor, [StringComparison]::Ordinal)
 if ($editorTransferCallIndex -lt 0) { throw 'Could not locate the EditorLoop state setup for the direct board-transfer probe.' }
 $editorTransferCallEnd = $editorTransferCallIndex + $editorFillCallAnchor.Length
@@ -1733,10 +1754,13 @@ if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'BRDXFER.EXE') -PathType L
     throw "Turbo Pascal did not produce BIN\BRDXFER.EXE. See $stageRoot\BRDXFER.LOG and $stageRoot\BRDXFER-COMPILE.LOG."
 }
 # The imported board's deliberately short payload exercises original
-# IOResult/BoardOpen behavior. Running after the compiler in the same DOSBox-X
-# allocator history can hang; the identical compiled probe succeeds in a fresh
-# maximum-speed session, with no clock-dependent behavior in this operation.
+# IOResult/BoardCreate behavior. The separate one-byte header run uses a
+# controlled free sink so the error-window allocation history does not overwrite
+# the just-freed board buffer before the original BoardOpen. Each run starts in
+# a fresh maximum-speed DOSBox-X session.
 Invoke-DosboxSession 'BRDXFER-RUN' @('BIN\BRDXFER.EXE SHORTPAY BRDXFER.OUT') 'max'
+Write-Host 'Running the direct Turbo Pascal one-byte .BRD header import with controlled heap history: BRDXFER'
+Invoke-DosboxSession 'BRDXFER-HEADER-RUN' @('BIN\BRDXFER.EXE SHORTHD BRDHDR.OUT') 'max'
 [IO.File]::WriteAllText($stagedEditorPath, $editorSourceOriginal, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText($stagedGamePath, $stagedGameBeforeBrdProbe, [Text.UTF8Encoding]::new($false))
 
@@ -1837,7 +1861,8 @@ $expectedOutputs = [ordered]@{
     'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
     'NEGBRD.OUT' = @('negative-brd 1 -1')
     'BRDIOPRB.OUT' = @('partial-length 100 4610 next-IOResult 0', 'short-payload 0 100 next-IOResult 0 16 32 165 165')
-    'BRDXFER.OUT' = @('board 0 255 0 4 31 30 12 0')
+    'BRDXFER.OUT' = @('board 0 255 0 4 31 30 12 0 0 0 0 0')
+    'BRDHDR.OUT' = @('board 6 41 0 21 47 30 12 259 0 0 0 0')
     'PLRTORCH.OUT' = @('0 199 30 12')
     'PLAYERST.OUT' = @(
         'shoot-held-right ammo 1 input 0 0 dir 1 0 stats 1 target 18 15 sound 2 6 bullet 11 10 0 1 0 100 under 0 0 64 1 48 1 32 1',
@@ -2970,6 +2995,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 93 # Includes the previous isolated compile/run probes, one refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, title-W world selection followed by P play, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+$directProbeCount = $probeFiles.Count + 94 # Includes the previous isolated compile/run probes plus the controlled short-header BRDXFER session, one refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, title-W world selection followed by P play, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
