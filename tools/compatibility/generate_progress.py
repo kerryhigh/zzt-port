@@ -54,6 +54,17 @@ def main() -> None:
             and result.get("roundtrip_stable_byte_differences") == 0
         )
 
+    def failed_load_state_suffix(result: dict) -> str:
+        state = result.get("failed_world_load_state")
+        if not state:
+            return ""
+        excluded = ", ".join(state.get("excluded_fields", [])) or "none"
+        return (
+            f"; malformed-load post-failure state {state.get('matched_fields', 'not recorded')}"
+            f"/{state.get('comparable_fields', 'not recorded')} comparable fields matched"
+            f" ({state.get('differences', 'not recorded')} differences; excluded: {excluded})"
+        )
+
     completed_integrated_fixtures = [
         item for item in integrated_fixtures if fixture_has_completion_evidence(item)
     ]
@@ -167,7 +178,7 @@ def main() -> None:
             save_total = save_matched + save_differences if isinstance(save_matched, int) and isinstance(save_differences, int) else "not recorded"
             roundtrip_total = roundtrip_matched + roundtrip_differences if isinstance(roundtrip_matched, int) and isinstance(roundtrip_differences, int) else "not recorded"
             fixture_summary_lines.append(
-                f"- `{fixture['id']}` {fixture['scenario']}: **{result.get('result', 'unclassified')}** in the latest run; {result.get('checkpoints', 'not recorded')} checkpoints / {result.get('field_comparisons', 'not recorded')} state fields; {result.get('state_field_differences', 'not recorded')} state differences; {result.get('logical_sound_events', 'not recorded')} sound events; {result.get('ordered_cell_writes', 'not recorded')} cell writes; {save_matched}/{save_total} stable generated-save bytes and {roundtrip_matched}/{roundtrip_total} round-trip bytes matched."
+                f"- `{fixture['id']}` {fixture['scenario']}: **{result.get('result', 'unclassified')}** in the latest run; {result.get('checkpoints', 'not recorded')} checkpoints / {result.get('field_comparisons', 'not recorded')} state fields; {result.get('state_field_differences', 'not recorded')} state differences; {result.get('logical_sound_events', 'not recorded')} sound events; {result.get('ordered_cell_writes', 'not recorded')} cell writes; {save_matched}/{save_total} stable generated-save bytes and {roundtrip_matched}/{roundtrip_total} round-trip bytes matched{failed_load_state_suffix(result)}."
             )
         else:
             fixture_summary_lines.append(f"- `{fixture['id']}` {fixture['scenario']}: no result in the latest verification record.")
@@ -258,7 +269,7 @@ def main() -> None:
         f"- First-divergence diagnostic negative control: {integrated_diagnostic.get('result', 'not recorded')}; {integrated_diagnostic.get('report', 'no controlled mismatch report recorded').rstrip().rstrip('.')}. This instrumentation check receives no replay-fixture or compatibility-case completion credit.",
         *(fixture_summary_lines if integrated_fixtures else ["- No frozen integrated fixture inventory is recorded."]),
         *([
-            f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints; {item.get('field_comparisons', 'not recorded')} state-field comparisons total; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence)."
+            f"- {item.get('fixture', 'unnamed replay')}: {item.get('checkpoints', 'not recorded')} checkpoints; {item.get('field_comparisons', 'not recorded')} state-field comparisons total; {item.get('result', 'unclassified')} ({item.get('evidence_class', 'unclassified')} evidence){failed_load_state_suffix(item)}."
             for item in integrated.get("per_cycle_results", [])
         ] if integrated.get("per_cycle_results") else ["- Current per-cycle results: none recorded."]),
         *([

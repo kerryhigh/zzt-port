@@ -2,6 +2,8 @@
 
 **Result:** passed in the clean Pascal/production runner on 2026-11-26. This closes fixture F10 only; Engine 2.0 and E2-11 remain open.
 
+> Historical run record: this document captures the earlier 126-session / 54-comparison run and the original F10 checkpoint totals. The current clean rerun and the additional pre-fallback failed-load state comparison are recorded in [the F10 boundary evidence](2026-11-26-e2-10-f10-malformed-load-boundary.md).
+
 ## Replay and comparison
 
 The direct Turbo Pascal 5.5 probe loads a deterministic malformed 512-byte `.ZZT` (`F10BAD.ZZT`). Original Pascal `WorldLoad` returns false (`F10BAD.OUT` contains `0`). It then follows the startup recovery setup with `WorldCreate`, loads the absent `F10ROOM.HI` table through `HighScoresLoad`, and enters the original `GamePlayLoop` for two logical cycles. The death path runs `HighScoresAdd`; a normalized input tape enters `KERRY` and Enter, and the original Pascal code writes the `.HI` file. The probe also saves, reloads, and saves the world through the original `.SAV` routines.

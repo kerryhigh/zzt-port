@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-26",
-    "root_revision": "19f38210ff3fba9e2e930eddbbd8c27406ae2851",
+    "root_revision": "94c24194b50635ca5c051dcdbdc2a7b583c49fad",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X runner passed on 2026-11-26: 147 direct sessions (54 standard, 93 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 state-field comparisons, 169 logical-cycle snapshots). The new GameTitleLoop W world-select -> P play -> one real paused cycle -> return-to-title replay matched at 3 checkpoints / 10,360 state fields. Existing six BOARDENT routes matched callback-boundary and full production-transition replays at 60/60 fields each; the prior title-abort and reload routes also passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-26: 147 direct Pascal sessions (54 standard, 93 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 also captured state immediately after malformed WorldLoad and before fallback WorldCreate: 3,385/3,385 comparable fields matched, with only private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -61,13 +61,13 @@
       "sessions": 147,
       "standard_programs": 54,
       "standalone_sessions": 93,
-      "session_result": "147 direct Turbo Pascal 5.5 compile/run sessions passed in the clean run: 54 standard probes and 93 standalone compile/run or fixture sessions. Includes the direct GameTitleLoop W world-select, P play, one real paused game cycle, and return-to-title replay; the prior P and R title routes; refused/accepted abort and retry paths; ten integrated fixtures; and the existing compile/run probes. Transient Pascal outputs were regenerated in the clean staging directory and are not committed."
+      "session_result": "147 direct Turbo Pascal 5.5 compile/run sessions passed in the clean run: 54 standard probes and 93 standalone compile/run or fixture sessions. The run includes all ten integrated fixtures. F10 captured and compared the selected state after malformed WorldLoad returned and before fallback WorldCreate."
     },
     "direct_differential_comparisons": {
       "configured": 65,
       "passed": 65,
       "failed": 0,
-      "result": "65/65 configured direct Pascal-to-production differential invocations passed in the clean run. The new direct GameTitleLoop W selection -> P play -> one real paused cycle -> return-to-title replay matched 3 checkpoints / 10,360 state fields. The six BOARDENT routes matched callback-boundary and full production-transition replays at 60/60 fields each. All ten frozen integrated fixtures passed (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). Other title, scheduler, save/load, editor, OOP, element, high-score, abort/quit and malformed-load comparisons passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker."
+      "result": "65/65 configured direct Pascal-to-production differential invocations passed in the clean run. Frozen F01-F10 matched at 238 checkpoints / 824,821 checkpoint fields / 169 logical cycles. Within F10, the post-failed-WorldLoad snapshot matched 3,385/3,385 comparable fields; World.BoardLen[0] is documented as private buffer metadata and excluded. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -1974,11 +1974,23 @@
           "roundtrip_stable_byte_differences": 0,
           "classified_roundtrip_pointer_positions": 8,
           "fixture_completion_credit": 1,
-          "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md",
+          "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-f10-malformed-load-boundary.md",
           "logical_cycle_checkpoints": 2,
           "logical_cycle_checkpoints_matched": 2,
           "logical_cycle_field_comparisons": 6859,
-          "logical_cycle_differences": 0
+          "logical_cycle_differences": 0,
+          "failed_world_load_state": {
+            "total_fields": 3386,
+            "comparable_fields": 3385,
+            "matched_fields": 3385,
+            "differences": 0,
+            "excluded_fields": [
+              "World.BoardLen[0] (private raw-buffer length)"
+            ],
+            "output": "F10STAT.OUT (7,114 bytes; SHA-256 04ebe3b987af66078490bbc40a19353b3512e59bf8d277ee7e60d2316ea888bb)",
+            "result": "passed",
+            "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-f10-malformed-load-boundary.md"
+          }
         }
       ],
       "schema_revision": "e2-10-replay-r10-demo-world",
@@ -2095,6 +2107,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-10-F10: extended the existing malformed-world replay with a pre-fallback state snapshot. Turbo Pascal 5.5 and production matched 3,385/3,385 comparable fields (BoardLen[0] excluded); the clean suite passed 147 sessions, 65/65 differentials, and all ten frozen integrated fixtures. Inventory and corpus totals did not change.",
       "E2-03-AC001: compiled the original Pascal GameTitleLoop W world-selection route, then P play, one actual paused cycle, and return-to-title; direct Pascal/production replay matched at 3 checkpoints / 10,360 fields. Corrected clean-run totals: 147 direct sessions and 65/65 differentials. E2-10 F01-F10 remain 10/10; the frozen inventory is unchanged and E2-03 remains partial.",
       "E2-03-AC001: connected BOARDENT direct Pascal captures to two production comparisons. The callback-boundary replay under service stubs matched 60/60 fields; a second replay through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter also matched 60/60. The clean runner passed 146 direct sessions, 64/64 differentials, F01-F10, runtime compatibility, and the first-divergence negative control. External world-file routes and the broader lifecycle matrix remain open; E2-03 stays partial and the frozen inventory is unchanged.",
       "E2-03-AC001: extended the original GameTitleLoop probe through refused abort, verified zero-speed tick advancement, accepted abort, and return-to-title. The direct Pascal/production replay matched 3 checkpoints / 10,242 fields. The clean run passed 146 direct sessions, 63/63 configured differentials, F01-F10, runtime verification, and the diagnostic negative control; the frozen 54-case inventory remains unchanged and E2-03 stays partial.",
@@ -2159,7 +2172,7 @@
     "latest_attempt": {
       "date": "2026-11-26",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "19f38210ff3fba9e2e930eddbbd8c27406ae2851",
+      "source_revision": "94c24194b50635ca5c051dcdbdc2a7b583c49fad",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 147,
       "configured_differentials_passed": 65,
@@ -2171,7 +2184,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X runner passed on 2026-11-26: 147 direct sessions (54 standard, 93 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 state-field comparisons, 169 logical-cycle snapshots). The new GameTitleLoop W world-select -> P play -> one real paused cycle -> return-to-title replay matched at 3 checkpoints / 10,360 state fields. Existing six BOARDENT routes matched callback-boundary and full production-transition replays at 60/60 fields each; the prior title-abort and reload routes also passed. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-26: 147 direct Pascal sessions (54 standard, 93 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 also captured state immediately after malformed WorldLoad and before fallback WorldCreate: 3,385/3,385 comparable fields matched, with only private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -2764,7 +2777,7 @@
       "accepted_abort_loop_fields_compared": 22,
       "accepted_abort_loop_differences": 0,
       "accepted_abort_loop_comparison_exit_code": 0,
-      "direct_pascal_standalone_sessions_passed": 92,
+      "direct_pascal_standalone_sessions_passed": 93,
       "direct_pascal_standard_programs_passed": 54,
       "title_refused_abort_return_comparison_exit_code": 0,
       "title_refused_abort_return_checkpoints": 3,
@@ -2822,7 +2835,14 @@
         },
         "fixture_credit": 0,
         "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-board-edge-full-transition-differential.md"
-      }
+      },
+      "integrated_f10_failure_state_comparison_exit_code": 0,
+      "failed_world_load_state_fields_total": 3386,
+      "failed_world_load_state_fields_compared": 3385,
+      "failed_world_load_state_field_differences": 0,
+      "failed_world_load_state_excluded_fields": [
+        "World.BoardLen[0] (private buffer length)"
+      ]
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -3098,7 +3118,20 @@
       "roundtrip_stable_byte_differences": 0,
       "classified_roundtrip_pointer_positions": 8,
       "fixture_completion_credit": 1,
-      "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md"
+      "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-f10-malformed-load-boundary.md",
+      "failed_world_load_state": {
+        "total_fields": 3386,
+        "comparable_fields": 3385,
+        "matched_fields": 3385,
+        "differences": 0,
+        "excluded_fields": [
+          "World.BoardLen[0] (private raw-buffer length)"
+        ],
+        "output": "F10STAT.OUT (7,114 bytes; SHA-256 04ebe3b987af66078490bbc40a19353b3512e59bf8d277ee7e60d2316ea888bb)",
+        "result": "passed",
+        "evidence": "tools/compatibility/evidence/2026-11-26-e2-10-f10-malformed-load-boundary.md"
+      },
+      "related_evidence": "tools/compatibility/evidence/2026-11-26-e2-10-malformed-load-high-score.md"
     },
     "schedule_matrix": {
       "acceptance_case": "E2-03-AC002",
