@@ -6,6 +6,7 @@ var
 	boardCounts: array[0..3] of integer;
 	boardNames: array[0..3] of string[8];
 	longText: string[58];
+	byteText: string[58];
 	tag, i, boardId, sourceBoardCount: integer;
 	rawValue: byte;
 {$F+}
@@ -85,6 +86,15 @@ begin
 	WorldSave('SAVTAIL', '.SAV');
 	World.Info.IsSave := false;
 	WorldSave('ZZTTAIL', '.ZZT');
+
+	{ Keep raw DOS CP437 payload bytes in all four WorldSave short strings. }
+	byteText := Chr($80) + Chr($82) + Chr($FF);
+	World.Info.Name := byteText;
+	World.Info.Flags[1] := byteText;
+	Board.Name := byteText;
+	Board.Info.Message := byteText;
+	World.Info.IsSave := false;
+	WorldSave('CP437', '.ZZT');
 
 	{ Preserve the frozen world's board records while testing WorldSave's
 	  documented 0/1/MAX_BOARD-1/MAX_BOARD count boundaries. Each slot gets

@@ -2136,6 +2136,9 @@ foreach ($staleTailWorldFixture in @('SAVTAIL.SAV', 'ZZTTAIL.ZZT')) {
         throw "WorldSaveProbe stale-tail case did not write $staleTailWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }
 }
+if (-not (Test-Path -LiteralPath (Join-Path $stageRoot 'CP437.ZZT') -PathType Leaf)) {
+    throw "WorldSaveProbe CP437 short-string case did not write CP437.ZZT. See $stageRoot\WORLDSAV.LOG."
+}
 foreach ($worldBoardCountFixture in @('BCNT0.SAV', 'BCNT1.SAV', 'BCNT99.SAV', 'BCNT100.SAV', 'BCNT0.ZZT', 'BCNT1.ZZT', 'BCNT99.ZZT', 'BCNT100.ZZT')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $worldBoardCountFixture) -PathType Leaf)) {
         throw "WorldSaveProbe board-count case did not write $worldBoardCountFixture. See $stageRoot\WORLDSAV.LOG."
@@ -2231,6 +2234,10 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .SAV/.ZZT board-count boundary differential failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-pascal-world-cp437.js' `
+        $stageRoot `
+        (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .ZZT CP437 short-string differential failed with exit code $LASTEXITCODE." }
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `
