@@ -64,6 +64,7 @@ begin
 		for i := 0 to 13 do
 			World.Info.unkPad[i] := signedValues[i mod 4];
 		WorldSave(signedNames[tag], '.SAV');
+		WorldSave(signedNames[tag], '.ZZT');
 	end;
 
 	{ Short-string assignments keep bytes from the previous longer value. }

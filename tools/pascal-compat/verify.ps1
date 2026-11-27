@@ -2126,7 +2126,7 @@ foreach ($signedWorldFixture in @('WRS0.SAV', 'WRS1.SAV', 'WRS2.SAV', 'WRS3.SAV'
         throw "WorldSaveProbe signed-field case did not write $signedWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }
 }
-foreach ($booleanWorldFixture in @('BLS0.SAV', 'BLS1.SAV', 'BLS2.SAV', 'BLS3.SAV')) {
+foreach ($booleanWorldFixture in @('BLS0.SAV', 'BLS1.SAV', 'BLS2.SAV', 'BLS3.SAV', 'BLS0.ZZT', 'BLS1.ZZT', 'BLS2.ZZT', 'BLS3.ZZT')) {
     if (-not (Test-Path -LiteralPath (Join-Path $stageRoot $booleanWorldFixture) -PathType Leaf)) {
         throw "WorldSaveProbe raw-Boolean case did not write $booleanWorldFixture. See $stageRoot\WORLDSAV.LOG."
     }

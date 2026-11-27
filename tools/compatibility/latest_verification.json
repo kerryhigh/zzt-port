@@ -7,7 +7,7 @@
     "root_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 73/73 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal .BRD BoardClose stat-count fixtures 0/1/149/150 matched all 10,660 payload bytes; WorldSave .SAV/.ZZT board counts 0/1/99/100 matched all 467,992 bytes across eight complete files; the shared-script alias matched all 2,025 bytes; stale-tail cases matched four fields and 26,465 bytes in both .SAV and .ZZT. No unexplained comparable mismatch; exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 73/73 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal ZZT Boolean/reserved cases preserved raw IsSave values 0/1/2/255 and matched 105,860 bytes; BRD stat counts 0/1/149/150 matched 10,660 payload bytes; WorldSave SAV/ZZT board counts 0/1/99/100 matched 467,992 bytes; shared-script alias matched 2,025 bytes; stale-tail cases matched 26,465 bytes per SAV and ZZT. No unexplained comparable mismatch; exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -97,7 +97,7 @@
       "configured": 73,
       "passed": 73,
       "failed": 0,
-      "result": "73/73 direct Pascal-to-production comparison invocations passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the suite includes .BRD stat-count boundaries 0/1/149/150 (10,660 bytes), WorldSave .SAV/.ZZT board counts 0/1/99/100 (467,992 complete-file bytes), the .BRD shared-script DataLen alias (2,025 bytes), and stale-string-tail checks for both .SAV and .ZZT. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
+      "result": "73/73 direct Pascal-to-production comparison invocations passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the suite includes raw ZZT IsSave/Keys Boolean values 0/1/2/255 (105,860 full-file bytes), BRD stat-count boundaries 0/1/149/150 (10,660 bytes), WorldSave SAV/ZZT board counts 0/1/99/100 (467,992 bytes), the BRD shared-script DataLen alias (2,025 bytes), and SAV/ZZT stale-tail checks. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2138,6 +2138,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-02 AC002: direct compiled-Pascal WorldSave ZZT raw Boolean/reserved cases preserved IsSave values 0, 1, 2, and 255 plus seven Keys bytes and 14 reserved bytes; all four 26,465-byte files (105,860 bytes total) match production. The same run rechecked paired SAV files. Clean suite: 149 sessions, 73/73 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial and the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-boolean-reserved.md.",
       "E2-02 AC002: direct compiled-Pascal WorldSave board-count boundaries 0, 1, 99, and 100 passed for both .SAV and .ZZT. Eight complete files and 467,992/467,992 bytes matched production with IsSave=1/0; counts 99/100 contain 100/101 board records. Clean run: 149 direct sessions, 73/73 comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-world-board-counts.md.",
       "E2-02 AC002: direct compiled-Pascal BoardClose stat counts 0, 1, 149, and 150 matched the shared .BRD parser/exporter across complete payloads of 190, 223, 5,107, and 5,140 bytes (10,660 bytes total). Clean run: 149 direct sessions, 72/72 comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-stat-counts.md.",
       "E2-02 AC002: direct compiled-Pascal WorldSave non-save `.ZZT` stale tails passed. ZZTTAIL.ZZT preserves four tails, keeps IsSave=0, and matches all 26,465 production round-trip bytes (SHA-256 6055e1b0b25bf58af0bd197a4a72f01101255b87c742ae2a2dc585e1e95895a0); the paired SAVTAIL.SAV retains IsSave=1 and also matches. Clean suite: 149 sessions, 71/71 comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-stale-tails.md.",
@@ -2244,13 +2245,13 @@
       "configured_differentials_passed": 73,
       "configured_differentials_failed": 0,
       "failure": null,
-      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 149 sessions. WORLDSAV additionally copies serialized board 0 into unique Pascal allocations for board IDs 1..100 before the WorldSave count-boundary cases, because the original save frees and replaces its current board buffer.",
+      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 149 sessions. WORLDSAV additionally copies serialized board 0 into unique Pascal allocations for board IDs 1..100 before the WorldSave count-boundary cases, because the original save frees and replaces its current board buffer. WORLDSAV also writes ZZT files from the same raw Boolean Move values used by the SAV cases; production checks raw IsSave/Keys bytes and the reserved pattern without normalizing them.",
       "integrated_pascal_probe": "F10IN.PAS; direct malformed WorldLoad, fallback WorldCreate, HighScoresLoad/Add/Save, original GamePlayLoop, and SAV reload",
       "integrated_differential_command": "Run compare-integrated-gameplay.js for F10 against the shared malformed-world/gameplay/high-score replay harness.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 73/73 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal .BRD BoardClose stat-count fixtures 0/1/149/150 matched all 10,660 payload bytes; WorldSave .SAV/.ZZT board counts 0/1/99/100 matched all 467,992 bytes across eight complete files; the shared-script alias matched all 2,025 bytes; stale-tail cases matched four fields and 26,465 bytes in both .SAV and .ZZT. No unexplained comparable mismatch; exit code 0.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 73/73 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal ZZT Boolean/reserved cases preserved raw IsSave values 0/1/2/255 and matched 105,860 bytes; BRD stat counts 0/1/149/150 matched 10,660 payload bytes; WorldSave SAV/ZZT board counts 0/1/99/100 matched 467,992 bytes; shared-script alias matched 2,025 bytes; stale-tail cases matched 26,465 bytes per SAV and ZZT. No unexplained comparable mismatch; exit code 0.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -4683,6 +4684,72 @@
         "The existing WORLDSAV.PAS session calls original BoardClose then BoardOpen(0), frees the old serialized board buffers for IDs 1..15, and copies board 0 into independent GetMem buffers for IDs 1..100 before testing WorldSave. This avoids making multiple board IDs alias a buffer that WorldSave frees and replaces.",
         "WorldSave writes each count 0, 1, MAX_BOARD-1, and MAX_BOARD as both .SAV (IsSave=1) and .ZZT (IsSave=0); no Pascal gameplay or serializer semantics are patched.",
         "The comparator verifies every count/length boundary and complete production read/open/close/write output byte-for-byte; all generated files stay in the ignored fresh verification staging directory."
+      ]
+    },
+    "zzt_boolean_reserved_differential": {
+      "evidence_class": "D+DP",
+      "acceptance_case": "E2-02-AC002",
+      "acceptance_status": "partial",
+      "result": "passed",
+      "probe": "tools/pascal-compat/WORLDSAV.PAS::WorldSave",
+      "comparator": "tools/pascal-compat/compare-pascal-world-booleans.js",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_board_open",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_board_close",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_write"
+      ],
+      "raw_boolean_values": [
+        0,
+        1,
+        2,
+        255
+      ],
+      "files_configured": 4,
+      "files_matched": 4,
+      "keys_fields_per_file": 7,
+      "reserved_byte_count": 14,
+      "file_bytes_matched_per_case": 26465,
+      "file_bytes_total_per_case": 26465,
+      "file_bytes_matched_total": 105860,
+      "file_bytes_total": 105860,
+      "byte_differences": 0,
+      "files": [
+        {
+          "file": "BLS0.ZZT",
+          "raw_boolean": 0,
+          "bytes": 26465,
+          "sha256": "2a8b3787e0c3b7c9cac3be8e6f5a0345e39df52297703f574576a918e549e346"
+        },
+        {
+          "file": "BLS1.ZZT",
+          "raw_boolean": 1,
+          "bytes": 26465,
+          "sha256": "1c42af092633eeebb2f90ac15d4c0bb4f707a29341837709541a2dac5053d7ca"
+        },
+        {
+          "file": "BLS2.ZZT",
+          "raw_boolean": 2,
+          "bytes": 26465,
+          "sha256": "484d41d8ea8972f1f94e2273a9c8ba1d10bf2148e38e1136704bcd293cf1fdf7"
+        },
+        {
+          "file": "BLS3.ZZT",
+          "raw_boolean": 255,
+          "bytes": 26465,
+          "sha256": "cece6a30613ad0c19bc84d8174b59bf13bd6503ea522d9a66a0e6eb1ff9f45ba"
+        }
+      ],
+      "paired_sav_values_rechecked": true,
+      "comparison_exit_code": 0,
+      "clean_suite_comparator_invocations": 1,
+      "fixture_corpus_completion_credit": 0,
+      "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-boolean-reserved.md",
+      "reconfirmed_in_full_suite_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
+      "staging_interventions": [
+        "The existing WORLDSAV.PAS case uses Move to set the raw Pascal Boolean byte in all seven Keys entries and IsSave, then calls the original WorldSave once with SAV and once with ZZT; raw values are not tested through Boolean conditional evaluation.",
+        "The same 14-byte reserved-field pattern is set before both writes; production verifies these bytes and the complete file.",
+        "All output files are generated only in the ignored fresh verification staging directory; no Pascal gameplay or serializer routine is patched."
       ]
     }
   }
