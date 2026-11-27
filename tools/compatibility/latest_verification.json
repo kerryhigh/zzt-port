@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-27",
-    "root_revision": "7a75959a736ad8044c1eb9b648721b4d8edd1348",
+    "root_revision": "e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X run passed on 2026-11-27: 148 direct Pascal sessions (54 standard, 94 standalone), 65/65 configured Pascal/production differential invocations, and F01-F10 (238 checkpoints, 824,821 checkpoint state-field comparisons, 169 logical-cycle snapshots). F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with only private World.BoardLen[0] excluded. The controlled SHORTHD.BRD one-byte 03 EditorTransferBoard case produced a stable direct state and matched production; prior uncontrolled allocator attempts are retained as nonpassing history. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8: 148 direct Pascal sessions (54 standard, 94 standalone), 65/65 configured Pascal/production differentials, and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -83,23 +83,25 @@
       "dosbox_x": "DOSBox-X 2026.10.01; executable SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed",
       "node": "v22.19.0",
       "python": "3.13.7",
-      "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64"
+      "msbuild": "17.14.19+164abd434; Visual Studio 2022 v143 x64",
+      "windows_build": "Visual Studio 2022 MSBuild 17.14.19, Windows SDK 10.0.26100.0, x64; CTest 3/3 passed.",
+      "android_gradle": "Gradle 8.11.1 offline; Android NDK 27.2.12479018; arm64-v8a and x86_64."
     },
     "direct_pascal": {
       "sessions": 148,
       "standard_programs": 54,
       "standalone_sessions": 94,
-      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed in the 2026-11-27 clean run: 54 standard probes and 94 standalone compile/run or fixture sessions. Includes all ten integrated fixtures, BRDXFER short-payload, and the controlled one-byte short-header session under ZZT's original memory directive. F10 also captured and compared the selected state after malformed WorldLoad returned and before fallback WorldCreate."
+      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed on source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8: 54 standard probes and 94 standalone compile/run or fixture sessions, including the ten integrated fixtures and controlled E2-02 short-header capture."
     },
     "direct_differential_comparisons": {
       "configured": 65,
       "passed": 65,
       "failed": 0,
-      "result": "65/65 configured direct Pascal-to-production differential invocations passed in the 2026-11-27 clean run. Frozen F01-F10 matched at 238 checkpoints / 824,821 checkpoint fields / 169 logical cycles. Within F10, the post-failed-WorldLoad snapshot matched 3,385/3,385 comparable fields; World.BoardLen[0] is documented as private buffer metadata and excluded. No unexplained comparable mismatch."
+      "result": "65/65 configured direct Pascal-to-production differential invocations passed on source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8. Frozen F01-F10 matched at 238 checkpoints / 824,821 checkpoint fields / 169 logical cycles. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields; private World.BoardLen[0] is excluded. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
-      "production_only_regressions": 1
+      "production_only_regressions": 2
     },
     "integrated_replay": {
       "required_fixtures": 10,
@@ -2104,15 +2106,16 @@
         "pascal_error_outcome_note": "WorldSave has no return value; the successful output was verified by its size and bytes.",
         "fixture_corpus_completion_credit": 0
       },
-      "fixture_manifest": "tools/compatibility/integrated_replay_fixture_manifest.json"
+      "fixture_manifest": "tools/compatibility/integrated_replay_fixture_manifest.json",
+      "verification_source_revision": "e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8"
     },
     "other_suites": {
-      "serializer": "passed; tools/serializer-compat/verify.ps1 exit 0; Pascal BoardClose/WorldSave versus shared LibZoo matched the full 25,928-byte .ZZT; the 289-byte BoardClose record matched through shared .BRD import/export; short-payload and controlled SHORTHD short-header EditorTransferBoard cases now have direct D/DP matches. The full per-field/error-boundary matrix remains open.",
+      "serializer": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; tools/serializer-compat/verify.ps1 exited 0. Exhaustive codec check covered all 65,536 signed words and 256 packed signed bytes; existing .ZZT/.SAV/.BRD fixtures, all 16 DEMO boards, malformed reads, RLE, stale strings, raw Boolean/reserved bytes, and stat aliasing also passed. Full per-field/error-boundary matrix remains open.",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
-      "runtime": "passed fresh 2026-11-27; tools/runtime-compat/verify.ps1 exited 0, including scheduler and shared-engine lifecycle checks.",
-      "android_compat": "passed fresh after shared-engine and E2-02 commit 7a75959a736ad8044c1eb9b648721b4d8edd1348; powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1; exit 0; Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
-      "android_build": "passed fresh after shared-engine and E2-02 commit 7a75959a736ad8044c1eb9b648721b4d8edd1348; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); CMake built arm64-v8a and x86_64 native engine libraries. No physical Android device test was performed.",
-      "windows_ctest": "passed fresh after shared-engine and E2-02 commit 7a75959a736ad8044c1eb9b648721b4d8edd1348; powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1; exit 0; Release x64 targets built; CTest 3/3 passed: Win32 engine I/O/80x25, sharp-bilinear scaling, and Pascal drum timing."
+      "runtime": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; tools/runtime-compat/verify.ps1 exited 0.",
+      "android_compat": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1; exit 0; Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
+      "android_build": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); CMake built arm64-v8a and x86_64 native engine libraries. No physical Android device test was performed.",
+      "windows_ctest": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1; exit 0; Release x64 targets built; CTest 3/3 passed: Win32 engine I/O/80x25, sharp-bilinear scaling, and Pascal drum timing."
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
@@ -2120,7 +2123,7 @@
       "Player element metadata differs: Pascal mutates ElementDefs[4].Character while LibZoo uses a draw callback. Resulting virtual-cell behavior across all animation cases remains to be proven.",
       "Editor flood-fill and .HI table semantics are now shared and directly compared; placement/paste/stat mutation side effects and other Editor.PAS state changes remain outside the platform-neutral API.",
       "F05 and F08 each counted 834 Pascal and 835 production identical-value redraws; that one-count same-value output cadence remains classified under the existing poll/render environment rule. In F05 state-transition T3, the cumulative effective-cell counter is Pascal 6003 versus production 6004 even though the complete ordered 6006-write stream and every logical-cycle counter match; this derived counter is excluded only at intermediate T checkpoints in F05/F08 and remains recorded for E2-03 transition acceptance. Undefined and process-pointer bytes follow the checklist contract.",
-      "Title malformed-restore comparison: Pascal World.BoardLen[0] is 319 while LibZoo\u2019s augmented private board buffer is 327. This implementation-specific internal size is excluded from equality; the refusal result and remaining 3,385 comparable world/board/stat/tile fields match, and external .ZZT/.SAV bytes are checked by the serializer suite."
+      "Title malformed-restore comparison: Pascal World.BoardLen[0] is 319 while LibZoo’s augmented private board buffer is 327. This implementation-specific internal size is excluded from equality; the refusal result and remaining 3,385 comparable world/board/stat/tile fields match, and external .ZZT/.SAV bytes are checked by the serializer suite."
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
@@ -2135,6 +2138,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-02 signed serialization portability fix on e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8: replaced implementation-defined 16/8-bit signed conversions in shared world and .BRD codecs with range-safe Pascal bit interpretation; writers preserve the original wire bytes. Exhaustive production regression passed all 65,536 word patterns and 256 packed-byte patterns. The clean Pascal run passed 148 sessions, 65/65 differentials, and all ten integrated fixtures; runtime, Windows 3/3 CTest, Android compatibility/build, and serializer checks passed. E2-02 AC002 and the blocker remain partial; the frozen inventory did not change. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-portable-signed-serialization.md.",
       "E2-02-AC003/AC004: controlled one-byte SHORTHD.BRD short-header EditorTransferBoard completed in the original Pascal path using a documented 60,000-byte heap-sink allocation history. Direct output was board 6 41 0 21 47 30 12 259 0 0 0 0; production matched eight selected fields, name bytes, and four neighbors. Clean run: 148 direct Pascal sessions (54 standard/94 standalone), 65/65 differentials, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. E2-02 remains partial and the 54-case inventory is unchanged. See tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
       "Earlier pre-hook E2-02 checkpoint: BRDXFER used ZZT memory limits and its short-payload differential passed; the corrected one-byte header attempt then timed out without output. This was superseded by the controlled heap-sink D/DP capture in tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
       "E2-10-F10: extended the existing malformed-world replay with a pre-fallback state snapshot. Turbo Pascal 5.5 and production matched 3,385/3,385 comparable fields (BoardLen[0] excluded); the clean suite passed 147 sessions, 65/65 differentials, and all ten frozen integrated fixtures. Inventory and corpus totals did not change.",
@@ -2192,12 +2196,34 @@
       "Do any supported ZZT operation cases expose materially different serialized or editor state across the remaining controlled allocator histories and truncation boundaries? The single-byte 03 short-header behavior is now directly captured for one documented allocator setup; broader matrix comparisons will determine whether further mandatory cases are needed."
     ],
     "production_only_regression_results": {
-      "configured_targeted_cases": 1,
-      "passed": 1,
+      "configured_targeted_cases": 2,
+      "passed": 2,
       "failed": 0,
-      "case": "zoo_editor_brd_transfer one-byte header from a seeded BEFORE board; outcome 1, selected prior-board state preserved, neighbors cleared",
-      "classification": "P with S-derived expected behavior; not a direct Pascal differential",
-      "source_revision": "3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial)"
+      "case": "Two passing production regressions: seeded .BRD safe-reopen state and exhaustive signed serialization codec.",
+      "classification": "P with source-derived expected behavior; these are production regressions, not direct Pascal differentials.",
+      "source_revision": "e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8",
+      "cases": [
+        {
+          "case": "seeded zoo_editor_brd_transfer safe-reopen model",
+          "result": "passed",
+          "classification": "P with S-derived expected behavior; not a direct Pascal differential",
+          "source_revision": "3ab25bd: test: cover shared .BRD safe-reopen model (E2-02 partial)"
+        },
+        {
+          "case": "exhaustive signed serialization codec",
+          "result": "passed",
+          "classification": "P with S-derived expected behavior; not a direct Pascal differential",
+          "source_revision": "e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8",
+          "coverage": {
+            "signed_word_bit_patterns": 65536,
+            "packed_signed_byte_patterns": 256,
+            "writer_bytes_checked": 131072,
+            "reader_patterns_checked": 65536,
+            "brd_signed_decoder_patterns_checked": 65536
+          },
+          "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-portable-signed-serialization.md"
+        }
+      ]
     },
     "latest_attempt": {
       "date": "2026-11-27",
@@ -3521,7 +3547,7 @@
       "logical_clock": "UseSystemTimeForElapsed=false; the staged Sounds unit does not install the hardware timer vector, leaving its zero-initialized TimerTicks fixed; production uses a fixed logical clock at 0 hsec and immediate zero-duration scheduler checks.",
       "staging_interventions": [
         "Staging hooks provide deterministic input, state capture, and termination after return to the title monitor; the original GamePromptEndPlay, GamePlayLoop, and GameTitleLoop control flow is unchanged.",
-        "The existing Pascal staging copy disables hardware interrupt installation for the sound timer and uses the direct probe\u2019s deterministic logical clock; no hardware timing output is compared.",
+        "The existing Pascal staging copy disables hardware interrupt installation for the sound timer and uses the direct probe’s deterministic logical clock; no hardware timing output is compared.",
         "Production resolves the same refused and accepted prompt results at the shared API boundary, then executes the real zoo_tick scheduler and zoo_world_return_title path."
       ],
       "oracle_output": {
