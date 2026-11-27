@@ -109,7 +109,7 @@ if (-not $stagedInput.Contains($interfaceAnchor) -or -not $stagedInput.Contains(
 }
 $stagedInput = $stagedInput.Replace(
     $interfaceAnchor,
-    $interfaceAnchor + "`r`n`t`tprocedure InputProbeSetKeyBuffer(buffer: string);`r`n`t`tprocedure InputProbeSetReadKeys(keys: string);`r`n`t`tfunction InputProbeGetKeyBuffer: string;"
+    $interfaceAnchor + "`r`n`t`tprocedure InputProbeSetKeyBuffer(buffer: string);`r`n`t`tprocedure InputProbeSetReadKeys(keys: string);`r`n`t`tfunction InputProbeGetKeyBuffer: string;`r`n`t`tfunction InputProbeGetReadKeys: string;`r`n`t`tprocedure InputProbeArmFollowupEscape;`r`n`t`tfunction InputProbeTakeFollowupEscape: boolean;"
 )
 $probeHelper = @'
 procedure InputProbeSetKeyBuffer(buffer: string);
@@ -127,10 +127,26 @@ begin
 	InputProbeReadKeys := keys;
 end;
 
+function InputProbeGetReadKeys: string;
+begin
+	InputProbeGetReadKeys := InputProbeReadKeys;
+end;
+
+procedure InputProbeArmFollowupEscape;
+begin
+	InputProbeFollowupEscapeArmed := true;
+end;
+
+function InputProbeTakeFollowupEscape: boolean;
+begin
+	InputProbeTakeFollowupEscape := InputProbeFollowupEscapeArmed;
+	InputProbeFollowupEscapeArmed := false;
+end;
+
 '@
 $stagedInput = $stagedInput.Replace(
     $inputBufferAnchor,
-    $inputBufferAnchor + "`r`n`tInputProbeReadKeys: string[50];"
+    $inputBufferAnchor + "`r`n`tInputProbeReadKeys: string[50];`r`n`tInputProbeFollowupEscapeArmed: boolean;"
 )
 $stagedInput = $stagedInput.Replace($implementationAnchor, $probeHelper + $implementationAnchor)
 $waitKeyPattern = '(?s)procedure InputReadWaitKey;\r?\n\s*begin\r?\n\s*repeat\r?\n\s*InputUpdate\r?\n\s*until InputKeyPressed <> #0;\r?\n\s*end;'
@@ -610,6 +626,8 @@ GameLoopProbeCycleCompleted := true;
 if GameLoopProbeTitleLifecycleEnabled and (GameStateElement = E_MONITOR)
 	and ((InputKeyPressed = 'P') or (GameLoopProbeTitleRestoreEnabled and (InputKeyPressed = 'R'))) then
 	GamePlayExitRequested := true;
+{ Staging-only deterministic input tape: queue one Escape after a refused prompt reaches a zero-speed cycle boundary. }
+if InputProbeTakeFollowupEscape then InputProbeSetKeyBuffer(Chr(27));
 '@
 $cycleProbeReplacement = '$1' + "`r`n`t`t`t`t`t" + $cycleProbe.Trim()
 $gamePlayLoop = [regex]::Replace($gamePlayLoop, $cycleAdvancePattern, $cycleProbeReplacement, 1)
@@ -2838,13 +2856,35 @@ end;
         -not (Test-Path -LiteralPath $abortLoopOutput -PathType Leaf)) {
         throw "Pascal end-play/title-quit/accepted-abort-loop replay did not write all captures. See $stageRoot\ABORTIN-RUN.LOG and $stageRoot\ABORTLP-RUN.LOG."
     }
+    Write-Host 'Compiling and running Pascal refused-abort loop follow-up replays: No and Escape'
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORTN.OUT') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORTE.OUT') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORTREF.LOG') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $stageBin 'ABORTREF.EXE') -Force -ErrorAction SilentlyContinue
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ABORTREF.PAS') -Destination (Join-Path $stageRoot 'ABORTREF.PAS') -Force
+    Invoke-DosboxSession 'ABORTREF-COMPILE' @(
+        'TPC.EXE /B /EBIN /ISRC /USRC ABORTREF.PAS > ABORTREFC.LOG'
+    )
+    if (-not (Test-Path -LiteralPath (Join-Path $stageBin 'ABORTREF.EXE') -PathType Leaf)) {
+        throw "Turbo Pascal did not produce BIN\ABORTREF.EXE. See $stageRoot\ABORTREFC.LOG and $stageRoot\ABORTREF-COMPILE.LOG."
+    }
+    Invoke-DosboxSession 'ABORTREF-NO-RUN' @('BIN\ABORTREF.EXE N')
+    Invoke-DosboxSession 'ABORTREF-ESCAPE-RUN' @('BIN\ABORTREF.EXE E')
+    $abortRefusedNoOutput = Join-Path $stageRoot 'ABORTN.OUT'
+    $abortRefusedEscapeOutput = Join-Path $stageRoot 'ABORTE.OUT'
+    if (-not (Test-Path -LiteralPath $abortRefusedNoOutput -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $abortRefusedEscapeOutput -PathType Leaf)) {
+        throw "Pascal refused-abort loop replays did not write both captures. See $stageRoot\ABORTREF-NO-RUN.LOG and $stageRoot\ABORTREF-ESCAPE-RUN.LOG."
+    }
     & node 'tools/pascal-compat/compare-player-abort.js' `
         $abortOutput `
         (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
         $titleQuitOutput `
         $abortLoopOutput `
-        (Join-Path $stageRoot 'DEMO.ZZT')
-    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production player-abort decision differential failed with exit code $LASTEXITCODE." }
+        (Join-Path $stageRoot 'DEMO.ZZT') `
+        $abortRefusedNoOutput `
+        $abortRefusedEscapeOutput
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production player-abort decision and lifecycle differential failed with exit code $LASTEXITCODE." }
 
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MISSLOAD.PAS') -Destination (Join-Path $stageRoot 'MISSLOAD.PAS') -Force
     Write-Host 'Compiling and running the direct Pascal missing-world reload capture: MISSLOAD'
@@ -2868,6 +2908,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 88 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, empty-SAV title-R refusal, and ABORTLP-COMPILE/RUN; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP-COMPILE/RUN and MISSLOAD-COMPILE/RUN)."
+$directProbeCount = $probeFiles.Count + 91 # Includes the previous isolated compile/run probes, MISSLOAD-COMPILE/RUN, successful title-P backing-world reload, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions; short-header BoardOpen remains excluded because its freed-buffer path is unstable under DOSBox-X.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

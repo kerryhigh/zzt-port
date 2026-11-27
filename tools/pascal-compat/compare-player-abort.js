@@ -5,6 +5,8 @@ const wasmPath = process.argv[3];
 const titleQuitPascalPath = process.argv[4] || null;
 const endPlayLoopPascalPath = process.argv[5] || null;
 const demoWorldPath = process.argv[6] || null;
+const refusedNoPascalPath = process.argv[7] || null;
+const refusedEscapePascalPath = process.argv[8] || null;
 if (!pascalPath || !wasmPath) {
   throw new Error('Usage: compare-player-abort.js <ABORT.OUT> <integrated_gameplay.wasm> [TITLEQUIT.OUT [ABORTLP.OUT DEMO.ZZT]]');
 }
@@ -135,6 +137,56 @@ if (expected.length !== 7) throw new Error(`Pascal end-play replay emitted ${exp
       }
     }
     console.log(`Accepted player-abort loop: actual Pascal GamePlayLoop return matched production zoo_tick exit boundary across ${count}/${count} player/world/scheduler/sound fields.`);
+  }
+  if (refusedNoPascalPath || refusedEscapePascalPath) {
+    if (!refusedNoPascalPath || !refusedEscapePascalPath || !demoWorldPath) {
+      throw new Error('The refused-abort loop differential requires ABORTN.OUT, ABORTE.OUT, and DEMO.ZZT.');
+    }
+    const refusedPaths = [refusedNoPascalPath, refusedEscapePascalPath];
+    const refusedNames = ['No', 'Escape'];
+    const refusedLoopNames = [
+      'exit requested', 'paused', 'key pressed', 'key buffer count', 'current tick',
+      'current stat tick', 'tick duration', 'tick counter', 'current board',
+      'return board', 'health', 'ammo', 'save flag', 'stat count', 'player x',
+      'player y', 'player tile element', 'player tile color', 'sound blocking',
+      'sound buffer position', 'sound buffer length', 'sound priority',
+    ];
+    const refusedExpected = refusedPaths.map((path, scenario) => {
+      const values = fs.readFileSync(path, 'ascii').trim().split(/\s+/).map(Number);
+      if (values.length !== refusedLoopNames.length || values.some(value => !Number.isInteger(value))) {
+        throw new Error(`Malformed Pascal refused-${refusedNames[scenario]}-then-accepted loop capture: ${values.length} fields, expected ${refusedLoopNames.length}.`);
+      }
+      return values;
+    });
+    const world = fs.readFileSync(demoWorldPath);
+    const capacity = instance.exports.integrated_demo_world_bytes_capacity();
+    if (world.length > capacity) throw new Error(`DEMO.ZZT exceeds production harness capacity: ${world.length}/${capacity}`);
+    const worldPointer = instance.exports.integrated_demo_world_bytes_ptr();
+    new Uint8Array(instance.exports.memory.buffer, worldPointer, world.length).set(world);
+    const result = instance.exports.run_integrated_refused_end_play_loop_checks(world.length);
+    if (result !== 0) throw new Error(`Production refused-abort loop replay returned ${result}`);
+    const count = instance.exports.integrated_refused_end_play_loop_output_count();
+    if (count !== refusedLoopNames.length * refusedNames.length) {
+      throw new Error(`Production refused-abort loop emitted ${count} fields; expected ${refusedLoopNames.length * refusedNames.length}`);
+    }
+    const pointer = instance.exports.integrated_refused_end_play_loop_output_ptr();
+    const actual = new Int32Array(instance.exports.memory.buffer, pointer, count);
+    for (let scenario = 0; scenario < refusedNames.length; scenario++) {
+      for (let field = 0; field < refusedLoopNames.length; field++) {
+        const got = actual[scenario * refusedLoopNames.length + field];
+        const want = refusedExpected[scenario][field];
+        if (got !== want) {
+          const from = Math.max(0, field - 2);
+          const to = Math.min(refusedLoopNames.length - 1, field + 2);
+          const context = [];
+          for (let near = from; near <= to; near++) {
+            context.push({ field: refusedLoopNames[near], pascal: refusedExpected[scenario][near], production: actual[scenario * refusedLoopNames.length + near] });
+          }
+          throw new Error(`Refused player-abort ${refusedNames[scenario]}-then-Yes first difference at field ${field} (${refusedLoopNames[field]}): Pascal=${want}, production=${got}; nearby=${JSON.stringify(context)}`);
+        }
+      }
+    }
+    console.log(`Refused player-abort loops: actual Pascal GamePlayLoop No-then-Yes and Escape-then-Yes aftermath matched production across ${count}/${count} fields (22 each).`);
   }
 })().catch(error => {
   console.error(error);

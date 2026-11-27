@@ -102,6 +102,7 @@ static int32_t integrated_title_restore_failure_field_count_value;
 static int32_t integrated_title_restore_failure_error_value;
 static int32_t integrated_end_play_output[7][5];
 static int32_t integrated_end_play_loop_output[22];
+static int32_t integrated_refused_end_play_loop_output[2][22];
 static int32_t integrated_title_quit_output[3][2];
 static uint8_t integrated_editor_brd_bytes[INTEGRATED_GAMEPLAY_SAVE_CAPACITY];
 static int32_t integrated_editor_brd_length_value;
@@ -4796,6 +4797,109 @@ uint32_t integrated_end_play_loop_output_ptr(void) {
 
 int32_t integrated_end_play_loop_output_count(void) {
 	return 22;
+}
+
+int32_t run_integrated_refused_end_play_loop_checks(int32_t world_length) {
+	int scenario, tick_steps;
+	if (world_length <= 0 || world_length > INTEGRATED_GAMEPLAY_SAVE_CAPACITY) return 60;
+	memset(integrated_refused_end_play_loop_output, 0, sizeof(integrated_refused_end_play_loop_output));
+	for (scenario = 0; scenario < 2; scenario++) {
+		zoo_io_handle world_handle;
+		zoo_tick_retval tick_result;
+		int result;
+		memset(&state, 0, sizeof(state));
+		memset(&video, 0, sizeof(video));
+		memset(&integrated_title_world_io, 0, sizeof(integrated_title_world_io));
+		video.func_write = test_video_write;
+		integrated_title_world_length = world_length;
+		integrated_title_world_io.read_only = true;
+		integrated_title_world_io.func_open_file = integrated_title_world_open_file;
+		state.d_video = &video;
+		state.d_io = &integrated_title_world_io;
+		state.func_draw_sidebar = test_sidebar_update;
+		state.func_random = integrated_gameplay_random;
+		state.random_seed = 0;
+		state.input.repeat_start = 4;
+		state.input.repeat_end = 6;
+		state.tick_speed = 0;
+		zoo_world_create(&state);
+		state.func_random = integrated_gameplay_random;
+		state.random_seed = 0;
+		world_handle = zoo_io_open_file_mem(integrated_demo_world_bytes, (size_t) world_length, MODE_READ);
+		result = zoo_world_load(&state, &world_handle, false);
+		if (world_handle.func_close != NULL) world_handle.func_close(&world_handle);
+		if (result != 0 || state.error_value != 0) return 61 - (result != 0 ? result : state.error_value);
+		result = zoo_world_play(&state);
+		if (result != 0 || state.error_value != 0) return 62 - (result != 0 ? result : state.error_value);
+		/* ABORTREF.PAS resets this sound state after BoardEnter and before the
+		   paused player loop, exactly as the accepted-abort loop probe does. */
+		zoo_sound_state_init(&state.sound);
+		state.sound.enabled = false;
+		state.sound.current_priority = -1;
+		/* Both N and Escape refuse the first prompt. The original loop then
+		   advances one zero-duration boundary before the scripted follow-up. */
+		zoo_game_resolve_end_play(&state, false, true);
+		/* This harness uses an explicit logical clock; enable its zero-time tape. */
+		force_elapsed_for_tick_check = true;
+		/* zoo_world_play can leave one board-enter transition callback pending.
+		   Drain that actual shared callback, then run through the zero-duration
+		   paused cycle until the scheduler resets the stat cursor. */
+		for (tick_steps = 0; tick_steps < 8 && state.current_stat_tick != 0; tick_steps++) {
+			tick_result = zoo_tick(&state);
+			if (state.error_value != 0) {
+				force_elapsed_for_tick_check = false;
+				return 63;
+			}
+			if (state.current_stat_tick != 0 && tick_result != RETURN_IMMEDIATE
+				&& tick_result != RETURN_NEXT_CYCLE) {
+				force_elapsed_for_tick_check = false;
+				return 64;
+			}
+		}
+		force_elapsed_for_tick_check = false;
+		if (state.current_stat_tick != 0 || tick_result != RETURN_IMMEDIATE) {
+			return 65;
+		}
+		/* This Escape is the environmental input tape inserted immediately
+		   after the Pascal scheduler's cycle-boundary InputUpdate. */
+		zoo_input_key_press(&state.input, 27);
+		tick_result = zoo_tick(&state);
+		if (tick_result != RETURN_NEXT_CYCLE || state.error_value != 0 || state.input.key_pressed != 27) return 66;
+		zoo_game_resolve_end_play(&state, true, true);
+		tick_result = zoo_tick(&state);
+		if (tick_result != RETURN_NEXT_CYCLE || state.error_value != 0) return 67;
+		integrated_refused_end_play_loop_output[scenario][0] = state.game_play_exit_requested ? 1 : 0;
+		integrated_refused_end_play_loop_output[scenario][1] = state.game_paused ? 1 : 0;
+		integrated_refused_end_play_loop_output[scenario][2] = state.input.key_pressed;
+		integrated_refused_end_play_loop_output[scenario][3] = state.input.key_buffer_count;
+		integrated_refused_end_play_loop_output[scenario][4] = state.current_tick;
+		integrated_refused_end_play_loop_output[scenario][5] = state.current_stat_tick;
+		integrated_refused_end_play_loop_output[scenario][6] = state.tick_duration;
+		integrated_refused_end_play_loop_output[scenario][7] = state.tick_counter;
+		integrated_refused_end_play_loop_output[scenario][8] = state.world.info.current_board;
+		integrated_refused_end_play_loop_output[scenario][9] = state.return_board_id;
+		integrated_refused_end_play_loop_output[scenario][10] = state.world.info.health;
+		integrated_refused_end_play_loop_output[scenario][11] = state.world.info.ammo;
+		integrated_refused_end_play_loop_output[scenario][12] = state.world.info.is_save ? 1 : 0;
+		integrated_refused_end_play_loop_output[scenario][13] = state.board.stat_count;
+		integrated_refused_end_play_loop_output[scenario][14] = state.board.stats[0].x;
+		integrated_refused_end_play_loop_output[scenario][15] = state.board.stats[0].y;
+		integrated_refused_end_play_loop_output[scenario][16] = state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].element;
+		integrated_refused_end_play_loop_output[scenario][17] = state.board.tiles[state.board.stats[0].x][state.board.stats[0].y].color;
+		integrated_refused_end_play_loop_output[scenario][18] = state.sound.block_queueing ? 1 : 0;
+		integrated_refused_end_play_loop_output[scenario][19] = state.sound.buffer_pos + 1;
+		integrated_refused_end_play_loop_output[scenario][20] = state.sound.buffer_len;
+		integrated_refused_end_play_loop_output[scenario][21] = state.sound.current_priority;
+	}
+	return 0;
+}
+
+uint32_t integrated_refused_end_play_loop_output_ptr(void) {
+	return (uint32_t) (uintptr_t) integrated_refused_end_play_loop_output;
+}
+
+int32_t integrated_refused_end_play_loop_output_count(void) {
+	return 44;
 }
 
 uint32_t integrated_end_play_output_ptr(void) {
