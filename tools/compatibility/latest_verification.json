@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-27",
-    "root_revision": "eb33726d49b71af239b9024b661bec0bf536bf7d",
+    "root_revision": "8204eb912f30053ab72805c33ce8c6c433927295",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 148 direct Pascal sessions (54 standard, 94 standalone), 67/67 direct Pascal/production comparison invocations (65 existing plus signed .BRD and signed .SAV boundary comparators, each covering five values), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). All five .BRD payloads matched 289/289 bytes; all five .SAV files matched 26,465/26,465 bytes with nine signed world fields decoded correctly. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision 8204eb912f30053ab72805c33ce8c6c433927295: 148 direct Pascal sessions (54 standard, 94 standalone), 68/68 direct Pascal/production comparison invocations (65 existing plus signed .BRD, signed .SAV, and short-string .BRD comparators), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). All nine short-string .BRD records matched 289/289 bytes; no unexplained comparable mismatch.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -91,13 +91,13 @@
       "sessions": 148,
       "standard_programs": 54,
       "standalone_sessions": 94,
-      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 54 standard probes and 94 standalone compile/run or fixture sessions, including the ten integrated fixtures and controlled E2-02 short-header capture. WORLDSAV also emitted five signed-boundary .SAV files in its existing direct session; the total session count remains 148."
+      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed on source revision 8204eb912f30053ab72805c33ce8c6c433927295: 54 standard probes and 94 standalone compile/run or fixture sessions, including all ten integrated fixtures and the E2-02 .BRD short-string capture."
     },
     "direct_differential_comparisons": {
-      "configured": 67,
-      "passed": 67,
+      "configured": 68,
+      "passed": 68,
       "failed": 0,
-      "result": "67/67 direct Pascal-to-production comparison invocations passed on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 65 existing configured comparisons plus the five-value signed .BRD comparator and the five-value signed .SAV world-header comparator. The .BRD comparator matched all 289 payload bytes per file; the .SAV comparator matched all 26,465 bytes per file and verified nine signed world fields. Frozen F01-F10 matched at 238 checkpoints / 824,821 checkpoint fields / 169 logical cycles. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields; private World.BoardLen[0] is excluded. No unexplained mismatch."
+      "result": "68/68 direct Pascal-to-production comparison invocations passed on source revision 8204eb912f30053ab72805c33ce8c6c433927295: 65 existing comparisons plus the signed .BRD, signed .SAV, and short-string .BRD comparators. All nine short-string records matched all 289 bytes; frozen F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2179,7 +2179,8 @@
       "E2-03 missing backing-world title-P path was rerun in the clean 2026-11-26 suite on source commit 58c01427d7095ec94ecefaec9948cbe42dda1774. The direct Pascal WorldLoad capture returned false; production zoo_world_play returned ZOO_ERROR_INVAL (-2) before play startup; all 18 preserved world/board fields matched. Full run passed 138 direct sessions, 60 direct differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), runtime checks, and first-divergence negative control. AC001 remains partial; other save/return routes and the consistent success/refusal transition matrix remain mandatory.",
       "E2-03 successful title-P backing-world reload passed in the clean 2026-11-26 runner: direct Pascal GameTitleLoop P loaded DEMO.ZZT after a title-only setup, and production zoo_world_play reloaded the same bytes; three checkpoints / 10,360 state fields matched through one real paused cycle and return-to-title. Full run passed 139 direct Pascal sessions (54 standard, 85 standalone), 61/61 direct differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), runtime checks, and the first-divergence negative control. AC001 remains partial because other save/return outcomes and the broader successful/refused transition matrix remain mandatory.",
       "E2-03-AC001 empty-file refusal passed in the clean 2026-11-26 runner on source revision 4a10f5b33963108128b6b11dae5d1646e0d09979: direct original GameTitleLoop R refusal against an existing zero-byte RESTORE.SAV matched 3,384/3,386 comparable fields; field 2 private board-buffer length and field 16 frontend-consumed InputKeyPressed are excluded. Production returned ZOO_ERROR_INVAL (-2). Full run passed 140 direct sessions, 62/62 differentials, F01-F10, runtime suite, and first-divergence negative control; AC001 remains partial.",
-      "After the clean 140-session Pascal/production run, Android CP437/key verification and debug plus Android-test APK builds passed for arm64-v8a and x86_64; Windows Release x64 build and CTest passed 3/3 after shared-engine commit 4a10f5b33963108128b6b11dae5d1646e0d09979. No Android device test was performed."
+      "After the clean 140-session Pascal/production run, Android CP437/key verification and debug plus Android-test APK builds passed for arm64-v8a and x86_64; Windows Release x64 build and CTest passed 3/3 after shared-engine commit 4a10f5b33963108128b6b11dae5d1646e0d09979. No Android device test was performed.",
+      "E2-02 AC002: direct Pascal and production byte differentials passed for nine .BRD short-string, raw-length, embedded NUL/CP437, and stale-tail cases; acceptance remains partial."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -2230,10 +2231,10 @@
     "latest_attempt": {
       "date": "2026-11-27",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "eb33726d49b71af239b9024b661bec0bf536bf7d",
+      "source_revision": "8204eb912f30053ab72805c33ce8c6c433927295",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 148,
-      "configured_differentials_passed": 67,
+      "configured_differentials_passed": 68,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 148 sessions.",
@@ -2242,7 +2243,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 148 direct Pascal sessions (54 standard, 94 standalone), 67/67 direct Pascal/production comparison invocations (65 existing plus signed .BRD and signed .SAV boundary comparators, each covering five values), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). All five .BRD payloads matched 289/289 bytes; all five .SAV files matched 26,465/26,465 bytes with nine signed world fields decoded correctly. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision 8204eb912f30053ab72805c33ce8c6c433927295: 148 direct Pascal sessions (54 standard, 94 standalone), 68/68 direct Pascal/production comparison invocations (65 existing plus signed .BRD, signed .SAV, and short-string .BRD comparators), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). All nine short-string .BRD records matched 289/289 bytes; no unexplained comparable mismatch.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -3027,6 +3028,120 @@
           "All WRS*.SAV files are transient outputs under the ignored clean staging directory and are regenerated by the runner."
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-world-header.md"
+      },
+      "pascal_boardclose_short_strings": {
+        "acceptance_case": "E2-02-AC002",
+        "evidence_class": "D+DP",
+        "acceptance_status": "partial",
+        "result": "Passed all nine raw short-string boundary captures and full-record differentials; AC002 remains partial.",
+        "probe": "tools/pascal-compat/BOARDENC.PAS",
+        "comparator": "tools/pascal-compat/compare-pascal-brd-strings.js",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_editor_brd.c::zoo_editor_brd_import_record",
+          "third_party/libzoo/src/libzoo/zoo_editor_brd.c::zoo_editor_brd_parse",
+          "third_party/libzoo/src/libzoo/zoo_editor_brd.c::zoo_editor_brd_serialize"
+        ],
+        "raw_name_lengths": [
+          0,
+          1,
+          49,
+          50,
+          51,
+          127,
+          255,
+          50,
+          1
+        ],
+        "records_configured": 9,
+        "records_matched": 9,
+        "record_bytes_matched_per_case": 289,
+        "record_bytes_total_per_case": 289,
+        "complete_record_bytes_matched": 2601,
+        "byte_differences": 0,
+        "comparison_exit_code": 0,
+        "clean_suite_comparator_invocations": 1,
+        "embedded_payload_bytes": [
+          65,
+          0,
+          128,
+          130,
+          255
+        ],
+        "stale_tail_source_assignment": [
+          "ZZT-STALE-TAIL-TEST",
+          "X"
+        ],
+        "generated_files": [
+          {
+            "file": "STR0.BRD",
+            "raw_name_length": 0,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "D2E16E26ED65B6BCA66950240137D83757A0A36BDE2DD091B5019C4E008F4CBB"
+          },
+          {
+            "file": "STR1.BRD",
+            "raw_name_length": 1,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "2CDFE5EF9839C526098933975D53551F6AE7315E8562BBF23BF854D125A52B9F"
+          },
+          {
+            "file": "STR2.BRD",
+            "raw_name_length": 49,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "A909DCF94E6D32E4ACFED201FE1B6F13764995FEB96E2F6C8A70E2734C4F5AA1"
+          },
+          {
+            "file": "STR3.BRD",
+            "raw_name_length": 50,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "742B709AD321AD45C94D5554E98D88CAA5C5331317A63BBB2DAF19614ED120B1"
+          },
+          {
+            "file": "STR4.BRD",
+            "raw_name_length": 51,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "A5C61E861E06ED9DF92674C971885DB8F89D3F0E5A638376514DBA4E49BB4130"
+          },
+          {
+            "file": "STR5.BRD",
+            "raw_name_length": 127,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "7B91FD88BE17D47692FFB1730782ECB0F1CF94CE6F88DEA2D04B0FE119E25220"
+          },
+          {
+            "file": "STR6.BRD",
+            "raw_name_length": 255,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "FA40581C656C97D6875CDF98A33AD4FAAA0F1F3897B84DEFD8938C1554C6ADEC"
+          },
+          {
+            "file": "STR7.BRD",
+            "raw_name_length": 50,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "C3ED92272B0EA42BEBC2A603BB67F5FAD642F4AB2C17ECC52DA6287A24155A6C"
+          },
+          {
+            "file": "STR8.BRD",
+            "raw_name_length": 1,
+            "file_bytes": 291,
+            "record_bytes_matched": 289,
+            "sha256": "AEB237A6F02956E6C3682036CECE233881791E20B4C5569F4EE1918FE11D7109"
+          }
+        ],
+        "staging_interventions": [
+          "The direct probe loads source-produced DEMO.ZZT once, assigns Board.Name bytes, and invokes the original BoardClose routine.",
+          "The existing no-op VideoWriteText callback suppresses display output only; no Pascal gameplay or serializer routine is modified.",
+          "The final probe reuses its existing byte buffer and loaded-board state; STR0.BRD through STR8.BRD are transient outputs in the ignored clean staging directory."
+        ],
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-short-strings.md"
       }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
@@ -3871,6 +3986,120 @@
         "All WRS*.SAV files are transient outputs under the ignored clean staging directory and are regenerated by the runner."
       ],
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-world-header.md"
+    },
+    "brd_short_string_differential": {
+      "acceptance_case": "E2-02-AC002",
+      "evidence_class": "D+DP",
+      "acceptance_status": "partial",
+      "result": "Passed all nine raw short-string boundary captures and full-record differentials; AC002 remains partial.",
+      "probe": "tools/pascal-compat/BOARDENC.PAS",
+      "comparator": "tools/pascal-compat/compare-pascal-brd-strings.js",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_editor_brd.c::zoo_editor_brd_import_record",
+        "third_party/libzoo/src/libzoo/zoo_editor_brd.c::zoo_editor_brd_parse",
+        "third_party/libzoo/src/libzoo/zoo_editor_brd.c::zoo_editor_brd_serialize"
+      ],
+      "raw_name_lengths": [
+        0,
+        1,
+        49,
+        50,
+        51,
+        127,
+        255,
+        50,
+        1
+      ],
+      "records_configured": 9,
+      "records_matched": 9,
+      "record_bytes_matched_per_case": 289,
+      "record_bytes_total_per_case": 289,
+      "complete_record_bytes_matched": 2601,
+      "byte_differences": 0,
+      "comparison_exit_code": 0,
+      "clean_suite_comparator_invocations": 1,
+      "embedded_payload_bytes": [
+        65,
+        0,
+        128,
+        130,
+        255
+      ],
+      "stale_tail_source_assignment": [
+        "ZZT-STALE-TAIL-TEST",
+        "X"
+      ],
+      "generated_files": [
+        {
+          "file": "STR0.BRD",
+          "raw_name_length": 0,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "D2E16E26ED65B6BCA66950240137D83757A0A36BDE2DD091B5019C4E008F4CBB"
+        },
+        {
+          "file": "STR1.BRD",
+          "raw_name_length": 1,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "2CDFE5EF9839C526098933975D53551F6AE7315E8562BBF23BF854D125A52B9F"
+        },
+        {
+          "file": "STR2.BRD",
+          "raw_name_length": 49,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "A909DCF94E6D32E4ACFED201FE1B6F13764995FEB96E2F6C8A70E2734C4F5AA1"
+        },
+        {
+          "file": "STR3.BRD",
+          "raw_name_length": 50,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "742B709AD321AD45C94D5554E98D88CAA5C5331317A63BBB2DAF19614ED120B1"
+        },
+        {
+          "file": "STR4.BRD",
+          "raw_name_length": 51,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "A5C61E861E06ED9DF92674C971885DB8F89D3F0E5A638376514DBA4E49BB4130"
+        },
+        {
+          "file": "STR5.BRD",
+          "raw_name_length": 127,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "7B91FD88BE17D47692FFB1730782ECB0F1CF94CE6F88DEA2D04B0FE119E25220"
+        },
+        {
+          "file": "STR6.BRD",
+          "raw_name_length": 255,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "FA40581C656C97D6875CDF98A33AD4FAAA0F1F3897B84DEFD8938C1554C6ADEC"
+        },
+        {
+          "file": "STR7.BRD",
+          "raw_name_length": 50,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "C3ED92272B0EA42BEBC2A603BB67F5FAD642F4AB2C17ECC52DA6287A24155A6C"
+        },
+        {
+          "file": "STR8.BRD",
+          "raw_name_length": 1,
+          "file_bytes": 291,
+          "record_bytes_matched": 289,
+          "sha256": "AEB237A6F02956E6C3682036CECE233881791E20B4C5569F4EE1918FE11D7109"
+        }
+      ],
+      "staging_interventions": [
+        "The direct probe loads source-produced DEMO.ZZT once, assigns Board.Name bytes, and invokes the original BoardClose routine.",
+        "The existing no-op VideoWriteText callback suppresses display output only; no Pascal gameplay or serializer routine is modified.",
+        "The final probe reuses its existing byte buffer and loaded-board state; STR0.BRD through STR8.BRD are transient outputs in the ignored clean staging directory."
+      ],
+      "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-short-strings.md"
     }
   }
 }
