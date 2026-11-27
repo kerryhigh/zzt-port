@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-27",
-    "root_revision": "a21746dd55bd1ba680a5749491be6838c241fc88",
+    "root_revision": "eb33726d49b71af239b9024b661bec0bf536bf7d",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision a21746dd55bd1ba680a5749491be6838c241fc88: 148 direct Pascal sessions (54 standard, 94 standalone), 66/66 direct Pascal/production comparison invocations (65 existing plus one signed .BRD boundary comparator covering five values), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Every signed boundary decoded in the board time limit and six stat fields across four stat records; all five 289-byte board payloads matched exactly. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 148 direct Pascal sessions (54 standard, 94 standalone), 67/67 direct Pascal/production comparison invocations (65 existing plus signed .BRD and signed .SAV boundary comparators, each covering five values), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). All five .BRD payloads matched 289/289 bytes; all five .SAV files matched 26,465/26,465 bytes with nine signed world fields decoded correctly. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -91,13 +91,13 @@
       "sessions": 148,
       "standard_programs": 54,
       "standalone_sessions": 94,
-      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed on source revision a21746dd55bd1ba680a5749491be6838c241fc88: 54 standard probes and 94 standalone compile/run or fixture sessions, including the ten integrated fixtures and controlled E2-02 short-header capture. BOARDENC also emitted five signed-boundary .BRD records in its existing direct session."
+      "session_result": "148 direct Turbo Pascal 5.5 compile/run sessions passed on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 54 standard probes and 94 standalone compile/run or fixture sessions, including the ten integrated fixtures and controlled E2-02 short-header capture. WORLDSAV also emitted five signed-boundary .SAV files in its existing direct session; the total session count remains 148."
     },
     "direct_differential_comparisons": {
-      "configured": 66,
-      "passed": 66,
+      "configured": 67,
+      "passed": 67,
       "failed": 0,
-      "result": "66/66 direct Pascal-to-production comparison invocations passed on source revision a21746dd55bd1ba680a5749491be6838c241fc88: 65 existing configured comparisons plus the signed .BRD boundary comparator, which checked five Pascal-generated values and all 289 bytes per record. Frozen F01-F10 matched at 238 checkpoints / 824,821 checkpoint fields / 169 logical cycles. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields; private World.BoardLen[0] is excluded. No unexplained mismatch."
+      "result": "67/67 direct Pascal-to-production comparison invocations passed on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 65 existing configured comparisons plus the five-value signed .BRD comparator and the five-value signed .SAV world-header comparator. The .BRD comparator matched all 289 payload bytes per file; the .SAV comparator matched all 26,465 bytes per file and verified nine signed world fields. Frozen F01-F10 matched at 238 checkpoints / 824,821 checkpoint fields / 169 logical cycles. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields; private World.BoardLen[0] is excluded. No unexplained mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2127,7 +2127,7 @@
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
-      "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The short-payload and controlled one-byte short-header EditorTransferBoard traces now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
+      "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The short-payload and controlled one-byte short-header EditorTransferBoard traces plus the five-value signed .BRD and nine-field .SAV boundary differentials now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
       "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
       "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
@@ -2138,6 +2138,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-02 AC002 signed .SAV world-header boundaries passed on eb33726d49b71af239b9024b661bec0bf536bf7d: the existing compiled-Pascal WORLDSAV session emitted five WorldSave files for -32768, -1, 0, 1, and 32767. Production decoded nine signed world-header fields and matched every byte in each 26,465-byte save. The clean suite passed 148 direct Pascal sessions, 67/67 direct comparisons, and F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles; E2-02 remains partial and no acceptance case was added. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-world-header.md.",
       "E2-02 AC002 signed .BRD boundaries passed on a21746dd55bd1ba680a5749491be6838c241fc88: the existing compiled-Pascal BOARDENC session emitted five BoardClose files for -32768, -1, 0, 1, and 32767. Production decoded TimeLimitSec plus StepX/StepY/Cycle/Follower/Leader/DataPos for all four stat records and re-emitted each full 289-byte payload byte-for-byte. Clean suite: 148 direct Pascal sessions, 66/66 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles; E2-02 remains partial and no acceptance cases were added. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-brd-boundaries.md.",
       "E2-02 signed serialization portability fix on e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8: replaced implementation-defined 16/8-bit signed conversions in shared world and .BRD codecs with range-safe Pascal bit interpretation; writers preserve the original wire bytes. Exhaustive production regression passed all 65,536 word patterns and 256 packed-byte patterns. The clean Pascal run passed 148 sessions, 65/65 differentials, and all ten integrated fixtures; runtime, Windows 3/3 CTest, Android compatibility/build, and serializer checks passed. E2-02 AC002 and the blocker remain partial; the frozen inventory did not change. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-portable-signed-serialization.md.",
       "E2-02-AC003/AC004: controlled one-byte SHORTHD.BRD short-header EditorTransferBoard completed in the original Pascal path using a documented 60,000-byte heap-sink allocation history. Direct output was board 6 41 0 21 47 30 12 259 0 0 0 0; production matched eight selected fields, name bytes, and four neighbors. Clean run: 148 direct Pascal sessions (54 standard/94 standalone), 65/65 differentials, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. E2-02 remains partial and the 54-case inventory is unchanged. See tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md.",
@@ -2229,10 +2230,10 @@
     "latest_attempt": {
       "date": "2026-11-27",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "a21746dd55bd1ba680a5749491be6838c241fc88",
+      "source_revision": "eb33726d49b71af239b9024b661bec0bf536bf7d",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 148,
-      "configured_differentials_passed": 66,
+      "configured_differentials_passed": 67,
       "configured_differentials_failed": 0,
       "failure": null,
       "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 148 sessions.",
@@ -2241,7 +2242,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision a21746dd55bd1ba680a5749491be6838c241fc88: 148 direct Pascal sessions (54 standard, 94 standalone), 66/66 direct Pascal/production comparison invocations (65 existing plus one signed .BRD boundary comparator covering five values), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Every signed boundary decoded in the board time limit and six stat fields across four stat records; all five 289-byte board payloads matched exactly. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision eb33726d49b71af239b9024b661bec0bf536bf7d: 148 direct Pascal sessions (54 standard, 94 standalone), 67/67 direct Pascal/production comparison invocations (65 existing plus signed .BRD and signed .SAV boundary comparators, each covering five values), and F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). All five .BRD payloads matched 289/289 bytes; all five .SAV files matched 26,465/26,465 bytes with nine signed world fields decoded correctly. F10 post-failed-WorldLoad state matched 3,385/3,385 comparable fields with private World.BoardLen[0] excluded. No unexplained comparable mismatch; E2-03-AC001 remains partial and E2-10 remains the only closed blocker.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 7,
       "integrated_state_fields_compared": 24015,
@@ -2836,7 +2837,7 @@
       "accepted_abort_loop_fields_compared": 22,
       "accepted_abort_loop_differences": 0,
       "accepted_abort_loop_comparison_exit_code": 0,
-      "direct_pascal_standalone_sessions_passed": 93,
+      "direct_pascal_standalone_sessions_passed": 94,
       "direct_pascal_standard_programs_passed": 54,
       "title_refused_abort_return_comparison_exit_code": 0,
       "title_refused_abort_return_checkpoints": 3,
@@ -2947,6 +2948,85 @@
           "Pascal pointer bytes are compared only within each same-run production parse/export round-trip; cross-run pointer values are allocator-dependent. DataLen remains valid and its signed alias edge matrix is outstanding."
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-brd-boundaries.md"
+      },
+      "signed_world_header_differential": {
+        "acceptance_case": "E2-02-AC002",
+        "evidence_class": "D+DP",
+        "result": "passed for five signed world-header values; AC002 remains partial",
+        "probe": "tools/pascal-compat/WORLDSAV.PAS::WorldSave",
+        "comparator": "tools/pascal-compat/compare-pascal-signed-world.js",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
+          "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_save"
+        ],
+        "fields": [
+          "Ammo",
+          "Gems",
+          "Health",
+          "Torches",
+          "TorchTicks",
+          "EnergizerTicks",
+          "Score",
+          "BoardTimeSec",
+          "BoardTimeHsec"
+        ],
+        "values": [
+          -32768,
+          -1,
+          0,
+          1,
+          32767
+        ],
+        "files_checked": 5,
+        "file_bytes_matched_per_case": 26465,
+        "file_byte_differences": 0,
+        "production_decode_fields_matched_per_case": 9,
+        "comparison_exit_code": 0,
+        "clean_suite_comparator_invocations": 1,
+        "source_world": {
+          "path": "app/src/main/assets/DEMO.ZZT",
+          "size_bytes": 26465,
+          "sha256": "B54610B5A52B125FA3083F38F6BEEC1CF2178655575FC0D60E999E2659253831"
+        },
+        "generated_files": [
+          {
+            "value": -32768,
+            "path": "build/pascal-compat-verification/WRS0.SAV",
+            "size_bytes": 26465,
+            "sha256": "CF3A68497C04277A9499D83229F0E340FF62D6494CF3CEF5B3A4C580003C6862"
+          },
+          {
+            "value": -1,
+            "path": "build/pascal-compat-verification/WRS1.SAV",
+            "size_bytes": 26465,
+            "sha256": "CADD98A9BA641685ECA91EDE70DD156F4EBCDC2D9C0A4A3E730E2E33A04DDEBD"
+          },
+          {
+            "value": 0,
+            "path": "build/pascal-compat-verification/WRS2.SAV",
+            "size_bytes": 26465,
+            "sha256": "08EAC392DED45CC7883BC137092CA0360D704A8925D55CFA6952D673836164B2"
+          },
+          {
+            "value": 1,
+            "path": "build/pascal-compat-verification/WRS3.SAV",
+            "size_bytes": 26465,
+            "sha256": "232D7BCB5F3E7E4EB7C5B945E8FD5121A96027BEC3B20EDFBBF3296FDE23540D"
+          },
+          {
+            "value": 32767,
+            "path": "build/pascal-compat-verification/WRS4.SAV",
+            "size_bytes": 26465,
+            "sha256": "7362C7AF55C2439C2B6B87A480E96695EB785331BC4D8C471827A6E85314F965"
+          }
+        ],
+        "staging_interventions": [
+          "The direct Pascal probe starts from source-produced DEMO.ZZT, keeps the active current board valid, sets the nine listed world fields and invokes the original WorldSave routine.",
+          "The existing quiet video callback suppresses probe display output only; no Pascal gameplay or serialization semantics were modified.",
+          "Production loads the same source world, opens the current board, assigns the same values, preserves the SAV IsSave byte, invokes zoo_world_save, and compares the complete output bytes.",
+          "All WRS*.SAV files are transient outputs under the ignored clean staging directory and are regenerated by the runner."
+        ],
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-world-header.md"
       }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
@@ -3712,6 +3792,85 @@
       },
       "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-title-w-world-selection.md",
       "scope_note": "Adds evidence to existing E2-03-AC001. The frozen acceptance inventory and E2-10 ten-fixture corpus are unchanged; E2-03 remains partial. Pascal uses its actual DOS working-directory file; the production replay receives identical bytes through memory I/O, so host filesystem/path and selector enumeration behavior remain outside this comparison."
+    },
+    "signed_world_header_differential": {
+      "acceptance_case": "E2-02-AC002",
+      "evidence_class": "D+DP",
+      "result": "passed for five signed world-header values; AC002 remains partial",
+      "probe": "tools/pascal-compat/WORLDSAV.PAS::WorldSave",
+      "comparator": "tools/pascal-compat/compare-pascal-signed-world.js",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_save"
+      ],
+      "fields": [
+        "Ammo",
+        "Gems",
+        "Health",
+        "Torches",
+        "TorchTicks",
+        "EnergizerTicks",
+        "Score",
+        "BoardTimeSec",
+        "BoardTimeHsec"
+      ],
+      "values": [
+        -32768,
+        -1,
+        0,
+        1,
+        32767
+      ],
+      "files_checked": 5,
+      "file_bytes_matched_per_case": 26465,
+      "file_byte_differences": 0,
+      "production_decode_fields_matched_per_case": 9,
+      "comparison_exit_code": 0,
+      "clean_suite_comparator_invocations": 1,
+      "source_world": {
+        "path": "app/src/main/assets/DEMO.ZZT",
+        "size_bytes": 26465,
+        "sha256": "B54610B5A52B125FA3083F38F6BEEC1CF2178655575FC0D60E999E2659253831"
+      },
+      "generated_files": [
+        {
+          "value": -32768,
+          "path": "build/pascal-compat-verification/WRS0.SAV",
+          "size_bytes": 26465,
+          "sha256": "CF3A68497C04277A9499D83229F0E340FF62D6494CF3CEF5B3A4C580003C6862"
+        },
+        {
+          "value": -1,
+          "path": "build/pascal-compat-verification/WRS1.SAV",
+          "size_bytes": 26465,
+          "sha256": "CADD98A9BA641685ECA91EDE70DD156F4EBCDC2D9C0A4A3E730E2E33A04DDEBD"
+        },
+        {
+          "value": 0,
+          "path": "build/pascal-compat-verification/WRS2.SAV",
+          "size_bytes": 26465,
+          "sha256": "08EAC392DED45CC7883BC137092CA0360D704A8925D55CFA6952D673836164B2"
+        },
+        {
+          "value": 1,
+          "path": "build/pascal-compat-verification/WRS3.SAV",
+          "size_bytes": 26465,
+          "sha256": "232D7BCB5F3E7E4EB7C5B945E8FD5121A96027BEC3B20EDFBBF3296FDE23540D"
+        },
+        {
+          "value": 32767,
+          "path": "build/pascal-compat-verification/WRS4.SAV",
+          "size_bytes": 26465,
+          "sha256": "7362C7AF55C2439C2B6B87A480E96695EB785331BC4D8C471827A6E85314F965"
+        }
+      ],
+      "staging_interventions": [
+        "The direct Pascal probe starts from source-produced DEMO.ZZT, keeps the active current board valid, sets the nine listed world fields and invokes the original WorldSave routine.",
+        "The existing quiet video callback suppresses probe display output only; no Pascal gameplay or serialization semantics were modified.",
+        "Production loads the same source world, opens the current board, assigns the same values, preserves the SAV IsSave byte, invokes zoo_world_save, and compares the complete output bytes.",
+        "All WRS*.SAV files are transient outputs under the ignored clean staging directory and are regenerated by the runner."
+      ],
+      "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-world-header.md"
     }
   }
 }

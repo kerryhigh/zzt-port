@@ -167,10 +167,11 @@
         "tools/pascal-compat/BRDXFER.PAS",
         "tools/serializer-compat/",
         "tools/highscore-compat/",
-        "tools/pascal-compat/compare-pascal-signed-brd.js"
+        "tools/pascal-compat/compare-pascal-signed-brd.js",
+        "tools/pascal-compat/compare-pascal-signed-world.js"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-brd-boundaries.md; SIG0..SIG4.BRD: five compiled-Pascal BoardClose records for -32768, -1, 0, 1, 32767; production decoded TimeLimitSec and six signed stat fields in four records and matched 289/289 record bytes for each value. Generated-run SHA-256 values are recorded in the evidence note.",
-      "verification_result": "Partial: direct compiled Pascal and production differential now verify five signed values (-32768, -1, 0, 1, 32767) for Board.Info.TimeLimitSec and each stat StepX, StepY, Cycle, Follower, Leader, and DataPos across four records; all five complete .BRD payloads match byte-for-byte. The remaining frozen per-format string, Boolean, reserved/stale-tail, DataLen, count, RLE, and malformed/truncation matrix remains incomplete.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-brd-boundaries.md; SIG0..SIG4.BRD: five compiled-Pascal BoardClose records for -32768, -1, 0, 1, 32767; production decoded TimeLimitSec and six signed stat fields in four records and matched 289/289 record bytes for each value. tools/compatibility/evidence/2026-11-27-e2-02-pascal-signed-world-header.md; WRS0..WRS4.SAV: five compiled-Pascal WorldSave files for -32768, -1, 0, 1, 32767; production decoded nine signed world-header fields and matched all 26465 bytes in each file. Generated-run hashes are recorded in the evidence notes.",
+      "verification_result": "Partial: direct compiled Pascal and production differential verify five signed values (-32768, -1, 0, 1, 32767) for Board.Info.TimeLimitSec and each stat StepX, StepY, Cycle, Follower, Leader, and DataPos across four records; all five complete 289-byte .BRD payloads match byte-for-byte. The same five values are verified in nine serialized world fields (Ammo, Gems, Health, Torches, TorchTicks, EnergizerTicks, Score, BoardTimeSec, BoardTimeHsec); all five complete 26465-byte .SAV files match byte-for-byte. The remaining frozen per-format string, Boolean, reserved/stale-tail, DataLen, count, RLE, and malformed/truncation matrix remains incomplete.",
       "required_evidence_classes": [
         "D",
         "DP"
