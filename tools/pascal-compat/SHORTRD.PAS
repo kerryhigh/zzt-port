@@ -11,6 +11,7 @@ var
 	boardId: integer;
 	ptr: pointer;
 	tailByte: byte;
+	loadedBytes: array[0..3] of byte;
 begin
 	VideoWriteText := QuietWrite;
 	TickSpeed := 4;
@@ -27,14 +28,19 @@ begin
 	loaded := WorldLoad('PARTIAL', '.ZZT', false);
 	if loaded then begin
 		ptr := World.BoardData[1];
+		Move(ptr^, loadedBytes, SizeOf(loadedBytes));
 		AdvancePointer(ptr, 4);
 		Move(ptr^, tailByte, SizeOf(tailByte));
 	end else begin
+		FillChar(loadedBytes, SizeOf(loadedBytes), 0);
 		tailByte := 0;
 	end;
 	Assign(output, 'SHORTRD.OUT');
 	Rewrite(output);
 	WriteLn(output, 'short-read ', Ord(loaded), ' ', World.BoardCount, ' ',
-		World.Info.CurrentBoard, ' ', World.BoardLen[1], ' tail ', tailByte);
+		World.Info.CurrentBoard, ' ', Ord(World.Info.IsSave), ' ', World.BoardLen[1], ' ',
+		Ord(World.BoardData[1] <> nil), ' data ',
+		loadedBytes[0], ' ', loadedBytes[1], ' ', loadedBytes[2], ' ',
+		loadedBytes[3], ' tail ', tailByte);
 	Close(output);
 end.

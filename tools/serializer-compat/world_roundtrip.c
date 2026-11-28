@@ -294,6 +294,43 @@ int run_world_load_partial_length(uint32_t input_len) {
     return 0;
 }
 
+int run_world_load_short_payload(uint32_t input_len) {
+    int ret;
+    zoo_io_handle in_handle;
+    uint8_t *board_data;
+    if (input_len > FIXTURE_CAP) return -90;
+    heap_used = 0;
+    memset(&state, 0, sizeof(state));
+    memset(output_data, 0, 13);
+    output_size = 0;
+    zoo_world_create(&state);
+    state.world.board_count = 1;
+    state.world.board_len[1] = 16;
+    state.world.board_data[1] = malloc(16);
+    if (state.world.board_data[1] == NULL) return ZOO_ERROR_NOMEM;
+    memset(state.world.board_data[1], 0xA5, 16);
+    in_handle = zoo_io_open_file_mem(input_data, input_len, MODE_READ);
+    ret = zoo_world_load(&state, &in_handle, false);
+    if (ret != 0) return ret;
+    if (state.world.board_count != 15 || state.world.info.current_board != 0
+            || state.world.info.is_save || state.world.board_len[1] != 16
+            || state.world.board_data[1] == NULL) return -91;
+
+    board_data = (uint8_t *) state.world.board_data[1];
+    output_data[0] = 1;
+    output_data[1] = (uint8_t) state.world.board_count;
+    output_data[2] = (uint8_t) ((uint16_t) state.world.board_count >> 8);
+    output_data[3] = (uint8_t) state.world.info.current_board;
+    output_data[4] = (uint8_t) ((uint16_t) state.world.info.current_board >> 8);
+    output_data[5] = state.world.info.is_save ? 1 : 0;
+    output_data[6] = (uint8_t) state.world.board_len[1];
+    output_data[7] = (uint8_t) ((uint16_t) state.world.board_len[1] >> 8);
+    output_data[8] = state.world.board_data[1] != NULL ? 1 : 0;
+    memcpy(output_data + 9, board_data, 4);
+    output_size = 13;
+    return 0;
+}
+
 int run_world_load_unsigned_board_length(uint32_t input_len) {
     int ret;
     zoo_io_handle in_handle;

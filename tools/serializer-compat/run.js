@@ -3,8 +3,14 @@ const path = require('node:path');
 const shortLengthOption = process.argv.indexOf('--pascal-short-length');
 const pascalShortLengthOutputPath = shortLengthOption >= 0 ? process.argv[shortLengthOption + 1] : null;
 const pascalShortLengthFixturePath = shortLengthOption >= 0 ? process.argv[shortLengthOption + 2] : null;
+const shortPayloadOption = process.argv.indexOf('--pascal-short-payload');
+const pascalShortPayloadOutputPath = shortPayloadOption >= 0 ? process.argv[shortPayloadOption + 1] : null;
+const pascalShortPayloadFixturePath = shortPayloadOption >= 0 ? process.argv[shortPayloadOption + 2] : null;
 if (shortLengthOption >= 0 && (!pascalShortLengthOutputPath || !pascalShortLengthFixturePath)) {
-  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT]');
+  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT]');
+}
+if (shortPayloadOption >= 0 && (!pascalShortPayloadOutputPath || !pascalShortPayloadFixturePath)) {
+  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT]');
 }
 function parseBoard(bytes, start) {
   let p = start + 51, cells = 0;
@@ -19,7 +25,7 @@ function parseBoard(bytes, start) {
   const original = fs.readFileSync(path.resolve(__dirname, '..', '..', 'app', 'src', 'main', 'assets', 'DEMO.ZZT'));
   const module = await WebAssembly.compile(fs.readFileSync(path.resolve(process.argv[2] || path.join(__dirname, 'world_roundtrip.wasm'))));
   const instance = await WebAssembly.instantiate(module, {});
-  const { memory, input_ptr, output_ptr, output_len, run_roundtrip, run_signed_serialization_codec, run_game_save_roundtrip, run_world_read, run_world_read_preserves_tail, run_world_read_title_only, run_world_load_missing_trailing, run_world_load_partial_length, run_world_load_unsigned_board_length, run_flag_save_roundtrip, run_repeated_pstring_assignment_roundtrip, run_pstring_matches_pascal_checks, run_world_reset_string_roundtrip,
+  const { memory, input_ptr, output_ptr, output_len, run_roundtrip, run_signed_serialization_codec, run_game_save_roundtrip, run_world_read, run_world_read_preserves_tail, run_world_read_title_only, run_world_load_missing_trailing, run_world_load_partial_length, run_world_load_short_payload, run_world_load_unsigned_board_length, run_flag_save_roundtrip, run_repeated_pstring_assignment_roundtrip, run_pstring_matches_pascal_checks, run_world_reset_string_roundtrip,
     run_board_roundtrip, run_zero_count_rle, run_final_rle_overrun, run_board_rle_writer_boundary,
     run_editor_brd_roundtrip, run_editor_brd_record_roundtrip, run_editor_brd_zero_count_rle,
     run_editor_brd_reject_truncated, run_shared_stat_data_alias } = instance.exports;
@@ -177,6 +183,42 @@ function parseBoard(bytes, start) {
       throw new Error(`Production partial-length state ${productionPartialLengthFields.join(' ')} differed from expected ${expectedPartialLengthFields.join(' ')}.`);
     }
     console.log('Production full-world load preserves the prior high byte of a one-byte board-length read');
+  }
+  if (pascalShortPayloadOutputPath) {
+    const shortPayloadFixture = fs.readFileSync(path.resolve(pascalShortPayloadFixturePath));
+    const expectedShortPayloadFixture = Buffer.concat([
+      fullLoadFixture,
+      Buffer.from([16, 0, 0x11, 0x22, 0x33, 0x44])
+    ]);
+    if (!shortPayloadFixture.equals(expectedShortPayloadFixture)) {
+      throw new Error('Pascal PARTIAL.ZZT does not match the expected four-byte short-payload fixture.');
+    }
+    new Uint8Array(memory.buffer, input_ptr(), shortPayloadFixture.length).set(shortPayloadFixture);
+    const shortPayloadResult = run_world_load_short_payload(shortPayloadFixture.length);
+    if (shortPayloadResult !== 0) throw new Error(`Production full-world short-payload load returned ${shortPayloadResult}`);
+    const productionSnapshot = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
+    if (productionSnapshot.length !== 13) throw new Error(`Production short-payload snapshot has ${productionSnapshot.length} bytes; expected 13.`);
+    const productionFields = [
+      productionSnapshot[0],
+      productionSnapshot.readInt16LE(1),
+      productionSnapshot.readInt16LE(3),
+      productionSnapshot[5],
+      productionSnapshot.readInt16LE(6),
+      productionSnapshot[8],
+      ...productionSnapshot.subarray(9, 13)
+    ];
+    const pascalText = fs.readFileSync(path.resolve(pascalShortPayloadOutputPath), 'utf8').trim();
+    const match = /^short-read (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) data (\d+) (\d+) (\d+) (\d+) tail (\d+)$/.exec(pascalText);
+    if (!match) throw new Error(`Unexpected Pascal SHORTRD.OUT record: ${pascalText}`);
+    const pascalFields = match.slice(1, 11).map(Number);
+    for (let i = 0; i < pascalFields.length; i++) {
+      if (pascalFields[i] !== productionFields[i]) {
+        throw new Error(`Short-payload WorldLoad differential mismatch at field ${i}: Pascal=${pascalFields[i]}, production=${productionFields[i]}; Pascal=${pascalText}; production=${productionFields.join(' ')}`);
+      }
+    }
+    const tailByte = Number(match[11]);
+    if (tailByte > 255) throw new Error(`Pascal short-payload tail was outside byte range: ${tailByte}`);
+    console.log(`Direct Pascal/production short-payload .ZZT WorldLoad matched ten deterministic fields: ${productionFields.join(' ')}; unread tail byte ${tailByte} is allocator-dependent and excluded.`);
   }
   const unsignedLengthFixture = Buffer.alloc(514 + 0xffff);
   original.copy(unsignedLengthFixture, 0, 0, 514 + firstBoardLength);

@@ -2132,7 +2132,7 @@ if (-not (Test-Path -LiteralPath $shortReadPath -PathType Leaf)) {
     throw "Turbo Pascal short-board-read probe did not write SHORTRD.OUT. See $stageRoot\SHORTRD.LOG."
 }
 $shortReadLines = [IO.File]::ReadAllLines($shortReadPath)
-if ($shortReadLines.Count -ne 1 -or $shortReadLines[0] -notmatch '^short-read 1 15 0 16 tail ([0-9]{1,3})$') {
+if ($shortReadLines.Count -ne 1 -or $shortReadLines[0] -notmatch '^short-read 1 15 0 0 16 1 data 17 34 51 68 tail ([0-9]{1,3})$') {
     throw "Unexpected Turbo Pascal short-board-read output: $([string]::Join('; ', $shortReadLines))"
 }
 $shortReadTailByte = [int]$Matches[1]
@@ -2213,7 +2213,9 @@ Push-Location $repoRoot
 try {
     & '.\tools\serializer-compat\verify.ps1' `
         -PascalShortLengthOutput (Join-Path $stageRoot 'SHORTLEN.OUT') `
-        -PascalShortLengthFixture (Join-Path $stageRoot 'PARTLEN.ZZT')
+        -PascalShortLengthFixture (Join-Path $stageRoot 'PARTLEN.ZZT') `
+        -PascalShortPayloadOutput (Join-Path $stageRoot 'SHORTRD.OUT') `
+        -PascalShortPayloadFixture (Join-Path $stageRoot 'PARTIAL.ZZT')
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Serializer compatibility suite failed with exit code $LASTEXITCODE." }
     & node 'tools/serializer-compat/compare-board-rle.js' `
         (Join-Path $stageRoot 'BOARDRLE.BIN') `
