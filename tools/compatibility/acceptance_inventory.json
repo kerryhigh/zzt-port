@@ -157,7 +157,55 @@
       "oracle_source": [
         "third_party/reconstruction-of-zzt/SRC/GAME.PAS::WorldLoad",
         "tools/pascal-compat/SHORTRD.PAS"
-      ]
+      ],
+      "latest_evidence": {
+        "zzt_missing_trailing_board_records": {
+          "evidence_class": "D+DP",
+          "status": "partial",
+          "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS::WorldLoad",
+          "production_implementation": [
+            "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
+            "third_party/libzoo/src/libzoo/zoo.c::zoo_world_load",
+            "tools/serializer-compat/world_roundtrip.c::run_world_load_missing_trailing"
+          ],
+          "test_fixture": [
+            "tools/pascal-compat/FULLLOAD.PAS",
+            "tools/serializer-compat/run.js --pascal-missing-trailing",
+            "build/pascal-compat-verification/FULLFILE.ZZT (generated staging fixture; not committed)"
+          ],
+          "oracle_output": {
+            "file": "build/pascal-compat-verification/FULLLOAD.OUT (generated staging output; not committed)",
+            "bytes": 55,
+            "sha256": "58f59910cf5505eead48d0ded298ac51e157279a4979b264e40097523a7b6ce1",
+            "text": "full-load 1 15 0 0 1 missing-len 0 0 data-present 1 0"
+          },
+          "production_output_fields": [
+            1,
+            15,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          "matched_deterministic_fields": 7,
+          "allocation_observation": {
+            "pascal_zero_length_BoardData_presence": [
+              1,
+              0
+            ],
+            "production_zero_length_BoardData_presence": [
+              0,
+              0
+            ],
+            "repeated_pascal_sessions": 3,
+            "downstream_absent_board_open": "unverified"
+          },
+          "verification_result": "Seven deterministic fields matched in the 2026-11-28 clean suite: 150 direct Pascal sessions, 75/75 configured differential invocations, F01-F10 (238 checkpoints, 824821 fields, 169 logical cycles), exit 0. Zero-length GetMem pointer presence differs and receives no equality credit. AC001/AC002 remain partial.",
+          "fixture_sha256": "82a6352e96c1cbe5f09f1f23bdc5696b9e63445191fb38159240b57e6ae22cdf",
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-zzt-missing-trailing-boards.md"
+        }
+      }
     },
     {
       "id": "E2-02-AC002",
@@ -230,7 +278,55 @@
       "oracle_source": [
         "third_party/reconstruction-of-zzt/SRC/GAME.PAS::WorldLoad",
         "tools/pascal-compat/SHORTRD.PAS"
-      ]
+      ],
+      "latest_evidence": {
+        "zzt_missing_trailing_board_records": {
+          "evidence_class": "D+DP",
+          "status": "partial",
+          "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS::WorldLoad",
+          "production_implementation": [
+            "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
+            "third_party/libzoo/src/libzoo/zoo.c::zoo_world_load",
+            "tools/serializer-compat/world_roundtrip.c::run_world_load_missing_trailing"
+          ],
+          "test_fixture": [
+            "tools/pascal-compat/FULLLOAD.PAS",
+            "tools/serializer-compat/run.js --pascal-missing-trailing",
+            "build/pascal-compat-verification/FULLFILE.ZZT (generated staging fixture; not committed)"
+          ],
+          "oracle_output": {
+            "file": "build/pascal-compat-verification/FULLLOAD.OUT (generated staging output; not committed)",
+            "bytes": 55,
+            "sha256": "58f59910cf5505eead48d0ded298ac51e157279a4979b264e40097523a7b6ce1",
+            "text": "full-load 1 15 0 0 1 missing-len 0 0 data-present 1 0"
+          },
+          "production_output_fields": [
+            1,
+            15,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          "matched_deterministic_fields": 7,
+          "allocation_observation": {
+            "pascal_zero_length_BoardData_presence": [
+              1,
+              0
+            ],
+            "production_zero_length_BoardData_presence": [
+              0,
+              0
+            ],
+            "repeated_pascal_sessions": 3,
+            "downstream_absent_board_open": "unverified"
+          },
+          "verification_result": "Seven deterministic fields matched in the 2026-11-28 clean suite: 150 direct Pascal sessions, 75/75 configured differential invocations, F01-F10 (238 checkpoints, 824821 fields, 169 logical cycles), exit 0. Zero-length GetMem pointer presence differs and receives no equality credit. AC001/AC002 remain partial.",
+          "fixture_sha256": "82a6352e96c1cbe5f09f1f23bdc5696b9e63445191fb38159240b57e6ae22cdf",
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-zzt-missing-trailing-boards.md"
+        }
+      }
     },
     {
       "id": "E2-02-AC003",
