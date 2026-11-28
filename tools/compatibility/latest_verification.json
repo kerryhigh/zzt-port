@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-27",
-    "root_revision": "e63565ef15e59d29589fab34cfafd7b6b1e77479",
+    "root_revision": "b617c48eb25969a03add95f887ae0aca1a115b76",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit e63565ef15e59d29589fab34cfafd7b6b1e77479 (tree 9c6a98a7873f32f99c41d4e2a1e8ea193ccd7613): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The new direct GameTitleLoop R restore case rejects a 511-byte .SAV header in Pascal; shared production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable world/board/stat/tile fields match. The six-case .BRD truncation matrix and existing serialization, high-score, runtime, lifecycle, and integrated replay checks passed. No unexplained comparable mismatch; full runner exit code 0. The runner count formula was corrected after this run to include the new standalone session; test execution and expected outputs were unchanged.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit b617c48eb25969a03add95f887ae0aca1a115b76 (tree e0931ff3f93146b431c4a67f7f8258874e3d3c71): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The direct GameTitleLoop R refusal for a 511-byte .SAV header matched production on 3,384/3,386 comparable fields; the direct SHORTLEN.PAS one-byte partial .ZZT board-length read matched the shared zoo_world_load path on all six fields using the exact 1,650-byte Pascal-generated PARTLEN.ZZT fixture. The six-case .BRD truncation matrix and existing serialization, high-score, runtime, lifecycle, and integrated replay checks passed. No unexplained comparable mismatch; full runner exit code 0. The corrected session-count formula printed 150 in this run.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -247,13 +247,13 @@
       "sessions": 150,
       "standard_programs": 55,
       "standalone_sessions": 95,
-      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit e63565ef15e59d29589fab34cfafd7b6b1e77479: 55 standard probes and 95 standalone compile/run or fixture sessions, including the 511-byte .SAV title-R refusal differential and all F01-F10 fixtures. The runner's arithmetic count was corrected post-run from 149 to 150 to include the newly added standalone DOSBox session."
+      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit b617c48eb25969a03add95f887ae0aca1a115b76: 55 standard probes and 95 standalone compile/run or fixture sessions, including the short-header and partial-length world-load cases and all F01-F10 fixtures."
     },
     "direct_differential_comparisons": {
       "configured": 75,
       "passed": 75,
       "failed": 0,
-      "result": "75/75 direct Pascal-to-production comparison invocations passed on published source commit e63565ef15e59d29589fab34cfafd7b6b1e77479. This is the prior 74-comparison clean suite plus the new one-byte-short .SAV title-R comparison. The short-header case matched 3,384/3,386 comparable state fields; F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
+      "result": "75/75 direct Pascal-to-production comparison invocations passed on published source commit b617c48eb25969a03add95f887ae0aca1a115b76. The existing serializer comparison invocation now includes a D/DP SHORTLEN.PAS partial .ZZT board-length case: six state fields match on the exact Pascal-generated PARTLEN.ZZT; the 511-byte title-R .SAV refusal also matches on 3,384/3,386 comparable fields. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2263,7 +2263,7 @@
         "fixture_corpus_completion_credit": 0
       },
       "fixture_manifest": "tools/compatibility/integrated_replay_fixture_manifest.json",
-      "verification_source_revision": "e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8"
+      "verification_source_revision": "b617c48eb25969a03add95f887ae0aca1a115b76"
     },
     "other_suites": {
       "serializer": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; tools/serializer-compat/verify.ps1 exited 0. Exhaustive codec check covered all 65,536 signed words and 256 packed signed bytes; existing .ZZT/.SAV/.BRD fixtures, all 16 DEMO boards, malformed reads, RLE, stale strings, raw Boolean/reserved bytes, and stat aliasing also passed. Full per-field/error-boundary matrix remains open.",
@@ -2349,7 +2349,8 @@
       "E2-02 AC002 chained .BRD DataLen alias passed in the clean 2026-11-27 Turbo Pascal 5.5/DOSBox-X run: BoardClose selected the latest earlier shared stat (stat 4 -> stat 3, wire DataLen -3) after the existing stat 3 -> stat 2 (-2) case; both full 2,025-byte records matched production (4,050 bytes total). The frozen 54-case inventory and AC002 partial status are unchanged.",
       "E2-02 AC002 chained .BRD load topology passed in the clean 2026-11-27 suite: original Pascal BoardOpen and the shared production parser both resolved stats 2/3/4 to one 98-byte script allocation after wire references -2/-3; both complete records matched (4,050 bytes total). Clean runner exited 0 with 149 Pascal sessions, 74/74 comparisons, and F01-F10; the frozen 54-case inventory is unchanged.",
       "E2-02 short-read matrix passed in the clean 2026-11-27 run on published source commit 07cbb562b392ac53361575210386c80098407062: direct Pascal captured empty/one-byte length reads and declared four-byte payloads with 0-3 bytes present; six original EditorTransferBoard cases passed D/DP state comparisons. Full runner: 149 direct Pascal sessions, 74/74 configured comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles, exit 0. The frozen 54-case inventory is unchanged; E2-02 remains partial. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-truncation-matrix.md.",
-      "E2-02 .SAV header truncation follow-up passed in the clean 2026-11-27 run: direct compiled Pascal GameTitleLoop R rejected a 511-byte RESTORE.SAV; production returned ZOO_ERROR_INVAL (-2), 3,384/3,386 comparable fields matched, and there were zero unexplained differences. The new comparator is the 75th configured differential. The 54-case inventory is unchanged and E2-02 remains partial. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md."
+      "E2-02 .SAV header truncation follow-up passed in the clean 2026-11-27 run: direct compiled Pascal GameTitleLoop R rejected a 511-byte RESTORE.SAV; production returned ZOO_ERROR_INVAL (-2), 3,384/3,386 comparable fields matched, and there were zero unexplained differences. The new comparator is the 75th configured differential. The 54-case inventory is unchanged and E2-02 remains partial. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md.",
+      "E2-02 direct .ZZT partial board-length D/DP comparison passed in the clean 2026-11-27 Turbo Pascal 5.5/DOSBox-X run on source commit b617c48eb25969a03add95f887ae0aca1a115b76: SHORTLEN.PAS and shared zoo_world_load matched all six captured values (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present) using the exact 1,650-byte PARTLEN.ZZT (SHA-256 76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f). Full run: 150 sessions, 75/75 configured comparisons, F01-F10, exit 0. Existing 54-case inventory unchanged; E2-02 remains partial. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -2400,19 +2401,19 @@
     "latest_attempt": {
       "date": "2026-11-27",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "e63565ef15e59d29589fab34cfafd7b6b1e77479",
+      "source_revision": "b617c48eb25969a03add95f887ae0aca1a115b76",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 150,
       "configured_differentials_passed": 75,
       "configured_differentials_failed": 0,
       "failure": null,
-      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 150 manifest-counted sessions (the runner printed 149 before its count formula was corrected). WORLDSAV additionally copies serialized board 0 into unique Pascal allocations for board IDs 1..100 before the WorldSave count-boundary cases, because the original save frees and replaces its current board buffer. WORLDSAV also writes ZZT files from the same raw Boolean Move values used by the SAV cases; production checks raw IsSave/Keys bytes and the reserved pattern without normalizing them. WORLDSAV additionally writes CP437.ZZT with raw 80/82/FF bytes in the world name, first flag, current board name, and message; the original WorldSave routine writes the file without gameplay hooks. WORLDSAV additionally writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true, each containing raw 80/82/FF bytes in the world name, first flag, current board name, and message; both are emitted by the original WorldSave routine. WORLDSAV writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true; both files contain embedded NUL and CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message, produced by the original WorldSave routine. TITLEIN mode T writes a 511-byte .SAV and runs the original GameTitleLoop R path; the staged TextWindow hook injects Escape only at the existing error-dialog acknowledgement.",
+      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 150 manifest-counted sessions (the runner printed 149 before its count formula was corrected). WORLDSAV additionally copies serialized board 0 into unique Pascal allocations for board IDs 1..100 before the WorldSave count-boundary cases, because the original save frees and replaces its current board buffer. WORLDSAV also writes ZZT files from the same raw Boolean Move values used by the SAV cases; production checks raw IsSave/Keys bytes and the reserved pattern without normalizing them. WORLDSAV additionally writes CP437.ZZT with raw 80/82/FF bytes in the world name, first flag, current board name, and message; the original WorldSave routine writes the file without gameplay hooks. WORLDSAV additionally writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true, each containing raw 80/82/FF bytes in the world name, first flag, current board name, and message; both are emitted by the original WorldSave routine. WORLDSAV writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true; both files contain embedded NUL and CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message, produced by the original WorldSave routine. TITLEIN mode T writes a 511-byte .SAV and runs the original GameTitleLoop R path; the staged TextWindow hook injects Escape only at the existing error-dialog acknowledgement. SHORTLEN.PAS initializes board 1 with prior length 0x0100 and an allocated buffer, then calls original WorldLoad with the generated one-byte-short length fixture. The production wrapper seeds equivalent state and receives the exact Pascal-generated PARTLEN.ZZT; only output capture is added.",
       "integrated_pascal_probe": "F10IN.PAS; direct malformed WorldLoad, fallback WorldCreate, HighScoresLoad/Add/Save, original GamePlayLoop, and SAV reload",
       "integrated_differential_command": "Run compare-integrated-gameplay.js for F10 against the shared malformed-world/gameplay/high-score replay harness.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit e63565ef15e59d29589fab34cfafd7b6b1e77479 (tree 9c6a98a7873f32f99c41d4e2a1e8ea193ccd7613): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The new direct GameTitleLoop R restore case rejects a 511-byte .SAV header in Pascal; shared production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable world/board/stat/tile fields match. The six-case .BRD truncation matrix and existing serialization, high-score, runtime, lifecycle, and integrated replay checks passed. No unexplained comparable mismatch; full runner exit code 0. The runner count formula was corrected after this run to include the new standalone session; test execution and expected outputs were unchanged.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit b617c48eb25969a03add95f887ae0aca1a115b76 (tree e0931ff3f93146b431c4a67f7f8258874e3d3c71): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The direct GameTitleLoop R refusal for a 511-byte .SAV header matched production on 3,384/3,386 comparable fields; the direct SHORTLEN.PAS one-byte partial .ZZT board-length read matched the shared zoo_world_load path on all six fields using the exact 1,650-byte Pascal-generated PARTLEN.ZZT fixture. The six-case .BRD truncation matrix and existing serialization, high-score, runtime, lifecycle, and integrated replay checks passed. No unexplained comparable mismatch; full runner exit code 0. The corrected session-count formula printed 150 in this run.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 238,
       "integrated_state_fields_compared": 824821,
@@ -3007,7 +3008,7 @@
       "accepted_abort_loop_fields_compared": 22,
       "accepted_abort_loop_differences": 0,
       "accepted_abort_loop_comparison_exit_code": 0,
-      "direct_pascal_standalone_sessions_passed": 94,
+      "direct_pascal_standalone_sessions_passed": 95,
       "direct_pascal_standard_programs_passed": 55,
       "title_refused_abort_return_comparison_exit_code": 0,
       "title_refused_abort_return_checkpoints": 3,
@@ -3404,7 +3405,7 @@
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-boolean-reserved.md"
       },
-      "configured_comparator_invocations": 74,
+      "configured_comparator_invocations": 75,
       "integrated_fixtures_completed": 10,
       "integrated_checkpoint_total": 238,
       "integrated_state_field_total": 824821,
@@ -3458,7 +3459,7 @@
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md"
       },
-      "verified_tree_sha": "83b2b5a569297876d8abed705936e6ee6ea43990",
+      "verified_tree_sha": "e0931ff3f93146b431c4a67f7f8258874e3d3c71",
       "brd_transfer_cases_passed": 6,
       "integrated_fixture_ids_completed": [
         "E2-10-F01",
@@ -3474,7 +3475,32 @@
       ],
       "integrated_logical_cycles": 169,
       "unexplained_comparable_mismatches": 0,
-      "session_count_correction": "The clean run completed with exit code 0 and executed the new title-R short-header DOSBox session. The printed aggregate was 149 because its previous hard-coded +94 omitted that additional session. Afterward the runner formula was corrected to +95; 55 standard + 95 standalone = 150. No test behavior or expected result changed."
+      "session_count_correction": "The prior short-header run printed 149 because the former standalone count formula used +94. The formula is now +95, and this clean run printed the manifest-backed total of 150 (55 standard + 95 standalone); no test behavior or expected result changed.",
+      "local_source_revision": "5ce54c2303a41e035d1502fc46db1f250bb7620b",
+      "source_tree_sha": "e0931ff3f93146b431c4a67f7f8258874e3d3c71",
+      "partial_length_world_differential": {
+        "fields_compared": 6,
+        "fields_matched": 6,
+        "differences": 0,
+        "pascal_values": [
+          1,
+          15,
+          0,
+          0,
+          272,
+          1
+        ],
+        "production_values": [
+          1,
+          15,
+          0,
+          0,
+          272,
+          1
+        ],
+        "fixture_sha256": "76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f",
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
+      }
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -5131,6 +5157,65 @@
       "full_clean_runner_exit_code": 0,
       "integrated_fixture_count": "10/10",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md"
+    },
+    "source_tree_sha": "e0931ff3f93146b431c4a67f7f8258874e3d3c71",
+    "zzt_partial_length_word_differential": {
+      "acceptance_cases": [
+        "E2-02-AC001",
+        "E2-02-AC002",
+        "E2-02-AC003",
+        "E2-02-AC004",
+        "E2-02-AC005"
+      ],
+      "evidence_class": "D+DP",
+      "result": "passed; all six captured fields match; acceptance cases and E2-02 remain partial",
+      "pascal_probe": "tools/pascal-compat/SHORTLEN.PAS / original WorldLoad(.ZZT)",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
+        "third_party/libzoo/src/libzoo/zoo.c::zoo_world_load"
+      ],
+      "production_capture": "tools/serializer-compat/world_roundtrip.c::run_world_load_partial_length",
+      "comparator": "tools/serializer-compat/run.js --pascal-short-length",
+      "fixture_path": "build/pascal-compat-verification/PARTLEN.ZZT",
+      "fixture_size_bytes": 1650,
+      "fixture_sha256": "76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f",
+      "pascal_output": "build/pascal-compat-verification/SHORTLEN.OUT",
+      "pascal_output_size_bytes": 26,
+      "pascal_output_sha256": "039bb3873ae5a7f73e173cafc47e79ae11961fc21f6b290c9de88a8add289f10",
+      "pascal_fields": [
+        1,
+        15,
+        0,
+        0,
+        272,
+        1
+      ],
+      "production_fields": [
+        1,
+        15,
+        0,
+        0,
+        272,
+        1
+      ],
+      "field_names": [
+        "load_success",
+        "board_count",
+        "current_board",
+        "is_save",
+        "board_len_1",
+        "board_data_present"
+      ],
+      "matched_fields": 6,
+      "unexplained_differences": 0,
+      "full_clean_runner_exit_code": 0,
+      "direct_pascal_sessions": 150,
+      "configured_differential_invocations": 75,
+      "integrated_fixture_count": "10/10; 238 checkpoints; 824821 fields; 169 logical cycles",
+      "source_revision": "b617c48eb25969a03add95f887ae0aca1a115b76",
+      "local_source_revision": "5ce54c2303a41e035d1502fc46db1f250bb7620b",
+      "source_tree_sha": "e0931ff3f93146b431c4a67f7f8258874e3d3c71",
+      "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
     }
   }
 }
