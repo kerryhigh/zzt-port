@@ -1,8 +1,8 @@
 const fs = require('fs');
 
-const [pascalOutputPath, productionWasmPath] = process.argv.slice(2);
-if (!pascalOutputPath || !productionWasmPath) {
-  throw new Error('Usage: node compare-input-buffer.js INPUTBUF.OUT player_input.wasm');
+const [pascalOutputPath, productionWasmPath, pascalMatrixPath] = process.argv.slice(2);
+if (!pascalOutputPath || !productionWasmPath || !pascalMatrixPath) {
+  throw new Error('Usage: node compare-input-buffer.js INPUTBUF.OUT player_input.wasm INPUTMAT.OUT');
 }
 
 const pascalRows = fs.readFileSync(pascalOutputPath, 'utf8')
@@ -55,6 +55,38 @@ const expectedHighBytes = cp437Rows.map((line, index) => {
   }
   return Number(fields[1]);
 });
+const wrappedRows = pascalLines.filter((line) => line.startsWith('wrap-burst '));
+if (wrappedRows.length !== 2) {
+  throw new Error(`Expected two Pascal ring-wrap burst rows, found ${wrappedRows.length}`);
+}
+const expectedWrapped = wrappedRows.flatMap((line) => {
+  const fields = line.trim().split(/\s+/).slice(1).map(Number);
+  if (fields.length !== 5 || fields.some((value) => !Number.isInteger(value))) {
+    throw new Error(`Malformed Pascal ring-wrap row: ${line}`);
+  }
+  return fields;
+});
+
+const inputMatrixLines = fs.readFileSync(pascalMatrixPath, 'utf8')
+  .split(/\r?\n/)
+  .filter((line) => line.startsWith('matrix '));
+const matrixRows = 256 * 2;
+const matrixFields = 7;
+if (inputMatrixLines.length !== matrixRows) {
+  throw new Error(`Expected ${matrixRows} Pascal input-length rows, found ${inputMatrixLines.length}`);
+}
+const expectedMatrix = inputMatrixLines.flatMap((line, index) => {
+  const fields = line.trim().split(/\s+/);
+  const values = fields.slice(1).map(Number);
+  const expectedLength = Math.floor(index / 2);
+  const expectedStage = (index % 2) + 1;
+  if (fields.length !== matrixFields + 1 || fields[0] !== 'matrix'
+      || values.some((value) => !Number.isInteger(value))
+      || values[0] !== expectedLength || values[1] !== expectedStage) {
+    throw new Error(`Malformed Pascal input-length row ${index}: ${line}`);
+  }
+  return values;
+});
 
 (async () => {
   const module = await WebAssembly.compile(fs.readFileSync(productionWasmPath));
@@ -83,7 +115,27 @@ const expectedHighBytes = cp437Rows.map((line, index) => {
       throw new Error(`CP437 input byte ${i} differs: Pascal=${expectedHighBytes[i]}, production=${actual[9 + i]}`);
     }
   }
-  console.log('Turbo Pascal versus production input: one-to-four-key bursts, repeated-key bursts, arrow movement bursts, and CP437 bytes 0x82/0xFF match.');
+  const wrappedPointer = instance.exports.player_input_wrapped_burst_output_ptr();
+  const actualWrapped = Array.from(new Int16Array(instance.exports.memory.buffer, wrappedPointer, expectedWrapped.length));
+  for (let i = 0; i < expectedWrapped.length; i++) {
+    if (actualWrapped[i] !== expectedWrapped[i]) {
+      throw new Error(`Wrapped input queue field ${i} differs: Pascal=${expectedWrapped[i]}, production=${actualWrapped[i]}`);
+    }
+  }
+  const matrixStatus = instance.exports.run_input_length_matrix_checks();
+  if (matrixStatus !== 0) throw new Error(`Production input-length matrix returned ${matrixStatus}`);
+  const matrixPointer = instance.exports.player_input_length_matrix_output_ptr();
+  const actualMatrix = Array.from(new Int16Array(
+    instance.exports.memory.buffer, matrixPointer, matrixRows * matrixFields));
+  for (let i = 0; i < expectedMatrix.length; i++) {
+    if (actualMatrix[i] !== expectedMatrix[i]) {
+      const row = Math.floor(i / matrixFields);
+      const field = i % matrixFields;
+      const fieldNames = ['length', 'stage', 'key_pressed', 'buffer_count', 'residual_byte', 'delta_x', 'delta_y'];
+      throw new Error(`Input queue first divergence at length ${Math.floor(row / 2)}, stage ${(row % 2) + 1}, ${fieldNames[field]}: Pascal=${expectedMatrix[i]}, production=${actualMatrix[i]}`);
+    }
+  }
+  console.log('Turbo Pascal versus production input: key bursts, ring wrap, and CP437 bytes match; all 256 buffer lengths (0..255), 512 Update transitions and residual buffers match.');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

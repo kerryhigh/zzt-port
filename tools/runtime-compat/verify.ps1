@@ -219,7 +219,9 @@ $playerInputArgs = @(
     '-I', (Join-Path $repoRoot 'tools\serializer-compat\include'),
     '-I', (Join-Path $repoRoot 'third_party\libzoo\include'),
 	'-I', (Join-Path $repoRoot 'third_party\libzoo\src\ui'),
-	'-Wl,--no-entry', '-Wl,--export=run_player_input_checks', '-Wl,--export=player_input_arrow_burst_output_ptr', '-Wl,--export=player_input_key_burst_output_ptr', '-Wl,--export-memory', '-Wl,--gc-sections',
+	'-Wl,--no-entry', '-Wl,--export=run_player_input_checks', '-Wl,--export=player_input_arrow_burst_output_ptr', '-Wl,--export=player_input_key_burst_output_ptr',
+	'-Wl,--export=player_input_wrapped_burst_output_ptr', '-Wl,--export=run_input_length_matrix_checks',
+	'-Wl,--export=player_input_length_matrix_output_ptr', '-Wl,--export-memory', '-Wl,--gc-sections',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
     $playerInputSource, `
     (Join-Path $repoRoot 'third_party\libzoo\src\libzoo\zoo_input.c'), `

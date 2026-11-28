@@ -1831,7 +1831,8 @@ $expectedOutputs = [ordered]@{
         'arrow-right-burst 0 0 0 1 0',
         'numeric-up 56 0 -1 0 -1', 'numeric-left 52 -1 0 -1 0',
         'numeric-right 54 1 0 1 0', 'numeric-down 50 0 1 0 1',
-        'neutral 53 0 0 0 1', 'empty 0 0 0 0 1'
+        'neutral 53 0 0 0 1', 'empty 0 0 0 0 1',
+        'wrap-burst 65 1 69 0 0', 'wrap-burst 69 0 0 0 0'
     )
     'SOUNDTIK.OUT' = @(
         'single 1 1 0 0',
@@ -2313,9 +2314,14 @@ try {
         (Join-Path $stageRoot 'SPINGUN.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\spinning_gun.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production Spinning Gun comparison failed with exit code $LASTEXITCODE." }
+    $inputMatrixPath = Join-Path $stageRoot 'INPUTMAT.OUT'
+    if (-not (Test-Path -LiteralPath $inputMatrixPath -PathType Leaf)) {
+        throw 'Direct Pascal input-length matrix was not produced.'
+    }
     & node 'tools/pascal-compat/compare-input-buffer.js' `
         (Join-Path $stageRoot 'INPUTBUF.OUT') `
-        (Join-Path $repoRoot 'build\runtime-compatibility\player_input.wasm')
+        (Join-Path $repoRoot 'build\runtime-compatibility\player_input.wasm') `
+        $inputMatrixPath
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production queued-arrow comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-player-tick.js' `
         $stageRoot `
