@@ -1232,7 +1232,11 @@
         "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks",
         "tools/pascal-compat/TRNTBL.PAS",
         "tools/pascal-compat/compare-transition-table.js",
-        "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md"
+        "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+        "tools/pascal-compat/CENTIRNG.PAS",
+        "tools/pascal-compat/compare-centipede-rng.js",
+        "tools/runtime-compat/oop_movement.c::run_centipede_rng_caller_checks",
+        "tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md"
       ],
       "oracle_output": {
         "path": "build/pascal-compat-verification/RNGVEC.OUT",
@@ -1242,7 +1246,7 @@
         "draws_matched": 224,
         "numeric_fields_matched": 1344,
         "field_differences": 0,
-        "caller_output_note": "Direct caller evidence covers 19/29 sites; 10 still lack direct D/DP evidence. Two additional sites have integrated-only F06/F07 support counted only under E2-10. GenerateTransitionTable directly matched all 1,500 coordinates and both final RandSeed words.",
+        "caller_output_note": "Direct caller evidence covers 21/29 sites; 8 still lack direct D/DP evidence. Two of those 8 have integrated-only F06/F07 support counted only under E2-10. The X-aligned and Y-aligned Centipede head Random(10) branches at ELEMENTS.PAS:205/:208 now match 34/34 numeric fields; GenerateTransitionTable directly matched all 1,500 coordinates and both final RandSeed words.",
         "oop_random_direction_callers": {
           "path": "build/pascal-compat-verification/OOPRND.OUT",
           "size_bytes": 173,
@@ -1294,9 +1298,62 @@
           "tested_local_source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
           "published_source_revision": "662dbd57fca3149d01e29d850b35c79c6b4ddb68",
           "tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e"
+        },
+        "centipede_aligned_axis_caller_differential": {
+          "acceptance_cases": [
+            "E2-07-RNG-ELEMENTS-0205",
+            "E2-07-RNG-ELEMENTS-0208"
+          ],
+          "evidence_class": "D+DP+S",
+          "result": "passed",
+          "source_locations": [
+            "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:205",
+            "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:208"
+          ],
+          "production_implementation": [
+            "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick",
+            "third_party/libzoo/src/libzoo/zoo_random.h::zoo_random_next"
+          ],
+          "probe": "tools/pascal-compat/CENTIRNG.PAS",
+          "production_comparator": "tools/pascal-compat/compare-centipede-rng.js",
+          "production_harness": "tools/runtime-compat/oop_movement.c::run_centipede_rng_caller_checks",
+          "cases": 2,
+          "numeric_fields_compared": 34,
+          "numeric_fields_matched": 34,
+          "field_differences": 0,
+          "initial_randseed_low_high": [
+            0,
+            0
+          ],
+          "random_range": 10,
+          "random_values": [
+            0,
+            0
+          ],
+          "final_randseed_low_high": [
+            1,
+            0
+          ],
+          "oracle_output": {
+            "path": "build/pascal-compat-verification/CENTIRNG.OUT",
+            "size_bytes": 106,
+            "sha256": "C2C32868915988A0BD834E86FF690C5F38309B74CA453A15B19043A60921EC25",
+            "retained_in_repository": false
+          },
+          "oracle_source_sha256": "9850C7C2F3B8BFA16B2D4842BB85B1FE5100630C3C7D3C73C5007EBC095C4F71",
+          "oracle_interventions": [
+            "Allocates IoTmpBuf before WorldCreate and uses a quiet VideoWriteText callback to suppress rendering only.",
+            "Initializes the player and Centipede stats/tiles, relevant Under/P1/P2/direction/leader/follower fields, energizer state, and RandSeed=0.",
+            "Previews Random(10), restores the original seed, then calls the original ElementDefs[E_CENTIPEDE_HEAD].TickProc(1); the reference gameplay source and RNG routines are unmodified.",
+            "Production initializes the equivalent state for each case and calls the shared zoo_e_centipede_head_tick callback with zoo_random_next behind the deterministic capture hook; the harness does not model Centipede behavior separately."
+          ],
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md",
+          "tested_local_source_revision": "9354bbb831a7e667c2cb053d5324f7280219def1",
+          "published_source_revision": "d7aa1239c1898ae0a78bd92e9240a38d5c4cf359",
+          "tree_sha": "68fadd96b618fff08974512131986913face247b"
         }
       },
-      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded primitive draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges. Direct caller evidence covers 19/29 sites, including all 1,500 GenerateTransitionTable coordinates and both final seed words (3,002/3,002 fields), and both branches of OOP RNDNS, RNDNE, and RNDP NORTH. Two other sites retain integrated-only F06/F07 support under E2-10. Ten caller sites remain without direct D/DP evidence; Randomize/time seeding and GAME.PAS:1699 remain pending. The clean suite passed 153 direct Pascal sessions and 78/78 configured differentials, with F01-F10 at 238 checkpoints, 824,821 fields, and 169 cycles.",
+      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded primitive draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges. Direct caller evidence covers 21/29 sites; the two aligned-axis Centipede Random(10) branches at ELEMENTS.PAS:205/:208 matched 34/34 numeric fields. Both branches of OOP RNDNS, RNDNE, and RNDP NORTH matched 66/66 fields; GenerateTransitionTable matched all 1,500 coordinates and both final seed words (3,002/3,002 fields). Eight caller sites remain without direct D/DP evidence, including two with integrated-only F06/F07 support under E2-10. Randomize/time seeding and the unresolved GAME.PAS:1699 register-message path remain pending. The clean suite passed 154 direct Pascal sessions, 79/79 configured differentials, and F01-F10 at 238 checkpoints, 824,821 state fields, and 169 cycles, with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md.",
       "required_evidence_classes": [
         "D",
         "S",
@@ -22763,13 +22820,45 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:205",
         "source_text": "if (X = Board.Stats[0].X) and (Random(10) < P1) then begin",
-        "evidence_class": "S",
+        "evidence_class": "D+DP+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. CENTIPR short-circuits before this call in its current fixtures; no direct evidence is credited.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/CENTIRNG.PAS",
+          "tools/pascal-compat/compare-centipede-rng.js",
+          "tools/runtime-compat/oop_movement.c::run_centipede_rng_caller_checks",
+          "tools/pascal-compat/verify.ps1",
+          "tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md"
+        ],
+        "verification_result": "Passed 2026-11-28: direct Turbo Pascal 5.5 and shared-production comparison matched this aligned-axis Random(10) branch, the draw range/value, final 32-bit RandSeed, Centipede stat movement, and source/destination tile element/color (17/17 numeric fields). The complete clean suite passed 154 direct Pascal sessions and 79/79 configured Pascal-to-production comparisons; see tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md.",
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/CENTIRNG.OUT",
+          "size_bytes": 106,
+          "sha256": "C2C32868915988A0BD834E86FF690C5F38309B74CA453A15B19043A60921EC25",
+          "retained_in_repository": false,
+          "row": "x-aligned 0 0 1 10 0 1 0 10 9 0 -1 0 112 10 9 44 15",
+          "numeric_fields_compared": 17,
+          "numeric_fields_matched": 17,
+          "field_differences": 0,
+          "initial_randseed_low_high": [
+            0,
+            0
+          ],
+          "random_range": 10,
+          "random_value": 0,
+          "final_randseed_low_high": [
+            1,
+            0
+          ],
+          "oracle_interventions": [
+            "Allocates IoTmpBuf before WorldCreate and uses a quiet VideoWriteText callback to suppress rendering only.",
+            "Initializes the player and Centipede stats/tiles, relevant Under/P1/P2/direction/leader/follower fields, energizer state, and RandSeed=0.",
+            "Previews Random(10), restores the original seed, then calls the original ElementDefs[E_CENTIPEDE_HEAD].TickProc(1); the reference gameplay source and RNG routines are unmodified.",
+            "Production initializes the equivalent state for each case and calls the shared zoo_e_centipede_head_tick callback with zoo_random_next behind the deterministic capture hook; the harness does not model Centipede behavior separately."
+          ],
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md"
+        }
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0208",
@@ -22778,13 +22867,45 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:208",
         "source_text": "end else if (Y = Board.Stats[0].Y) and (Random(10) < P1) then begin",
-        "evidence_class": "S",
+        "evidence_class": "D+DP+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. CENTIPR short-circuits before this call in its current fixtures; no direct evidence is credited.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/CENTIRNG.PAS",
+          "tools/pascal-compat/compare-centipede-rng.js",
+          "tools/runtime-compat/oop_movement.c::run_centipede_rng_caller_checks",
+          "tools/pascal-compat/verify.ps1",
+          "tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md"
+        ],
+        "verification_result": "Passed 2026-11-28: direct Turbo Pascal 5.5 and shared-production comparison matched this aligned-axis Random(10) branch, the draw range/value, final 32-bit RandSeed, Centipede stat movement, and source/destination tile element/color (17/17 numeric fields). The complete clean suite passed 154 direct Pascal sessions and 79/79 configured Pascal-to-production comparisons; see tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md.",
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/CENTIRNG.OUT",
+          "size_bytes": 106,
+          "sha256": "C2C32868915988A0BD834E86FF690C5F38309B74CA453A15B19043A60921EC25",
+          "retained_in_repository": false,
+          "row": "y-aligned 0 0 1 10 0 1 0 9 10 -1 0 0 112 9 10 44 15",
+          "numeric_fields_compared": 17,
+          "numeric_fields_matched": 17,
+          "field_differences": 0,
+          "initial_randseed_low_high": [
+            0,
+            0
+          ],
+          "random_range": 10,
+          "random_value": 0,
+          "final_randseed_low_high": [
+            1,
+            0
+          ],
+          "oracle_interventions": [
+            "Allocates IoTmpBuf before WorldCreate and uses a quiet VideoWriteText callback to suppress rendering only.",
+            "Initializes the player and Centipede stats/tiles, relevant Under/P1/P2/direction/leader/follower fields, energizer state, and RandSeed=0.",
+            "Previews Random(10), restores the original seed, then calls the original ElementDefs[E_CENTIPEDE_HEAD].TickProc(1); the reference gameplay source and RNG routines are unmodified.",
+            "Production initializes the equivalent state for each case and calls the shared zoo_e_centipede_head_tick callback with zoo_random_next behind the deterministic capture hook; the harness does not model Centipede behavior separately."
+          ],
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-centipede-aligned-rng.md"
+        }
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0211",
