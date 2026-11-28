@@ -4,20 +4,22 @@
   ],
   "verification": {
     "date": "2026-11-27",
-    "root_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
+    "root_revision": "07cbb562b392ac53361575210386c80098407062",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 74/74 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal WorldSave embedded-NUL/CP437 strings 00/80/82/FF in the world name, all ten flags, current board name, and message matched in both .SAV and .ZZT files (26, 52,930 total bytes); raw ZZT Boolean/reserved cases matched 105,860 bytes; BRD stat counts 0/1/149/150 matched 10,660 payload bytes; WorldSave SAV/ZZT board counts 0/1/99/100 matched 467,992 bytes; chained shared-script aliases matched 4,050 bytes across two complete records, with original Pascal BoardOpen and production parser confirming stats 2/3/4 share one 98-byte allocation; stale-tail cases matched 26,465 bytes per SAV and ZZT. No unexplained comparable mismatch; exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run against published source commit 07cbb562b392ac53361575210386c80098407062 (tree 83b2b5a569297876d8abed705936e6ee6ea43990): 149 direct Pascal sessions (55 standard, 94 standalone), 74/74 configured Pascal-to-production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The expanded .BRD read/transfer matrix passed for empty and one-byte length records and declared four-byte payloads with 0-3 bytes present; the original Pascal editor-transfer path matched the shared operation on its configured state fields. Existing WorldSave CP437/NUL, Boolean/reserved, count-boundary, chained alias, stale-tail, serializer, high-score, runtime, and integrated replay checks passed. No unexplained comparable mismatch; full runner exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
       "probe": "tools/pascal-compat/BRDIOPRB.PAS",
       "evidence_class": "D",
-      "result": "passed",
+      "result": "passed in the clean 2026-11-27 run",
       "partial_length": {
         "first_ioresult": 100,
+        "destination_word_initial": 4660,
         "destination_word_after_read": 4610,
-        "next_ioresult": 0
+        "next_ioresult": 0,
+        "input_byte": 2
       },
       "short_payload": {
         "header_ioresult": 0,
@@ -33,13 +35,13 @@
       "editor_transfer_probe": {
         "probe": "tools/pascal-compat/BRDXFER.PAS",
         "evidence_class": "D+DP",
-        "result": "Short-payload and controlled short-header EditorTransferBoard cases passed direct capture and production differential in the 2026-11-27 clean run; broader truncation and allocator-history coverage remains open.",
-        "fixture": "short payload: declared length 4, two payload bytes present",
+        "result": "All six original EditorTransferBoard truncation cases passed direct capture and production state differential in the 2026-11-27 clean run; broader E2-02 boundaries and other allocator histories remain open.",
+        "fixture": "empty outer header; one-byte header 03; declared four-byte payload with 0, 1, 2, or 3 payload bytes present",
         "staging_interventions": [
           "Staged EDITOR.PAS supplies the import choice and fixture filename at existing prompt boundaries.",
-          "BRDXFER.PAS declares {$M 49152,163840,655360}, matching the directive in reconstructed ZZT.PAS; only the probe executable's stack/heap limits change.",
-          "For SHORTHD, the probe allocates a 60,000-byte heap sink in World.BoardData[1] before import; staged EDITOR.PAS frees that sink immediately after the original BoardClose inside EditorTransferBoard, controlling subsequent DOS heap reuse while leaving the original BoardData buffer available to the Pascal short-header read.",
-          "Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. DisplayIOError, IOResult handling, file reads, BoardCreate/BoardOpen, and editor cleanup remain reconstructed Pascal routines; modal key handling is outside this probe."
+          "BRDXFER.PAS uses {$M 49152,163840,655360}, matching reconstructed ZZT.PAS.",
+          "For EMPTY and SHORTHD, BRDXFER allocates a 60,000-byte heap sink before import; staged EDITOR.PAS frees it immediately after the original BoardClose inside EditorTransferBoard to control this documented DOS allocator history.",
+          "Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. DisplayIOError, IOResult handling, file reads, BoardCreate/BoardOpen, and editor cleanup remain reconstructed Pascal routines."
         ],
         "short_payload_output": "board 0 255 0 4 31 30 12 0 0 0 0 0",
         "short_header_attempt": {
@@ -73,9 +75,163 @@
             "control": "Short-payload control still produced board 0 255 0 4 31 30 12 0 0 0 0 0 and matched production."
           }
         },
-        "interpretation": "Short-payload BoardCreate state and the SHORTHD one-byte short-header/reopen state are direct D/DP evidence under their documented setups. For the short header, the visible World.BoardLen[0] is 259 (0x0103), the prior serialized board is reopened, and all four neighbor links are cleared. This establishes one controlled allocation history only; other environment-dependent allocator histories and the full boundary matrix remain open.",
-        "shared_engine_comparison": "Short-payload outcome plus eight selected board/player fields passed. Controlled short-header outcome plus eight selected fields, board-name bytes, and four neighbor values passed. Full field/error and untouched-suffix matrix remains pending.",
-        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md"
+        "interpretation": "The empty and one-byte header paths reopen the prior board under their stated allocator setup; the short payload lengths 0-3 reach BoardCreate. The direct Pascal destination suffix was seeded to $A5, so it proves the read leaves that probe buffer suffix unchanged only under this explicit setup. Production rejects incomplete record payloads and exposes no equivalent discarded buffer. This evidence does not close the complete format/error matrix.",
+        "shared_engine_comparison": "Six D+DP editor-transfer outcomes passed: seven compared fields plus name/neighbors for the empty header (private BoardLen excluded), eight fields plus name/neighbors for the one-byte header, and eight selected fields for each payload length 0-3.",
+        "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-truncation-matrix.md",
+        "transfer_matrix": [
+          {
+            "case": "empty-header-controlled-reopen",
+            "fixture": "EMPTY.BRD",
+            "fixture_bytes": 0,
+            "pascal_output": "board 6 41 0 21 47 30 12 319 0 0 0 0",
+            "production_outcome": 1,
+            "fields_matched": 7,
+            "board_name_bytes_matched": true,
+            "four_neighbor_links_matched": true,
+            "private_board_buffer_length": {
+              "pascal": 319,
+              "production": 321,
+              "comparison": "excluded; LibZoo stores two private metadata bytes"
+            },
+            "oracle_output_file": "EMPTY.OUT",
+            "oracle_output_size_bytes": 38,
+            "oracle_output_sha256": "d60e53c5e34d0914e655222f828165e7d954d8f1d02a9f159f9743ed8c225eca"
+          },
+          {
+            "case": "short-header-controlled-reopen",
+            "fixture": "SHORTHD.BRD",
+            "fixture_bytes_hex": "03",
+            "pascal_output": "board 6 41 0 21 47 30 12 259 0 0 0 0",
+            "production_outcome": 1,
+            "fields_matched": 8,
+            "board_name_bytes_matched": true,
+            "four_neighbor_links_matched": true,
+            "oracle_output_file": "BRDHDR.OUT",
+            "oracle_output_size_bytes": 38,
+            "oracle_output_sha256": "5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5"
+          },
+          {
+            "case": "zero-byte-payload",
+            "fixture": "PAYZERO.BRD",
+            "fixture_bytes_hex": "0400",
+            "payload_bytes_present": 0,
+            "pascal_output": "board 0 255 0 4 31 30 12 0 0 0 0 0",
+            "production_outcome": 2,
+            "fields_matched": 8,
+            "oracle_output_file": "PAYZERO.OUT",
+            "oracle_output_size_bytes": 36,
+            "oracle_output_sha256": "f88b2af33496a6e85a415bf9103252780d8e3f4a697af7d537ecfeedb3426b4a"
+          },
+          {
+            "case": "one-byte-payload",
+            "fixture": "PAYONE.BRD",
+            "fixture_bytes_hex": "040010",
+            "payload_bytes_present": 1,
+            "pascal_output": "board 0 255 0 4 31 30 12 0 0 0 0 0",
+            "production_outcome": 2,
+            "fields_matched": 8,
+            "oracle_output_file": "PAYONE.OUT",
+            "oracle_output_size_bytes": 36,
+            "oracle_output_sha256": "f88b2af33496a6e85a415bf9103252780d8e3f4a697af7d537ecfeedb3426b4a"
+          },
+          {
+            "case": "two-byte-payload",
+            "fixture": "SHORTPAY.BRD",
+            "fixture_bytes_hex": "04001020",
+            "payload_bytes_present": 2,
+            "pascal_output": "board 0 255 0 4 31 30 12 0 0 0 0 0",
+            "production_outcome": 2,
+            "fields_matched": 8,
+            "oracle_output_file": "BRDXFER.OUT",
+            "oracle_output_size_bytes": 36,
+            "oracle_output_sha256": "f88b2af33496a6e85a415bf9103252780d8e3f4a697af7d537ecfeedb3426b4a"
+          },
+          {
+            "case": "three-byte-payload",
+            "fixture": "PAYTHREE.BRD",
+            "fixture_bytes_hex": "0400102030",
+            "payload_bytes_present": 3,
+            "pascal_output": "board 0 255 0 4 31 30 12 0 0 0 0 0",
+            "production_outcome": 2,
+            "fields_matched": 8,
+            "oracle_output_file": "PAYTHREE.OUT",
+            "oracle_output_size_bytes": 36,
+            "oracle_output_sha256": "f88b2af33496a6e85a415bf9103252780d8e3f4a697af7d537ecfeedb3426b4a"
+          }
+        ],
+        "fixture_sha256": {
+          "EMPTY.BRD": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "SHORTHD.BRD": "084fed08b978af4d7d196a7446a86b58009e636b611db16211b65a9aadff29c5",
+          "PAYZERO.BRD": "c0ba8a33ac67f44abff5984dfbb6f56c46b880ac2b86e1f23e7fa9c402c53ae7",
+          "PAYONE.BRD": "2bd56058e48142aaa68d15b90df075232e441e78bb3eff596edf8f17d9dff7b5",
+          "SHORTPAY.BRD": "9fc1555c096242a12784fcc2a13dfbe307afa71c9bf98a4b1a46bf70fdb7aab1",
+          "PAYTHREE.BRD": "4ed9d0100f8db72ad536c09b6176abc232dd59a1bd7a06438801416a604cbcdc"
+        }
+      },
+      "empty_length": {
+        "first_ioresult": 100,
+        "destination_word_initial": 4660,
+        "destination_word_after_read": 4660,
+        "next_ioresult": 0
+      },
+      "short_payload_matrix": {
+        "declared_length": 4,
+        "destination_seed_byte": 165,
+        "evidence_class": "D",
+        "cases": [
+          {
+            "payload_bytes_present": 0,
+            "payload_ioresult": 100,
+            "header_ioresult": 0,
+            "next_ioresult": 0,
+            "destination_bytes": [
+              165,
+              165,
+              165,
+              165
+            ]
+          },
+          {
+            "payload_bytes_present": 1,
+            "payload_ioresult": 100,
+            "header_ioresult": 0,
+            "next_ioresult": 0,
+            "destination_bytes": [
+              16,
+              165,
+              165,
+              165
+            ]
+          },
+          {
+            "payload_bytes_present": 2,
+            "payload_ioresult": 100,
+            "header_ioresult": 0,
+            "next_ioresult": 0,
+            "destination_bytes": [
+              16,
+              32,
+              165,
+              165
+            ]
+          },
+          {
+            "payload_bytes_present": 3,
+            "payload_ioresult": 100,
+            "header_ioresult": 0,
+            "next_ioresult": 0,
+            "destination_bytes": [
+              16,
+              32,
+              48,
+              165
+            ]
+          }
+        ],
+        "output_file": "BRDIOPRB.OUT",
+        "output_size_bytes": 294,
+        "output_sha256": "4a1f7296357c1c727cc8116a4ae49601f486a37d3b8a63abb77a294aa5601890",
+        "production_buffer_comparison": "not applicable: incomplete payload is discarded by the production transfer operation; unread suffix is only stable under the explicit Pascal seed"
       }
     },
     "toolchain": {
@@ -91,13 +247,13 @@
       "sessions": 149,
       "standard_programs": 55,
       "standalone_sessions": 94,
-      "session_result": "149 direct Turbo Pascal 5.5 compile/run sessions passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 55 standard probes and 94 standalone compile/run or fixture sessions, including BOARDENC stat-count cases, BRDALI baseline/chained alias writes plus original BoardOpen chained load, and all ten integrated fixtures."
+      "session_result": "149 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit 07cbb562b392ac53361575210386c80098407062: 55 standard probes and 94 standalone compile/run or fixture sessions, including all six BRDXFER truncation cases and F01-F10."
     },
     "direct_differential_comparisons": {
       "configured": 74,
       "passed": 74,
       "failed": 0,
-      "result": "74/74 direct Pascal-to-production comparison invocations passed on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the suite includes embedded-NUL/CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message for both WorldSave .ZZT (IsSave=0) and .SAV (IsSave=1) files (26 short-string field instances and 52,930 file bytes); raw ZZT IsSave/Keys Boolean values 0/1/2/255 (105,860 bytes), BRD stat-count boundaries 0/1/149/150 (10,660 bytes), WorldSave SAV/ZZT board counts 0/1/99/100 (467,992 bytes), chained BRD shared-script aliases (4,050 bytes across two complete records: stat 3 -> 2 wire -2 and stat 4 -> latest earlier shared stat 3 wire -3, with direct Pascal BoardOpen and production parser topology checks), and SAV/ZZT stale-tail checks. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained mismatch."
+      "result": "74/74 direct Pascal-to-production comparison invocations passed on published source commit 07cbb562b392ac53361575210386c80098407062. The clean suite includes the six-case truncated .BRD EditorTransferBoard matrix (empty/one-byte headers; declared four-byte payloads with 0-3 bytes available), alongside the existing serialization, runtime, high-score, lifecycle, and integrated fixture comparisons. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots; no unexplained mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2127,7 +2283,7 @@
     ],
     "remaining_mandatory_work": [
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
-      "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The short-payload and controlled one-byte short-header EditorTransferBoard traces, five-value signed .BRD and nine-field .SAV boundary differentials, .BRD stat counts 0/1/149/150 (10,660 payload bytes matched) and .SAV/.ZZT WorldSave board counts 0/1/99/100 (8 full files / 467,992 bytes matched), strings, Boolean/reserved records, and one shared-script DataLen=-2 alias record (2,025 bytes matched), .SAV Boolean/reserved records, embedded NUL and CP437 00/80/82/FF bytes in all 13 WorldSave strings per .SAV/.ZZT file, including all ten flags, and .SAV/.ZZT stale-tail records covering four strings each (26,465 bytes matched per file), now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
+      "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The six-case empty/one-byte-header and 0-3-byte-payload EditorTransferBoard matrix, five-value signed .BRD and nine-field .SAV boundary differentials, .BRD stat counts 0/1/149/150 (10,660 payload bytes matched) and .SAV/.ZZT WorldSave board counts 0/1/99/100 (8 full files / 467,992 bytes matched), strings, Boolean/reserved records, and one shared-script DataLen=-2 alias record (2,025 bytes matched), .SAV Boolean/reserved records, embedded NUL and CP437 00/80/82/FF bytes in all 13 WorldSave strings per .SAV/.ZZT file, including all ten flags, and .SAV/.ZZT stale-tail records covering four strings each (26,465 bytes matched per file), now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
       "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
       "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
@@ -2191,7 +2347,8 @@
       "E2-02 AC002: direct Pascal and production comparisons passed for raw .BRD Boolean bytes 0/1/2/255 and all 16 Board.Info reserved bytes; acceptance remains partial.",
       "E2-02 AC002 .SAV Boolean/reserved boundaries passed on b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: the existing compiled-Pascal WORLDSAV session emitted four WorldSave files with raw values 0, 1, 2, and 255 in all seven Keys bytes and IsSave plus a 14-byte reserved pattern. Production read/round-trip matched all 26,465 bytes in each file. Clean suite: 148 direct Pascal sessions, 70/70 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles; AC002 remains partial and no acceptance case was added. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-boolean-reserved.md.",
       "E2-02 AC002 chained .BRD DataLen alias passed in the clean 2026-11-27 Turbo Pascal 5.5/DOSBox-X run: BoardClose selected the latest earlier shared stat (stat 4 -> stat 3, wire DataLen -3) after the existing stat 3 -> stat 2 (-2) case; both full 2,025-byte records matched production (4,050 bytes total). The frozen 54-case inventory and AC002 partial status are unchanged.",
-      "E2-02 AC002 chained .BRD load topology passed in the clean 2026-11-27 suite: original Pascal BoardOpen and the shared production parser both resolved stats 2/3/4 to one 98-byte script allocation after wire references -2/-3; both complete records matched (4,050 bytes total). Clean runner exited 0 with 149 Pascal sessions, 74/74 comparisons, and F01-F10; the frozen 54-case inventory is unchanged."
+      "E2-02 AC002 chained .BRD load topology passed in the clean 2026-11-27 suite: original Pascal BoardOpen and the shared production parser both resolved stats 2/3/4 to one 98-byte script allocation after wire references -2/-3; both complete records matched (4,050 bytes total). Clean runner exited 0 with 149 Pascal sessions, 74/74 comparisons, and F01-F10; the frozen 54-case inventory is unchanged.",
+      "E2-02 short-read matrix passed in the clean 2026-11-27 run on published source commit 07cbb562b392ac53361575210386c80098407062: direct Pascal captured empty/one-byte length reads and declared four-byte payloads with 0-3 bytes present; six original EditorTransferBoard cases passed D/DP state comparisons. Full runner: 149 direct Pascal sessions, 74/74 configured comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles, exit 0. The frozen 54-case inventory is unchanged; E2-02 remains partial. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-brd-truncation-matrix.md."
     ],
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
@@ -2242,7 +2399,7 @@
     "latest_attempt": {
       "date": "2026-11-27",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
+      "source_revision": "07cbb562b392ac53361575210386c80098407062",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 149,
       "configured_differentials_passed": 74,
@@ -2254,10 +2411,10 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on source revision b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5: 149 direct Pascal sessions (55 standard, 94 standalone), 74/74 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). Direct Pascal WorldSave embedded-NUL/CP437 strings 00/80/82/FF in the world name, all ten flags, current board name, and message matched in both .SAV and .ZZT files (26, 52,930 total bytes); raw ZZT Boolean/reserved cases matched 105,860 bytes; BRD stat counts 0/1/149/150 matched 10,660 payload bytes; WorldSave SAV/ZZT board counts 0/1/99/100 matched 467,992 bytes; shared-script alias matched 2,025 bytes; stale-tail cases matched 26,465 bytes per SAV and ZZT. No unexplained comparable mismatch; exit code 0.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit 07cbb562b392ac53361575210386c80098407062 (tree 83b2b5a569297876d8abed705936e6ee6ea43990): 149 direct Pascal sessions (55 standard, 94 standalone), 74/74 direct Pascal/production comparison invocations, and E2-10 F01-F10 (238 checkpoints, 824,821 checkpoint fields, 169 logical-cycle snapshots). The six-case .BRD truncation matrix passed; the fixed 54-case acceptance inventory is unchanged and E2-02 remains partial. No unexplained comparable mismatch; exit code 0.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
-      "integrated_checkpoint_count": 7,
-      "integrated_state_fields_compared": 24015,
+      "integrated_checkpoint_count": 238,
+      "integrated_state_fields_compared": 824821,
       "integrated_sound_event_fields_compared": 0,
       "integrated_cell_write_fields_compared": 116,
       "integrated_save_deterministic_bytes_matched": 610,
@@ -3299,7 +3456,23 @@
           "The production comparator validates all 13 fixed short-string slots per file, then reads each generated fixture and executes the shared serializer round-trip harness."
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md"
-      }
+      },
+      "verified_tree_sha": "83b2b5a569297876d8abed705936e6ee6ea43990",
+      "brd_transfer_cases_passed": 6,
+      "integrated_fixture_ids_completed": [
+        "E2-10-F01",
+        "E2-10-F02",
+        "E2-10-F03",
+        "E2-10-F04",
+        "E2-10-F05",
+        "E2-10-F06",
+        "E2-10-F07",
+        "E2-10-F08",
+        "E2-10-F09",
+        "E2-10-F10"
+      ],
+      "integrated_logical_cycles": 169,
+      "unexplained_comparable_mismatches": 0
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -4491,13 +4664,21 @@
       "record_byte_differences_total": 0,
       "reconfirmed_in_full_suite_revision": "b4d6b8c9b3c7769d7b6be52ce61b6393a0b1eac5",
       "loaded_capture": "loaded 2 2 3 4 98 98 98 98 1 1",
-      "pascal_boardopen_resolved_stat_ids": [2, 3, 4],
+      "pascal_boardopen_resolved_stat_ids": [
+        2,
+        3,
+        4
+      ],
       "pascal_boardopen_data_len_bytes": 98,
       "pascal_boardopen_pointer_equalities": 2,
-      "production_parser_resolved_stat_ids": [2, 3, 4],
+      "production_parser_resolved_stat_ids": [
+        2,
+        3,
+        4
+      ],
       "production_parser_data_len_bytes": 98,
       "production_parser_pointer_equalities": 2
-},
+    },
     "sav_stale_string_tail_differential": {
       "evidence_class": "D+DP",
       "acceptance_case": "E2-02-AC002",
@@ -4893,7 +5074,14 @@
       "snapshot_bytes_total": 768256,
       "snapshot_bytes_matched": 768256,
       "writer_probe": "tools/pascal-compat/BOARDENC.PAS::BoardClose",
-      "writer_run_lengths": [255, 255, 255, 255, 255, 225],
+      "writer_run_lengths": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        225
+      ],
       "writer_cells": 1500,
       "brd_payload_bytes_matched": 289,
       "world_file_bytes_matched": 25928,
