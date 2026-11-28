@@ -287,6 +287,7 @@ function Set-TitleRestoreEscapeInputHook {
 
 $probeFiles = @(
     @{ Source = 'VALPROBE.PAS'; DosName = 'VALPROBE.PAS'; Program = 'VALPROBE'; CompileFlags = '/B /EBIN' },
+    @{ Source = 'RNGVEC.PAS'; DosName = 'RNGVEC.PAS'; Program = 'RNGVEC'; CompileFlags = '/B /EBIN' },
     @{ Source = 'INPUTBUF.PAS'; DosName = 'INPUTBUF.PAS'; Program = 'INPUTBUF'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'ELDEFPRB.PAS'; DosName = 'ELDEFPRB.PAS'; Program = 'ELDEFPRB'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'WORLDSAV.PAS'; DosName = 'WORLDSAV.PAS'; Program = 'WORLDSAV'; CompileFlags = '/B /EBIN /UBIN' },
@@ -917,6 +918,12 @@ foreach ($probe in $probeFiles) {
         Invoke-DosboxSession $baseName @($compile, "BIN\$($probe.Program).EXE") '3000'
     }
 }
+
+Write-Host 'Comparing direct Turbo Pascal seeded RNG vectors with the production primitive...'
+& node 'tools/pascal-compat/compare-rng-vector.js' `
+    (Join-Path $stageRoot 'RNGVEC.OUT') `
+    (Join-Path $repoRoot 'build\runtime-compatibility\rng.wasm')
+if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production seeded RNG vector comparison failed with exit code $LASTEXITCODE." }
 
 Write-Host 'Compiling and running isolated direct Turbo Pascal OOP #IF cases: OOPIFPRB'
 $oopIfCommands = [Collections.Generic.List[string]]::new()

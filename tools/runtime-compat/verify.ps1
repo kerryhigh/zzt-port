@@ -207,7 +207,10 @@ $rngArgs = @(
     '--target=wasm32-unknown-unknown', '-std=c99', '-O1', '-nostdlib', '-ffreestanding', '-fno-builtin',
     '-ffunction-sections', '-fdata-sections',
     '-I', (Join-Path $repoRoot 'third_party\libzoo\src\libzoo'),
-    '-Wl,--no-entry', '-Wl,--export=run_rng_checks', '-Wl,--export-memory', '-Wl,--gc-sections',
+    '-Wl,--no-entry', '-Wl,--export=run_rng_checks',
+    '-Wl,--export=rng_vector_set_seed', '-Wl,--export=rng_vector_next',
+    '-Wl,--export=rng_vector_seed_low', '-Wl,--export=rng_vector_seed_high',
+    '-Wl,--export-memory', '-Wl,--gc-sections',
     '-Wl,--initial-memory=16777216', '-Wl,--max-memory=16777216', '-Wl,-z,stack-size=1048576',
     $rngSource, '-o', $rngWasm
 )

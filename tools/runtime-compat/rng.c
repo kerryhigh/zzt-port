@@ -1,6 +1,24 @@
 #include <stdint.h>
 #include "zoo_random.h"
 
+static uint32_t rng_vector_seed;
+
+void rng_vector_set_seed(uint32_t seed) {
+	rng_vector_seed = seed;
+}
+
+int16_t rng_vector_next(int16_t max) {
+	return zoo_random_next(&rng_vector_seed, max);
+}
+
+int32_t rng_vector_seed_low(void) {
+	return (int32_t) (rng_vector_seed & 0xFFFFU);
+}
+
+int32_t rng_vector_seed_high(void) {
+	return (int32_t) ((rng_vector_seed >> 16) & 0xFFFFU);
+}
+
 int32_t run_rng_checks(void) {
 	static const int16_t tp55_expected[] = {343, 282, 986, 996, 781, 855, 343, 32};
 	static const int16_t drum4_expected[] = {
