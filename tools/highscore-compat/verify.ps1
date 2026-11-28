@@ -1,7 +1,8 @@
 param(
     [string]$PascalHiPath,
     [string]$PascalLoadDirectory,
-    [string]$PascalInsertionDirectory
+    [string]$PascalInsertionDirectory,
+    [string]$PascalTruncationMatrixPath
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -43,9 +44,12 @@ if ($LASTEXITCODE -ne 0) { throw "Shared LibZoo high-score harness compilation f
 $hiPath = if ($PascalHiPath) { (Resolve-Path -LiteralPath $PascalHiPath).Path } else { '-' }
 $loadPath = if ($PascalLoadDirectory) { (Resolve-Path -LiteralPath $PascalLoadDirectory).Path } else { '-' }
 $insertPath = if ($PascalInsertionDirectory) { (Resolve-Path -LiteralPath $PascalInsertionDirectory).Path } else { '-' }
+$truncationMatrixPath = if ($PascalTruncationMatrixPath) { (Resolve-Path -LiteralPath $PascalTruncationMatrixPath).Path } else { '-' }
 $roundTrip = Join-Path $buildDir 'pascal-highscores-roundtrip.HI'
+$truncationMatrixOutput = Join-Path $buildDir 'pascal-highscores-truncation-matrix.bin'
 & $node.Source (Join-Path $PSScriptRoot 'verify.js') $wasm `
-    $hiPath $roundTrip $loadPath $buildDir $insertPath $buildDir
+    $hiPath $roundTrip $loadPath $buildDir $insertPath $buildDir `
+    $truncationMatrixPath $truncationMatrixOutput
 if ($LASTEXITCODE -ne 0) { throw "Shared LibZoo high-score compatibility checks failed with exit code $LASTEXITCODE." }
 
 $javaSources = @(

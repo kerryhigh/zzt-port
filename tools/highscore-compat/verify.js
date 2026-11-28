@@ -185,6 +185,27 @@ async function main() {
     }
   }
 
+  if (args[6] && args[6] !== '-') {
+    const expected = fs.readFileSync(args[6]);
+    const expectedLength = TABLE_BYTES * TABLE_BYTES;
+    assert(expected.length === expectedLength,
+      `Pascal high-score truncation matrix has ${expected.length} bytes; expected ${expectedLength}.`);
+    const seed = fs.readFileSync(path.join(path.dirname(args[6]), 'HISEED.HI'));
+    assert(seed.length === TABLE_BYTES, 'High-score truncation seed is not one complete record.');
+    const actual = Buffer.alloc(expectedLength);
+    for (let length = 0; length < TABLE_BYTES; length++) {
+      init();
+      assert(load(seed) === 0, `Could not seed high-score truncation case ${length}.`);
+      const status = load(seed.subarray(0, length), false);
+      assert(status !== 0, `Production accepted truncated .HI length ${length}.`);
+      save().copy(actual, length * TABLE_BYTES);
+    }
+    requireEqual(actual, expected, 'Pascal high-score truncation matrix differs from shared LibZoo');
+    if (args[7] && args[7] !== '-') writeOut(args[7], actual);
+    differentialCount += TABLE_BYTES;
+    console.log(`Turbo Pascal HighScoresLoad truncation sweep: all ${TABLE_BYTES} lengths (0..${TABLE_BYTES - 1}) match byte-for-byte (${expectedLength} bytes)`);
+  }
+
   if (args[4] && args[4] !== '-') {
     const directory = args[4];
     const outputDirectory = args[5];

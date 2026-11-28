@@ -8,8 +8,12 @@ const
 	);
 var
 	i: integer;
+	truncLength: integer;
 	seedFile: file of THighScoreList;
 	seedList: THighScoreList;
+	truncInput: file;
+	truncOutput: file;
+	seedBytes: array[1 .. 1590] of byte;
 
 procedure WriteScoreTable(filename: string);
 var
@@ -38,5 +42,20 @@ begin
 		HighScoresLoad;
 		WriteScoreTable(World.Info.Name + '.OUT');
 	end;
+	Move(seedList, seedBytes, SizeOf(seedList));
+	Assign(truncOutput, 'HITRUNC.MAT');
+	Rewrite(truncOutput, 1);
+	for truncLength := 0 to SizeOf(seedList) - 1 do begin
+		World.Info.Name := 'HITRUNC';
+		Assign(truncInput, 'HITRUNC.HI');
+		Rewrite(truncInput, 1);
+		if truncLength > 0 then
+			BlockWrite(truncInput, seedBytes, truncLength);
+		Close(truncInput);
+		HighScoreList := seedList;
+		HighScoresLoad;
+		BlockWrite(truncOutput, HighScoreList, SizeOf(HighScoreList));
+	end;
+	Close(truncOutput);
 	Dispose(IoTmpBuf);
 end.

@@ -2289,10 +2289,18 @@ try {
         $stageRoot `
         (Join-Path $repoRoot 'build\serializer-compatibility\world_roundtrip.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal .ZZT CP437 short-string differential failed with exit code $LASTEXITCODE." }
+    $hiTruncationMatrix = Join-Path $stageRoot 'HITRUNC.MAT'
+    $hiTruncationMatrixBytes = 1590 * 1590
+    if (-not (Test-Path -LiteralPath $hiTruncationMatrix -PathType Leaf) -or
+        (Get-Item -LiteralPath $hiTruncationMatrix).Length -ne $hiTruncationMatrixBytes) {
+        throw "Turbo Pascal .HI truncation matrix is missing or has the wrong size; expected $hiTruncationMatrixBytes bytes."
+    }
+    Write-Host 'Turbo Pascal HighScoresLoad direct truncation matrix: 1,590 inputs, lengths 0..1,589.'
     & '.\tools\highscore-compat\verify.ps1' `
         -PascalHiPath (Join-Path $stageRoot 'PASPROBE.HI') `
         -PascalLoadDirectory $stageRoot `
-        -PascalInsertionDirectory $stageRoot
+        -PascalInsertionDirectory $stageRoot `
+        -PascalTruncationMatrixPath $hiTruncationMatrix
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "High-score compatibility suite failed with exit code $LASTEXITCODE." }
     & '.\tools\runtime-compat\verify.ps1'
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Runtime compatibility suite failed with exit code $LASTEXITCODE." }
