@@ -931,15 +931,28 @@
       "requirement": "Retain existing direct parser counts and edge tests; add missing command branches, not redundant copies of passing probes.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:178",
       "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "evidence_class": "D+DP",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction",
+        "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
+      ],
+      "test_fixture": [
+        "tools/pascal-compat/OOPRND.PAS (additional direct slash-direction parser branches)",
+        "tools/pascal-compat/compare-oop-random-walk.js"
+      ],
+      "oracle_output": {
+        "path": "build/pascal-compat-verification/OOPRND.OUT",
+        "size_bytes": 173,
+        "sha256": "5E53A9179A593566FB882EF4C6764A1D92997F5E2992C3749CCE290322170DE7",
+        "cases_matched": 6,
+        "numeric_fields_matched": 66
+      },
+      "verification_result": "Partial parser progress, 2026-11-28: OopExecute directly matched RNDNS/RNDNE and both RNDP NORTH Random(2) branches across six cases / 66 fields. The remaining frozen OOP parser command, alias, cursor/error, and interaction inventory is still pending; this probe does not close AC003.",
       "required_evidence_classes": [
         "D",
         "DP"
-      ]
+      ],
+      "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
     },
     {
       "id": "E2-05-AC004",
@@ -1213,7 +1226,10 @@
         "tools/pascal-compat/SPINGUN.PAS",
         "tools/pascal-compat/SHARKPRB.PAS",
         "tools/pascal-compat/DARKIN.PAS (E2-10-F06 integrated cross-support; not counted again)",
-        "tools/pascal-compat/PAUSEIN.PAS (E2-10-F07 integrated cross-support; not counted again)"
+        "tools/pascal-compat/PAUSEIN.PAS (E2-10-F07 integrated cross-support; not counted again)",
+        "tools/pascal-compat/OOPRND.PAS",
+        "tools/pascal-compat/compare-oop-random-walk.js",
+        "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
       ],
       "oracle_output": {
         "path": "build/pascal-compat-verification/RNGVEC.OUT",
@@ -1223,9 +1239,17 @@
         "draws_matched": 224,
         "numeric_fields_matched": 1344,
         "field_differences": 0,
-        "caller_output_note": "Named direct gameplay outputs are checked by their committed comparators; pending caller rows have no direct output yet."
+        "caller_output_note": "Direct caller evidence now covers 18/29 source sites; 11 still lack direct output. Three additional sites retain integrated-only F06/F07 support counted only under E2-10.",
+        "oop_random_direction_callers": {
+          "path": "build/pascal-compat-verification/OOPRND.OUT",
+          "size_bytes": 173,
+          "sha256": "5E53A9179A593566FB882EF4C6764A1D92997F5E2992C3749CCE290322170DE7",
+          "cases_matched": 6,
+          "numeric_fields_matched": 66,
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
+        }
       },
-      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges (D/DP). Source maps 29/29 call sites; direct gameplay probes cover 15/29. F06/F07 provide integrated I support for three pending startup/scheduler sites, counted only under E2-10. Fourteen caller cases, Randomize/time seeding, and GAME.PAS:1699 remain pending. Full clean suite passed 151/151 direct Pascal sessions and 76/76 configured differentials with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.",
+      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges (D/DP). Source maps 29/29 call sites; direct caller probes cover 18/29, including both branches of OOP RNDNS, RNDNE, and RNDP NORTH (six OopExecute cases, 66/66 fields). F06/F07 provide integrated I support for three other startup/scheduler sites, counted only under E2-10. Eleven caller cases, Randomize/time seeding, and GAME.PAS:1699 remain pending. Full clean suite passed 152/152 direct Pascal sessions and 77/77 configured differentials with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md and tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md.",
       "required_evidence_classes": [
         "D",
         "S",
@@ -12757,9 +12781,22 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:158",
         "source_text": "if Random(2) = 0 then",
-        "evidence_class": null,
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP",
+        "test_fixture": [
+          "tools/pascal-compat/OOPRND.PAS (RNDP NORTH with Random(2)=0 and 1)",
+          "tools/pascal-compat/compare-oop-random-walk.js"
+        ],
+        "verification_result": "Both branches of the source Random(2)=0 condition at OOP.PAS:158 ran through OopExecute and matched production direction movement and post-call RNG state. This case does not close the broader E2-05 parser/command inventories.",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction",
+          "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
+        ],
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/OOPRND.OUT",
+          "size_bytes": 173,
+          "sha256": "5E53A9179A593566FB882EF4C6764A1D92997F5E2992C3749CCE290322170DE7"
+        },
+        "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
       },
       {
         "id": "E2-05-BR-OOP-0162",
@@ -22796,13 +22833,92 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:143",
         "source_text": "dy := Random(2) * 2 - 1;",
-        "evidence_class": "S",
+        "evidence_class": "D+DP+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Random OOP direction aliases have not yet been directly probed.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/OOPRND.PAS (direct compiled OopExecute probe)",
+          "tools/pascal-compat/compare-oop-random-walk.js (D/DP field comparison)",
+          "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
+        ],
+        "verification_result": "Passed 2026-11-28: both Random(2) outcomes for this direct OopExecute caller matched production movement, instruction cursor, object/tile state, and 32-bit RandSeed. Six cases across all three OOP callers matched 66/66 numeric fields; the full clean suite passed 152/152 direct Pascal sessions and 77/77 configured Pascal/production comparisons. See tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md.",
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/OOPRND.OUT",
+          "size_bytes": 173,
+          "sha256": "5E53A9179A593566FB882EF4C6764A1D92997F5E2992C3749CCE290322170DE7",
+          "matched_cases": 6,
+          "numeric_fields_matched": 66,
+          "cases": [
+            {
+              "case": 1,
+              "word": "RNDNS",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                10,
+                9
+              ]
+            },
+            {
+              "case": 2,
+              "word": "RNDNS",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                10,
+                11
+              ]
+            },
+            {
+              "case": 3,
+              "word": "RNDNE",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                10,
+                9
+              ]
+            },
+            {
+              "case": 4,
+              "word": "RNDNE",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                11,
+                10
+              ]
+            },
+            {
+              "case": 5,
+              "word": "RNDP NORTH",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                11,
+                10
+              ]
+            },
+            {
+              "case": 6,
+              "word": "RNDP NORTH",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                9,
+                10
+              ]
+            }
+          ]
+        },
+        "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
       },
       {
         "id": "E2-07-RNG-OOP-0145",
@@ -22811,13 +22927,92 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:145",
         "source_text": "dx := Random(2);",
-        "evidence_class": "S",
+        "evidence_class": "D+DP+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Random OOP direction aliases have not yet been directly probed.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/OOPRND.PAS (direct compiled OopExecute probe)",
+          "tools/pascal-compat/compare-oop-random-walk.js (D/DP field comparison)",
+          "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
+        ],
+        "verification_result": "Passed 2026-11-28: both Random(2) outcomes for this direct OopExecute caller matched production movement, instruction cursor, object/tile state, and 32-bit RandSeed. Six cases across all three OOP callers matched 66/66 numeric fields; the full clean suite passed 152/152 direct Pascal sessions and 77/77 configured Pascal/production comparisons. See tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md.",
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/OOPRND.OUT",
+          "size_bytes": 173,
+          "sha256": "5E53A9179A593566FB882EF4C6764A1D92997F5E2992C3749CCE290322170DE7",
+          "matched_cases": 6,
+          "numeric_fields_matched": 66,
+          "cases": [
+            {
+              "case": 1,
+              "word": "RNDNS",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                10,
+                9
+              ]
+            },
+            {
+              "case": 2,
+              "word": "RNDNS",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                10,
+                11
+              ]
+            },
+            {
+              "case": 3,
+              "word": "RNDNE",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                10,
+                9
+              ]
+            },
+            {
+              "case": 4,
+              "word": "RNDNE",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                11,
+                10
+              ]
+            },
+            {
+              "case": 5,
+              "word": "RNDP NORTH",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                11,
+                10
+              ]
+            },
+            {
+              "case": 6,
+              "word": "RNDP NORTH",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                9,
+                10
+              ]
+            }
+          ]
+        },
+        "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
       },
       {
         "id": "E2-07-RNG-OOP-0158",
@@ -22826,13 +23021,92 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:158",
         "source_text": "if Random(2) = 0 then",
-        "evidence_class": "S",
+        "evidence_class": "D+DP+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Random OOP direction aliases have not yet been directly probed.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/OOPRND.PAS (direct compiled OopExecute probe)",
+          "tools/pascal-compat/compare-oop-random-walk.js (D/DP field comparison)",
+          "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
+        ],
+        "verification_result": "Passed 2026-11-28: both Random(2) outcomes for this direct OopExecute caller matched production movement, instruction cursor, object/tile state, and 32-bit RandSeed. Six cases across all three OOP callers matched 66/66 numeric fields; the full clean suite passed 152/152 direct Pascal sessions and 77/77 configured Pascal/production comparisons. See tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md.",
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/OOPRND.OUT",
+          "size_bytes": 173,
+          "sha256": "5E53A9179A593566FB882EF4C6764A1D92997F5E2992C3749CCE290322170DE7",
+          "matched_cases": 6,
+          "numeric_fields_matched": 66,
+          "cases": [
+            {
+              "case": 1,
+              "word": "RNDNS",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                10,
+                9
+              ]
+            },
+            {
+              "case": 2,
+              "word": "RNDNS",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                10,
+                11
+              ]
+            },
+            {
+              "case": 3,
+              "word": "RNDNE",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                10,
+                9
+              ]
+            },
+            {
+              "case": 4,
+              "word": "RNDNE",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                11,
+                10
+              ]
+            },
+            {
+              "case": 5,
+              "word": "RNDP NORTH",
+              "seed": 0,
+              "draw": 0,
+              "final_seed": 1,
+              "position": [
+                11,
+                10
+              ]
+            },
+            {
+              "case": 6,
+              "word": "RNDP NORTH",
+              "seed": 2,
+              "draw": 1,
+              "final_seed": 269551627,
+              "position": [
+                9,
+                10
+              ]
+            }
+          ]
+        },
+        "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
       },
       {
         "id": "E2-07-RNG-SOUNDS-0118",
