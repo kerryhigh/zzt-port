@@ -266,6 +266,8 @@ int run_world_load_partial_length(uint32_t input_len) {
     if (input_len > FIXTURE_CAP) return -90;
     heap_used = 0;
     memset(&state, 0, sizeof(state));
+    memset(output_data, 0, 9);
+    output_size = 0;
     zoo_world_create(&state);
     state.world.board_count = 1;
     state.world.board_len[1] = 0x0100;
@@ -278,6 +280,17 @@ int run_world_load_partial_length(uint32_t input_len) {
     if (state.world.board_count != 15 || state.world.info.current_board != 0
             || state.world.info.is_save || state.world.board_len[1] != 0x0110
             || state.world.board_data[1] == NULL) return -91;
+
+    output_data[0] = 1;
+    output_data[1] = (uint8_t) state.world.board_count;
+    output_data[2] = (uint8_t) ((uint16_t) state.world.board_count >> 8);
+    output_data[3] = (uint8_t) state.world.info.current_board;
+    output_data[4] = (uint8_t) ((uint16_t) state.world.info.current_board >> 8);
+    output_data[5] = state.world.info.is_save ? 1 : 0;
+    output_data[6] = (uint8_t) state.world.board_len[1];
+    output_data[7] = (uint8_t) ((uint16_t) state.world.board_len[1] >> 8);
+    output_data[8] = state.world.board_data[1] != NULL ? 1 : 0;
+    output_size = 9;
     return 0;
 }
 

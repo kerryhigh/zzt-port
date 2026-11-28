@@ -1,3 +1,8 @@
+param(
+    [string]$PascalShortLengthOutput,
+    [string]$PascalShortLengthFixture
+)
+
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $gradleText = [IO.File]::ReadAllText((Join-Path $repoRoot 'app\build.gradle'))
@@ -52,5 +57,17 @@ $clangArgs = @(
 )
 & $clang @clangArgs
 if ($LASTEXITCODE -ne 0) { throw "WASM serializer harness compilation failed with exit code $LASTEXITCODE." }
-& $node.Source (Join-Path $PSScriptRoot 'run.js') $wasm
+$runArgs = @($wasm)
+if ($PascalShortLengthOutput -or $PascalShortLengthFixture) {
+    if (-not $PascalShortLengthOutput -or -not $PascalShortLengthFixture) {
+        throw 'Pass both PascalShortLengthOutput and PascalShortLengthFixture for the direct WorldLoad comparison.'
+    }
+    foreach ($path in @($PascalShortLengthOutput, $PascalShortLengthFixture)) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            throw "Pascal partial-length comparison input is missing: $path"
+        }
+    }
+    $runArgs += @('--pascal-short-length', $PascalShortLengthOutput, $PascalShortLengthFixture)
+}
+& $node.Source (Join-Path $PSScriptRoot 'run.js') @runArgs
 if ($LASTEXITCODE -ne 0) { throw "Serializer compatibility checks failed with exit code $LASTEXITCODE." }

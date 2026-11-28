@@ -1889,7 +1889,7 @@ $expectedOutputs = [ordered]@{
     )
     'WORLDTIT.OUT' = @('title-only 1 0 0 1 1')
     'FULLLOAD.OUT' = @('full-load 1 15 0 0 1 missing-len 0 0')
-    'SHORTLEN.OUT' = @('short-len 1 15 0 272')
+    'SHORTLEN.OUT' = @('short-len 1 15 0 0 272 1')
     'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
     'NEGBRD.OUT' = @('negative-brd 1 -1')
     'BRDIOPRB.OUT' = @(
@@ -2211,7 +2211,9 @@ foreach ($statCountFixture in @('STATC0.BRD', 'STATC1.BRD', 'STATC149.BRD', 'STA
 
 Push-Location $repoRoot
 try {
-    & '.\tools\serializer-compat\verify.ps1'
+    & '.\tools\serializer-compat\verify.ps1' `
+        -PascalShortLengthOutput (Join-Path $stageRoot 'SHORTLEN.OUT') `
+        -PascalShortLengthFixture (Join-Path $stageRoot 'PARTLEN.ZZT')
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Serializer compatibility suite failed with exit code $LASTEXITCODE." }
     & node 'tools/serializer-compat/compare-board-rle.js' `
         (Join-Path $stageRoot 'BOARDRLE.BIN') `

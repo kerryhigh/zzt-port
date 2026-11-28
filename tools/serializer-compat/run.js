@@ -1,5 +1,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const shortLengthOption = process.argv.indexOf('--pascal-short-length');
+const pascalShortLengthOutputPath = shortLengthOption >= 0 ? process.argv[shortLengthOption + 1] : null;
+const pascalShortLengthFixturePath = shortLengthOption >= 0 ? process.argv[shortLengthOption + 2] : null;
+if (shortLengthOption >= 0 && (!pascalShortLengthOutputPath || !pascalShortLengthFixturePath)) {
+  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT]');
+}
 function parseBoard(bytes, start) {
   let p = start + 51, cells = 0;
   while (cells < 1500) { const count = bytes[p]; p += 3; cells += count === 0 ? 1 : count; }
@@ -134,11 +140,44 @@ function parseBoard(bytes, start) {
   const fullLoadResult = run_world_load_missing_trailing(fullLoadFixture.length);
   if (fullLoadResult !== 0) throw new Error(`Full-world load of a valid current board with missing trailing records returned ${fullLoadResult}`);
   console.log('Production full-world load opens the valid current board and retains the declared count when trailing board records are absent');
-  const partialLengthFixture = Buffer.concat([fullLoadFixture, Buffer.from([0x10])]);
+  const expectedPartialLengthFixture = Buffer.concat([fullLoadFixture, Buffer.from([0x10])]);
+  const partialLengthFixture = pascalShortLengthFixturePath
+    ? fs.readFileSync(path.resolve(pascalShortLengthFixturePath))
+    : expectedPartialLengthFixture;
+  if (!partialLengthFixture.equals(expectedPartialLengthFixture)) {
+    throw new Error('Pascal PARTLEN.ZZT does not match the expected one-byte partial board-length fixture.');
+  }
   new Uint8Array(memory.buffer, input_ptr(), partialLengthFixture.length).set(partialLengthFixture);
   const partialLengthResult = run_world_load_partial_length(partialLengthFixture.length);
   if (partialLengthResult !== 0) throw new Error(`A one-byte board length did not preserve its prior high byte (${partialLengthResult})`);
-  console.log('Production full-world load preserves the prior high byte of a one-byte board-length read');
+  const partialLengthProduction = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
+  if (partialLengthProduction.length !== 9) throw new Error(`Production partial-length snapshot has ${partialLengthProduction.length} bytes; expected 9.`);
+  const productionPartialLengthFields = [
+    partialLengthProduction[0],
+    partialLengthProduction.readInt16LE(1),
+    partialLengthProduction.readInt16LE(3),
+    partialLengthProduction[5],
+    partialLengthProduction.readInt16LE(6),
+    partialLengthProduction[8]
+  ];
+  if (pascalShortLengthOutputPath) {
+    const pascalText = fs.readFileSync(path.resolve(pascalShortLengthOutputPath), 'utf8').trim();
+    const match = /^short-len (\d+) (\d+) (\d+) (\d+) (\d+) (\d+)$/.exec(pascalText);
+    if (!match) throw new Error(`Unexpected Pascal SHORTLEN.OUT record: ${pascalText}`);
+    const pascalPartialLengthFields = match.slice(1).map(Number);
+    for (let i = 0; i < pascalPartialLengthFields.length; i++) {
+      if (pascalPartialLengthFields[i] !== productionPartialLengthFields[i]) {
+        throw new Error(`Partial WorldLoad length differential mismatch at field ${i}: Pascal=${pascalPartialLengthFields[i]}, production=${productionPartialLengthFields[i]}; Pascal=${pascalText}; production=${productionPartialLengthFields.join(' ')}`);
+      }
+    }
+    console.log(`Direct Pascal/production one-byte partial .ZZT board-length load matched six fields: ${productionPartialLengthFields.join(' ')} (the prior high byte remains ${productionPartialLengthFields[4] >> 8}).`);
+  } else {
+    const expectedPartialLengthFields = [1, 15, 0, 0, 0x0110, 1];
+    if (productionPartialLengthFields.some((value, i) => value !== expectedPartialLengthFields[i])) {
+      throw new Error(`Production partial-length state ${productionPartialLengthFields.join(' ')} differed from expected ${expectedPartialLengthFields.join(' ')}.`);
+    }
+    console.log('Production full-world load preserves the prior high byte of a one-byte board-length read');
+  }
   const unsignedLengthFixture = Buffer.alloc(514 + 0xffff);
   original.copy(unsignedLengthFixture, 0, 0, 514 + firstBoardLength);
   unsignedLengthFixture.writeInt16LE(0, 2);

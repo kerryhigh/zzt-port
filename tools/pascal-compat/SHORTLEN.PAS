@@ -26,6 +26,7 @@ begin
 	Assign(output, 'SHORTLEN.OUT');
 	Rewrite(output);
 	WriteLn(output, 'short-len ', Ord(loaded), ' ', World.BoardCount, ' ',
-		World.Info.CurrentBoard, ' ', World.BoardLen[1]);
+		World.Info.CurrentBoard, ' ', Ord(World.Info.IsSave), ' ',
+		World.BoardLen[1], ' ', Ord(World.BoardData[1] <> nil));
 	Close(output);
 end.
