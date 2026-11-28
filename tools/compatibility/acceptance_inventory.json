@@ -1229,7 +1229,10 @@
         "tools/pascal-compat/PAUSEIN.PAS (E2-10-F07 integrated cross-support; not counted again)",
         "tools/pascal-compat/OOPRND.PAS",
         "tools/pascal-compat/compare-oop-random-walk.js",
-        "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks"
+        "tools/runtime-compat/oop_label.c::run_oop_random_walk_capture_checks",
+        "tools/pascal-compat/TRNTBL.PAS",
+        "tools/pascal-compat/compare-transition-table.js",
+        "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md"
       ],
       "oracle_output": {
         "path": "build/pascal-compat-verification/RNGVEC.OUT",
@@ -1239,7 +1242,7 @@
         "draws_matched": 224,
         "numeric_fields_matched": 1344,
         "field_differences": 0,
-        "caller_output_note": "Direct caller evidence now covers 18/29 source sites; 11 still lack direct output. Three additional sites retain integrated-only F06/F07 support counted only under E2-10.",
+        "caller_output_note": "Direct caller evidence covers 19/29 sites; 10 still lack direct D/DP evidence. Two additional sites have integrated-only F06/F07 support counted only under E2-10. GenerateTransitionTable directly matched all 1,500 coordinates and both final RandSeed words.",
         "oop_random_direction_callers": {
           "path": "build/pascal-compat-verification/OOPRND.OUT",
           "size_bytes": 173,
@@ -1247,9 +1250,53 @@
           "cases_matched": 6,
           "numeric_fields_matched": 66,
           "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
+        },
+        "transition_table_caller_differential": {
+          "acceptance_cases": [
+            "E2-07-RNG-GAME-0140"
+          ],
+          "evidence_class": "D+DP",
+          "result": "passed",
+          "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:140",
+          "source_text": "iy := Random(TransitionTableSize) + 1;",
+          "production_implementation": [
+            "third_party/libzoo/src/libzoo/zoo.c::zoo_transition_table_init",
+            "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
+          ],
+          "probe": "tools/pascal-compat/TRNTBL.PAS",
+          "production_comparator": "tools/pascal-compat/compare-transition-table.js",
+          "production_harness": "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks",
+          "coordinate_entries": 1500,
+          "coordinate_entries_matched": 1500,
+          "random_draws": 1500,
+          "numeric_fields_compared": 3002,
+          "numeric_fields_matched": 3002,
+          "field_differences": 0,
+          "initial_randseed": 0,
+          "seed_words_compared": 2,
+          "seed_words_matched": 2,
+          "final_randseed_words_low_high": [
+            18372,
+            9231
+          ],
+          "oracle_output": {
+            "path": "build/pascal-compat-verification/TRNTBL.OUT",
+            "size_bytes": 16145,
+            "sha256": "35a9c454576a2a70825693cb4549bb5531a83191d5c7de738378b1316ce81d7f",
+            "retained_in_repository": false
+          },
+          "oracle_interventions": [
+            "The probe sets RandSeed=0 and calls the original GenerateTransitionTable routine without modifying Pascal source or gameplay semantics.",
+            "The probe does not call WorldCreate and performs no other RNG calls.",
+            "The production capture invokes the same zoo_transition_table_init helper used by zoo_state_init; the harness does not duplicate the shuffle."
+          ],
+          "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+          "tested_local_source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
+          "published_source_revision": "662dbd57fca3149d01e29d850b35c79c6b4ddb68",
+          "tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e"
         }
       },
-      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges (D/DP). Source maps 29/29 call sites; direct caller probes cover 18/29, including both branches of OOP RNDNS, RNDNE, and RNDP NORTH (six OopExecute cases, 66/66 fields). F06/F07 provide integrated I support for three other startup/scheduler sites, counted only under E2-10. Eleven caller cases, Randomize/time seeding, and GAME.PAS:1699 remain pending. Full clean suite passed 152/152 direct Pascal sessions and 77/77 configured differentials with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md and tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md.",
+      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded primitive draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges. Direct caller evidence covers 19/29 sites, including all 1,500 GenerateTransitionTable coordinates and both final seed words (3,002/3,002 fields), and both branches of OOP RNDNS, RNDNE, and RNDP NORTH. Two other sites retain integrated-only F06/F07 support under E2-10. Ten caller sites remain without direct D/DP evidence; Randomize/time seeding and GAME.PAS:1699 remain pending. The clean suite passed 153 direct Pascal sessions and 78/78 configured differentials, with F01-F10 at 238 checkpoints, 824,821 fields, and 169 cycles.",
       "required_evidence_classes": [
         "D",
         "S",
@@ -2397,12 +2444,25 @@
           "third_party/reconstruction-of-zzt/SRC/GAME.PAS:38",
           "third_party/reconstruction-of-zzt/SRC/GAME.PAS:125"
         ],
-        "production_implementation": [],
-        "test_fixture": [],
-        "oracle_output": null,
-        "evidence_class": null,
-        "verification_result": "unclassified",
-        "scope_status": "requires_shared_mapping_or_adapter_exclusion"
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_transition_table_init",
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/TRNTBL.PAS",
+          "tools/pascal-compat/compare-transition-table.js",
+          "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+          "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks"
+        ],
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/TRNTBL.OUT",
+          "size_bytes": 16145,
+          "sha256": "35a9c454576a2a70825693cb4549bb5531a83191d5c7de738378b1316ce81d7f",
+          "retained_in_repository": false
+        },
+        "evidence_class": "D+DP+S",
+        "verification_result": "The original procedure directly filled and shuffled the 60x25 coordinates; direct Pascal/production comparison matched all 1,500 positions and both final RandSeed words under controlled seed zero.",
+        "scope_status": "shared_engine_mapping_verified_for_captured_path"
       },
       {
         "id": "E2-03-ROUTINE-GAME-GETSTATIDAT",
@@ -6369,9 +6429,14 @@
         "routine": "GenerateTransitionTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:131",
         "source_text": "for iy := 1 to BOARD_HEIGHT do",
-        "evidence_class": null,
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "test_fixture": [
+          "tools/pascal-compat/TRNTBL.PAS",
+          "tools/pascal-compat/compare-transition-table.js",
+          "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+          "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks"
+        ],
+        "verification_result": "The direct TRNTBL probe executed this loop in the original GenerateTransitionTable procedure; all resulting coordinates and both final seed words matched production."
       },
       {
         "id": "E2-03-BR-GAME-0132",
@@ -6383,9 +6448,14 @@
         "routine": "GenerateTransitionTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:132",
         "source_text": "for ix := 1 to BOARD_WIDTH do begin",
-        "evidence_class": null,
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "test_fixture": [
+          "tools/pascal-compat/TRNTBL.PAS",
+          "tools/pascal-compat/compare-transition-table.js",
+          "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+          "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks"
+        ],
+        "verification_result": "The direct TRNTBL probe executed this loop in the original GenerateTransitionTable procedure; all resulting coordinates and both final seed words matched production."
       },
       {
         "id": "E2-03-BR-GAME-0139",
@@ -6397,9 +6467,14 @@
         "routine": "GenerateTransitionTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:139",
         "source_text": "for ix := 1 to TransitionTableSize do begin",
-        "evidence_class": null,
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "test_fixture": [
+          "tools/pascal-compat/TRNTBL.PAS",
+          "tools/pascal-compat/compare-transition-table.js",
+          "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+          "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks"
+        ],
+        "verification_result": "The direct TRNTBL probe executed this loop in the original GenerateTransitionTable procedure; all resulting coordinates and both final seed words matched production."
       },
       {
         "id": "E2-03-BR-GAME-0167",
@@ -22249,15 +22324,21 @@
         "routine": "GenerateTransitionTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:140",
         "source_text": "iy := Random(TransitionTableSize) + 1;",
-        "evidence_class": "I+S",
+        "evidence_class": "D+DP+I+S",
         "production_implementation": [
-          "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init",
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_transition_table_init",
+          "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks"
         ],
         "test_fixture": [
           "tools/pascal-compat/DARKIN.PAS",
-          "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md"
+          "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md",
+          "tools/pascal-compat/TRNTBL.PAS",
+          "tools/pascal-compat/compare-transition-table.js",
+          "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks",
+          "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md"
         ],
-        "verification_result": "Integrated evidence only (E2-10-F06); latest clean record matched 126 checkpoints and 438702 state fields with zero state differences. This does not close the direct D/DP caller criterion.",
+        "verification_result": "Direct compiled Pascal and production comparison passed: all 1,500 shuffled coordinates, all 1,500 Random(1500) draws, and both final RandSeed words matched for initial seed zero (3,002/3,002 numeric fields; zero differences). Existing E2-10-F06 integrated evidence remains I support only and is not recounted as direct caller credit.",
         "oracle_output": {
           "integrated_fixture": "E2-10-F06",
           "reference_evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md",
@@ -22268,7 +22349,51 @@
           "latest_verification_state_fields": 438702,
           "latest_verification_logical_cycles": 120,
           "latest_verification_cycle_fields": 418216,
-          "scope_note": "DARKIN directly calls GenerateTransitionTable after RandSeed=0, before WorldCreate, then runs 120 actual gameplay cycles. The integrated capture supports startup sequence and resulting state; it does not assert the transition order table itself."
+          "scope_note": "F06 remains integrated gameplay support; the direct TRNTBL probe now independently compares the transition order itself and the final RNG state.",
+          "direct_transition_table_differential": {
+            "acceptance_cases": [
+              "E2-07-RNG-GAME-0140"
+            ],
+            "evidence_class": "D+DP",
+            "result": "passed",
+            "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:140",
+            "source_text": "iy := Random(TransitionTableSize) + 1;",
+            "production_implementation": [
+              "third_party/libzoo/src/libzoo/zoo.c::zoo_transition_table_init",
+              "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
+            ],
+            "probe": "tools/pascal-compat/TRNTBL.PAS",
+            "production_comparator": "tools/pascal-compat/compare-transition-table.js",
+            "production_harness": "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks",
+            "coordinate_entries": 1500,
+            "coordinate_entries_matched": 1500,
+            "random_draws": 1500,
+            "numeric_fields_compared": 3002,
+            "numeric_fields_matched": 3002,
+            "field_differences": 0,
+            "initial_randseed": 0,
+            "seed_words_compared": 2,
+            "seed_words_matched": 2,
+            "final_randseed_words_low_high": [
+              18372,
+              9231
+            ],
+            "oracle_output": {
+              "path": "build/pascal-compat-verification/TRNTBL.OUT",
+              "size_bytes": 16145,
+              "sha256": "35a9c454576a2a70825693cb4549bb5531a83191d5c7de738378b1316ce81d7f",
+              "retained_in_repository": false
+            },
+            "oracle_interventions": [
+              "The probe sets RandSeed=0 and calls the original GenerateTransitionTable routine without modifying Pascal source or gameplay semantics.",
+              "The probe does not call WorldCreate and performs no other RNG calls.",
+              "The production capture invokes the same zoo_transition_table_init helper used by zoo_state_init; the harness does not duplicate the shuffle."
+            ],
+            "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+            "tested_local_source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
+            "published_source_revision": "662dbd57fca3149d01e29d850b35c79c6b4ddb68",
+            "tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e"
+          }
         }
       },
       {

@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-28",
-    "root_revision": "67f4ecb3c898b37b8279419642a51078cc5d8d38",
+    "root_revision": "662dbd57fca3149d01e29d850b35c79c6b4ddb68",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published mirror 67f4ecb3c898b37b8279419642a51078cc5d8d38 (local tested source commit 32da4facaa196c57975d71d0dd344a1758ced88e; tree 4274ca294d7a4a16f3847b4023ff3d7b8cd32280): 152 direct Pascal sessions (56 standard, 96 standalone), 77/77 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The 224-draw seeded RNG primitive vector and six OOP random-direction cases passed; zero unexplained comparable mismatches; full runner exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published mirror 662dbd57fca3149d01e29d850b35c79c6b4ddb68 (local tested source commit 29522c73662c1e8b029fff23ba29d5fc01297769; tree bdc5cb65db59ff527479b5c31391972afa85857e): 153 direct Pascal sessions (56 standard, 97 standalone), 78/78 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The 224-draw seeded RNG primitive vector, six OOP random-direction cases, and 1,500-entry GenerateTransitionTable differential passed; zero unexplained comparable mismatches; full runner exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -244,16 +244,16 @@
       "android_gradle": "Gradle 8.11.1 offline; Android NDK 27.2.12479018; arm64-v8a and x86_64."
     },
     "direct_pascal": {
-      "sessions": 152,
+      "sessions": 153,
       "standard_programs": 56,
-      "standalone_sessions": 96,
-      "session_result": "152 direct Turbo Pascal 5.5 compile/run sessions passed on published mirror 67f4ecb3c898b37b8279419642a51078cc5d8d38 (local tested source commit 32da4facaa196c57975d71d0dd344a1758ced88e; tree 4274ca294d7a4a16f3847b4023ff3d7b8cd32280)."
+      "standalone_sessions": 97,
+      "session_result": "153 direct Turbo Pascal 5.5 compile/run sessions passed on published mirror 662dbd57fca3149d01e29d850b35c79c6b4ddb68 (local tested source commit 29522c73662c1e8b029fff23ba29d5fc01297769; tree bdc5cb65db59ff527479b5c31391972afa85857e)."
     },
     "direct_differential_comparisons": {
-      "configured": 77,
-      "passed": 77,
+      "configured": 78,
+      "passed": 78,
       "failed": 0,
-      "result": "77/77 configured direct Pascal-to-production comparison invocations passed on published mirror 67f4ecb3c898b37b8279419642a51078cc5d8d38 (local tested source commit 32da4facaa196c57975d71d0dd344a1758ced88e). The seeded RNG primitive comparison covered 224 draws / 1,344 numeric fields; the six OOP random-direction caller snapshots matched 66/66 fields. E2-10 remained 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
+      "result": "78/78 configured direct Pascal-to-production comparison invocations passed on published mirror 662dbd57fca3149d01e29d850b35c79c6b4ddb68 (local tested source commit 29522c73662c1e8b029fff23ba29d5fc01297769). The seeded RNG primitive matched 224 draws / 1,344 fields; OOP random direction callers matched 66/66 fields; GenerateTransitionTable matched 1,500 coordinates and both final seed words (3,002/3,002 numeric fields). E2-10 remained 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2270,10 +2270,10 @@
     "other_suites": {
       "serializer": "Passed in the clean Turbo Pascal runner on published source commit ec49c6a17f46cc4c43c7124d7e90ec5c7019abf7 (local 759c6691db7a2208704cf36e382301ecc8d96e3d); tools/serializer-compat/verify.ps1 exited 0. Exhaustive codec check covered all 65,536 signed words and 256 packed signed bytes; existing .ZZT/.SAV/.BRD fixtures, all 16 DEMO boards, malformed reads, RLE, stale strings, raw Boolean/reserved bytes, stat aliasing, partial board-length reads, and full WorldLoad partial payloads passed. The SHORTRD.PAS comparison matched ten deterministic values; the unread allocator tail is excluded. Full per-field/error-boundary matrix remains open.",
       "highscore": "passed; shared LibZoo table code compared against 16 direct Pascal outputs (one save, eight load/reset, seven add); 256 source-derived model rows; five Android CP437 adapter assertions",
-      "runtime": "Passed fresh for the production compatibility harness at local source commit 32da4facaa196c57975d71d0dd344a1758ced88e; tools/runtime-compat/verify.ps1 exited 0. The runtime verifier rebuilt the OOP Wasm harness and passed its production compatibility checks; the clean Pascal run then compared the six-case OOPRND fixture against that harness.",
-      "android_compat": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1; exit 0; Android 60x25 raster and DOS keyboard mapping cover all 256 CP437 bytes, colors, blink phases, and Pascal monochrome rules.",
-      "android_build": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (7 executed, 57 up-to-date); CMake built arm64-v8a and x86_64 native engine libraries. No physical Android device test was performed.",
-      "windows_ctest": "passed fresh after source revision e2bbf2d45f535c03b532b309ae6f2eaefd30d6d8; powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1; exit 0; Release x64 targets built; CTest 3/3 passed: Win32 engine I/O/80x25, sharp-bilinear scaling, and Pascal drum timing."
+      "runtime": "Passed fresh for the production compatibility harness built from local source commit 29522c73662c1e8b029fff23ba29d5fc01297769; tools/runtime-compat/verify.ps1 exited 0 and rebuilt integrated_gameplay.wasm with the shared transition-table helper used for the direct differential.",
+      "android_compat": "Passed after shared-source revision 29522c73662c1e8b029fff23ba29d5fc01297769; powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1 exited 0; all 256 CP437 bytes, colors, blink phases, monochrome mapping, and DOS keyboard mapping passed.",
+      "android_build": "Passed after shared-source revision 29522c73662c1e8b029fff23ba29d5fc01297769; .\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest; exit 0; 64 actionable tasks (4 executed, 60 up-to-date); CMake completed arm64-v8a and x86_64 builds. No device test. The sandbox denied Android metrics settings access and the installed SDK tools warned about SDK XML version 4; neither prevented the build.",
+      "windows_ctest": "Passed after shared-source revision 29522c73662c1e8b029fff23ba29d5fc01297769; powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1; exit 0; Release x64 targets built; CTest 3/3 passed: Win32 engine I/O/80x25, sharp-bilinear integer/fractional scaling, and Pascal drum timing."
     },
     "known_unexplained_mismatches": [],
     "known_discrepancies": [
@@ -2288,7 +2288,7 @@
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The six-case empty/one-byte-header and 0-3-byte-payload EditorTransferBoard matrix, five-value signed .BRD and nine-field .SAV boundary differentials, .BRD stat counts 0/1/149/150 (10,660 payload bytes matched) and .SAV/.ZZT WorldSave board counts 0/1/99/100 (8 full files / 467,992 bytes matched), strings, Boolean/reserved records, and one shared-script DataLen=-2 alias record (2,025 bytes matched), .SAV Boolean/reserved records, embedded NUL and CP437 00/80/82/FF bytes in all 13 WorldSave strings per .SAV/.ZZT file, including all ten flags, and .SAV/.ZZT stale-tail records covering four strings each (26,465 bytes matched per file), now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
       "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
-      "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer cases. E2-07 has 29/29 RNG source sites mapped and 18/29 directly verified; 11 caller cases, Randomize/time seeding, and the unresolved GAME.PAS:1699 register-message path remain mandatory.",
+      "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer cases. E2-07 has 29/29 RNG source sites mapped and 19/29 directly verified; 10 caller cases, Randomize/time seeding, and the unresolved GAME.PAS:1699 register-message path remain mandatory.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
@@ -2297,6 +2297,8 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-07-AC003 remains partial. The direct RNG primitive vector matched 224/224 draws and 1,344/1,344 fields; OOP direction callers matched 66/66 fields; GenerateTransitionTable matched 1,500 coordinates and both final seed words (3,002/3,002 fields). Frozen call-site inventory: 19/29 direct D/DP, two additional integrated-only sites credited under E2-10, 10 without direct caller evidence. Clean suite: 153 direct Pascal sessions, 78/78 comparisons, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Evidence: tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md.",
+      "Platform regression after shared-source commit 29522c73662c1e8b029fff23ba29d5fc01297769: Android CP437/key suite passed; offline Gradle debug and Android-test APK build passed for arm64-v8a/x86_64; Windows Release x64 build and CTest 3/3 passed. No Android device was connected.",
       "E2-07-AC003 remains partial. The direct Pascal/production RNG vector matched 224/224 draws and 1,344/1,344 numeric fields; the new OOPRND probe matched six OopExecute snapshots / 66 fields for RNDNS, RNDNE, and both RNDP branches. Frozen call-site inventory: 18/29 direct D/DP, 3/29 integrated-only support (credited under E2-10), 11 pending direct. Clean suite: 152 direct Pascal sessions, 77/77 comparisons, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Evidence: tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md.",
       "E2-02 missing trailing .ZZT records: direct Pascal WorldLoad and production zoo_world_load match seven deterministic fields; after loading, production zoo_world_save matches the full 1,135-byte Pascal BoardClose file record. An initial probe compared different private/internal record representations and was corrected; no engine change was needed. Pascal GetMem(0) presence was 1/0 for boards 1/15 across three same-setup DOSBox-X sessions, production stores NULL/NULL, and absent-board open remains unverified. Clean 2026-11-28 suite: 150 direct Pascal sessions, 75/75 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Frozen inventory remains 54 cases; E2-02 remains partial.",
       "E2-02 AC002: direct compiled-Pascal WorldSave wrote embedded NUL and CP437 bytes 00/80/82/FF to the world name, all ten flags, current board name, and message for both .ZZT (IsSave=0) and .SAV (IsSave=1). Production matched all 26 string-field instances and 52,930/52,930 file bytes (SHA-256 .ZZT 47c5a657b5c4fb9c04e99ac4fd8a623c79870cd5db9aaf3ba37f0f34ff33cdfa; .SAV 1eddbe003459ab80ff88730f070d03cc4d148b1d7c5be7a0bbe007f427f345d7). The clean run passed 149 direct Pascal sessions and 74/74 direct comparisons; F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md.",
@@ -4196,7 +4198,7 @@
       "evidence": "tools/compatibility/evidence/2026-11-26-e2-03-empty-save-refusal.md"
     },
     "platform_build_checks": {
-      "source_revision": "7a75959a736ad8044c1eb9b648721b4d8edd1348",
+      "source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
       "android_compat": {
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android-compat/verify.ps1",
         "exit_code": 0,
@@ -4206,13 +4208,17 @@
         "command": ".\\gradlew.bat --gradle-user-home build\\gradle-home --no-daemon --offline :app:assembleDebug :app:assembleDebugAndroidTest",
         "exit_code": 0,
         "actionable_tasks": 64,
-        "executed_tasks": 7,
-        "up_to_date_tasks": 57,
+        "executed_tasks": 4,
+        "up_to_date_tasks": 60,
         "native_abis": [
           "arm64-v8a",
           "x86_64"
         ],
-        "device_tested": false
+        "device_tested": false,
+        "non_fatal_environment_warnings": [
+          "Android metrics settings file was not writable in the sandbox.",
+          "The installed SDK processing tools reported an SDK XML version mismatch."
+        ]
       },
       "windows_build": {
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File windows/build.ps1",
@@ -5264,7 +5270,7 @@
       "integrated_fixture_count": "10/10",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md"
     },
-    "source_tree_sha": "4274ca294d7a4a16f3847b4023ff3d7b8cd32280",
+    "source_tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e",
     "zzt_partial_length_word_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5323,8 +5329,8 @@
       "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
     },
-    "local_source_revision": "32da4facaa196c57975d71d0dd344a1758ced88e",
-    "verified_tree_sha": "4274ca294d7a4a16f3847b4023ff3d7b8cd32280",
+    "local_source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
+    "verified_tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e",
     "zzt_short_payload_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5619,9 +5625,9 @@
     "rng_seed_vector_differential": {
       "acceptance_case": "E2-07-AC003",
       "verification_date": "2026-11-28",
-      "source_revision": "32da4facaa196c57975d71d0dd344a1758ced88e",
-      "published_code_revision": "67f4ecb3c898b37b8279419642a51078cc5d8d38",
-      "tree_sha": "4274ca294d7a4a16f3847b4023ff3d7b8cd32280",
+      "source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
+      "published_code_revision": "662dbd57fca3149d01e29d850b35c79c6b4ddb68",
+      "tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e",
       "evidence_class": "D+DP",
       "result": "passed",
       "seed_count": 16,
@@ -5675,8 +5681,8 @@
       "call_site_inventory": {
         "source_mapped": 29,
         "total": 29,
-        "direct_D_DP": 18,
-        "pending_direct": 11,
+        "direct_D_DP": 19,
+        "pending_direct": 10,
         "direct_ids": [
           "E2-07-RNG-ELEMENTS-0090",
           "E2-07-RNG-ELEMENTS-0113",
@@ -5690,6 +5696,7 @@
           "E2-07-RNG-ELEMENTS-0426",
           "E2-07-RNG-ELEMENTS-0427",
           "E2-07-RNG-ELEMENTS-0785",
+          "E2-07-RNG-GAME-0140",
           "E2-07-RNG-GAME-1276",
           "E2-07-RNG-GAME-1279",
           "E2-07-RNG-GAME-1289",
@@ -5701,7 +5708,6 @@
           "E2-07-RNG-ELEMENTS-0205",
           "E2-07-RNG-ELEMENTS-0208",
           "E2-07-RNG-ELEMENTS-1290",
-          "E2-07-RNG-GAME-0140",
           "E2-07-RNG-GAME-1515",
           "E2-07-RNG-GAME-1564",
           "E2-07-RNG-GAME-1699",
@@ -5711,9 +5717,8 @@
           "E2-07-RNG-SOUNDS-0130"
         ],
         "evidence": "tools/compatibility/acceptance_inventory.json source_inventory.rng_call_sites",
-        "integrated_support": 3,
+        "integrated_support": 2,
         "integrated_ids": [
-          "E2-07-RNG-GAME-0140",
           "E2-07-RNG-GAME-1515",
           "E2-07-RNG-GAME-1564"
         ],
@@ -5724,7 +5729,7 @@
           "E2-07-RNG-OOP-0158"
         ]
       },
-      "limitations": "The primitive vector verifies fixed-seed RNG math; direct caller evidence now covers 18/29 sites, with 11 still pending. Three additional sites have integrated-only F06/F07 support, credited only under E2-10. CENTIPR short-circuits ELEMENTS.PAS:205 and :208. GAME.PAS:1699 has no production routine mapped. Four SOUNDS.PAS drum assignments remain structurally unreconciled with the production static table. Randomize/time-seed behavior remains pending.",
+      "limitations": "The primitive vector verifies fixed-seed RNG math; direct caller evidence now covers 19/29 sites, with 10 still pending. Two additional sites have integrated-only F06/F07 support, credited only under E2-10. CENTIPR short-circuits ELEMENTS.PAS:205 and :208. GAME.PAS:1699 has no production routine mapped. Four SOUNDS.PAS drum assignments remain structurally unreconciled with the production static table. Randomize/time-seed behavior remains pending.",
       "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md",
       "oop_random_direction_caller_differential": {
         "acceptance_cases": [
@@ -5821,6 +5826,50 @@
           "Original OopExecute path called without modifying Pascal gameplay or RNG routines."
         ],
         "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-oop-random-directions.md"
+      },
+      "transition_table_caller_differential": {
+        "acceptance_cases": [
+          "E2-07-RNG-GAME-0140"
+        ],
+        "evidence_class": "D+DP",
+        "result": "passed",
+        "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:140",
+        "source_text": "iy := Random(TransitionTableSize) + 1;",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_transition_table_init",
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
+        ],
+        "probe": "tools/pascal-compat/TRNTBL.PAS",
+        "production_comparator": "tools/pascal-compat/compare-transition-table.js",
+        "production_harness": "tools/runtime-compat/oop_movement.c::run_transition_table_capture_checks",
+        "coordinate_entries": 1500,
+        "coordinate_entries_matched": 1500,
+        "random_draws": 1500,
+        "numeric_fields_compared": 3002,
+        "numeric_fields_matched": 3002,
+        "field_differences": 0,
+        "initial_randseed": 0,
+        "seed_words_compared": 2,
+        "seed_words_matched": 2,
+        "final_randseed_words_low_high": [
+          18372,
+          9231
+        ],
+        "oracle_output": {
+          "path": "build/pascal-compat-verification/TRNTBL.OUT",
+          "size_bytes": 16145,
+          "sha256": "35a9c454576a2a70825693cb4549bb5531a83191d5c7de738378b1316ce81d7f",
+          "retained_in_repository": false
+        },
+        "oracle_interventions": [
+          "The probe sets RandSeed=0 and calls the original GenerateTransitionTable routine without modifying Pascal source or gameplay semantics.",
+          "The probe does not call WorldCreate and performs no other RNG calls.",
+          "The production capture invokes the same zoo_transition_table_init helper used by zoo_state_init; the harness does not duplicate the shuffle."
+        ],
+        "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-transition-table.md",
+        "tested_local_source_revision": "29522c73662c1e8b029fff23ba29d5fc01297769",
+        "published_source_revision": "662dbd57fca3149d01e29d850b35c79c6b4ddb68",
+        "tree_sha": "bdc5cb65db59ff527479b5c31391972afa85857e"
       }
     }
   }
