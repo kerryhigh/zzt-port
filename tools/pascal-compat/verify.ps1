@@ -2122,6 +2122,10 @@ $fullLoadPath = Join-Path $stageRoot 'FULLLOAD.OUT'
 if (-not (Test-Path -LiteralPath $fullLoadPath -PathType Leaf)) {
     throw "Turbo Pascal absent-trailing-board probe did not write FULLLOAD.OUT. See $stageRoot\FULLLOAD.LOG."
 }
+$fullBoardPath = Join-Path $stageRoot 'FULLBORD.BIN'
+if (-not (Test-Path -LiteralPath $fullBoardPath -PathType Leaf)) {
+    throw "Turbo Pascal absent-trailing-board probe did not write FULLBORD.BIN. See $stageRoot\FULLLOAD.LOG."
+}
 $fullLoadLines = [IO.File]::ReadAllLines($fullLoadPath)
 if ($fullLoadLines.Count -ne 1 -or $fullLoadLines[0] -notmatch '^full-load 1 15 0 0 1 missing-len 0 0 data-present ([01]) ([01])$') {
     throw "Unexpected Turbo Pascal absent-trailing-board output: $([string]::Join('; ', $fullLoadLines))"
@@ -2228,7 +2232,8 @@ try {
         -PascalShortPayloadOutput (Join-Path $stageRoot 'SHORTRD.OUT') `
         -PascalShortPayloadFixture (Join-Path $stageRoot 'PARTIAL.ZZT') `
         -PascalMissingTrailingOutput (Join-Path $stageRoot 'FULLLOAD.OUT') `
-        -PascalMissingTrailingFixture (Join-Path $stageRoot 'FULLFILE.ZZT')
+        -PascalMissingTrailingFixture (Join-Path $stageRoot 'FULLFILE.ZZT') `
+        -PascalMissingTrailingBoardOutput (Join-Path $stageRoot 'FULLBORD.BIN')
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Serializer compatibility suite failed with exit code $LASTEXITCODE." }
     & node 'tools/serializer-compat/compare-board-rle.js' `
         (Join-Path $stageRoot 'BOARDRLE.BIN') `

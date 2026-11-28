@@ -7,6 +7,7 @@ end;
 {$F-}
 var
 	output: text;
+	boardFile: file;
 	loaded: boolean;
 	boardPresent: byte;
 	missingBoardOnePresent: byte;
@@ -32,6 +33,12 @@ begin
 			World.Info.CurrentBoard, ' ', Ord(World.Info.IsSave), ' ', boardPresent,
 			' missing-len ', World.BoardLen[1], ' ', World.BoardLen[MAX_BOARD],
 			' data-present ', missingBoardOnePresent, ' ', missingBoardLastPresent);
+		BoardClose;
+		Assign(boardFile, 'FULLBORD.BIN');
+		Rewrite(boardFile, 1);
+		BlockWrite(boardFile, World.BoardLen[0], SizeOf(World.BoardLen[0]));
+		BlockWrite(boardFile, World.BoardData[0]^, World.BoardLen[0]);
+		Close(boardFile);
 	end else begin
 		WriteLn(output, 'full-load 0');
 	end;

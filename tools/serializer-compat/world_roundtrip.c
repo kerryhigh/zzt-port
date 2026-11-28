@@ -244,7 +244,7 @@ int run_world_read_title_only(uint32_t input_len) {
 int run_world_load_missing_trailing(uint32_t input_len) {
     int ret;
     int16_t i;
-    zoo_io_handle in_handle;
+    zoo_io_handle in_handle, out_handle;
     if (input_len > FIXTURE_CAP) return -90;
     heap_used = 0;
     memset(&state, 0, sizeof(state));
@@ -258,7 +258,6 @@ int run_world_load_missing_trailing(uint32_t input_len) {
         if (state.world.board_len[i] != 0 || state.world.board_data[i] != NULL) return -92;
     }
     memset(output_data, 0, 13);
-    output_size = 0;
     output_data[0] = 1;
     output_data[1] = (uint8_t) state.world.board_count;
     output_data[2] = (uint8_t) ((uint16_t) state.world.board_count >> 8);
@@ -272,7 +271,13 @@ int run_world_load_missing_trailing(uint32_t input_len) {
     output_data[10] = (uint8_t) ((uint16_t) state.world.board_len[state.world.board_count] >> 8);
     output_data[11] = state.world.board_data[1] != NULL ? 1 : 0;
     output_data[12] = state.world.board_data[state.world.board_count] != NULL ? 1 : 0;
-    output_size = 13;
+    /* Compare Pascal BoardClose's file-format record with the real production
+       WorldSave output. zoo_board_close stores LibZoo's private in-memory form,
+       which intentionally carries extra bookkeeping and is not a disk record. */
+    out_handle = zoo_io_open_file_mem(output_data + 13, FIXTURE_CAP - 13, true);
+    ret = zoo_world_save(&state, &out_handle);
+    if (ret != 0) return ret;
+    output_size = 13 + (size_t) out_handle.func_tell(&out_handle);
     return 0;
 }
 

@@ -4,7 +4,8 @@ param(
     [string]$PascalShortPayloadOutput,
     [string]$PascalShortPayloadFixture,
     [string]$PascalMissingTrailingOutput,
-    [string]$PascalMissingTrailingFixture
+    [string]$PascalMissingTrailingFixture,
+    [string]$PascalMissingTrailingBoardOutput
 )
 
 $ErrorActionPreference = 'Stop'
@@ -84,16 +85,16 @@ if ($PascalShortPayloadOutput -or $PascalShortPayloadFixture) {
     }
     $runArgs += @('--pascal-short-payload', $PascalShortPayloadOutput, $PascalShortPayloadFixture)
 }
-if ($PascalMissingTrailingOutput -or $PascalMissingTrailingFixture) {
-    if (-not $PascalMissingTrailingOutput -or -not $PascalMissingTrailingFixture) {
-        throw 'Pass both PascalMissingTrailingOutput and PascalMissingTrailingFixture for the direct missing-trailing-record WorldLoad comparison.'
+if ($PascalMissingTrailingOutput -or $PascalMissingTrailingFixture -or $PascalMissingTrailingBoardOutput) {
+    if (-not $PascalMissingTrailingOutput -or -not $PascalMissingTrailingFixture -or -not $PascalMissingTrailingBoardOutput) {
+        throw 'Pass PascalMissingTrailingOutput, PascalMissingTrailingFixture, and PascalMissingTrailingBoardOutput for the direct missing-trailing-record WorldLoad comparison.'
     }
-    foreach ($path in @($PascalMissingTrailingOutput, $PascalMissingTrailingFixture)) {
+    foreach ($path in @($PascalMissingTrailingOutput, $PascalMissingTrailingFixture, $PascalMissingTrailingBoardOutput)) {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
             throw "Pascal missing-trailing comparison input is missing: $path"
         }
     }
-    $runArgs += @('--pascal-missing-trailing', $PascalMissingTrailingOutput, $PascalMissingTrailingFixture)
+    $runArgs += @('--pascal-missing-trailing', $PascalMissingTrailingOutput, $PascalMissingTrailingFixture, $PascalMissingTrailingBoardOutput)
 }
 & $node.Source (Join-Path $PSScriptRoot 'run.js') @runArgs
 if ($LASTEXITCODE -ne 0) { throw "Serializer compatibility checks failed with exit code $LASTEXITCODE." }

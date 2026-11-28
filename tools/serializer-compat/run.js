@@ -9,14 +9,15 @@ const pascalShortPayloadFixturePath = shortPayloadOption >= 0 ? process.argv[sho
 const missingTrailingOption = process.argv.indexOf('--pascal-missing-trailing');
 const pascalMissingTrailingOutputPath = missingTrailingOption >= 0 ? process.argv[missingTrailingOption + 1] : null;
 const pascalMissingTrailingFixturePath = missingTrailingOption >= 0 ? process.argv[missingTrailingOption + 2] : null;
+const pascalMissingTrailingBoardOutputPath = missingTrailingOption >= 0 ? process.argv[missingTrailingOption + 3] : null;
 if (shortLengthOption >= 0 && (!pascalShortLengthOutputPath || !pascalShortLengthFixturePath)) {
-  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT]');
+  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT] [--pascal-missing-trailing FULLLOAD.OUT FULLFILE.ZZT FULLBORD.BIN]');
 }
 if (shortPayloadOption >= 0 && (!pascalShortPayloadOutputPath || !pascalShortPayloadFixturePath)) {
-  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT] [--pascal-missing-trailing FULLLOAD.OUT FULLFILE.ZZT]');
+  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT] [--pascal-missing-trailing FULLLOAD.OUT FULLFILE.ZZT FULLBORD.BIN]');
 }
-if (missingTrailingOption >= 0 && (!pascalMissingTrailingOutputPath || !pascalMissingTrailingFixturePath)) {
-  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT] [--pascal-missing-trailing FULLLOAD.OUT FULLFILE.ZZT]');
+if (missingTrailingOption >= 0 && (!pascalMissingTrailingOutputPath || !pascalMissingTrailingFixturePath || !pascalMissingTrailingBoardOutputPath)) {
+  throw new Error('Usage: run.js <world_roundtrip.wasm> [--pascal-short-length SHORTLEN.OUT PARTLEN.ZZT] [--pascal-short-payload SHORTRD.OUT PARTIAL.ZZT] [--pascal-missing-trailing FULLLOAD.OUT FULLFILE.ZZT FULLBORD.BIN]');
 }
 function parseBoard(bytes, start) {
   let p = start + 51, cells = 0;
@@ -152,7 +153,7 @@ function parseBoard(bytes, start) {
   const fullLoadResult = run_world_load_missing_trailing(fullLoadFixture.length);
   if (fullLoadResult !== 0) throw new Error(`Full-world load of a valid current board with missing trailing records returned ${fullLoadResult}`);
   const fullLoadSnapshot = Buffer.from(new Uint8Array(memory.buffer, output_ptr(), output_len()).slice());
-  if (fullLoadSnapshot.length !== 13) throw new Error(`Production missing-trailing snapshot has ${fullLoadSnapshot.length} bytes; expected 13.`);
+  if (fullLoadSnapshot.length < 13 + 514) throw new Error(`Production missing-trailing snapshot has ${fullLoadSnapshot.length} bytes; expected saved-world output after the 13-byte state prefix.`);
   const fullLoadProductionFields = [
     fullLoadSnapshot[0],
     fullLoadSnapshot.readInt16LE(1),
@@ -184,7 +185,33 @@ function parseBoard(bytes, start) {
     }
     const pascalZeroLengthPresence = pascalFields.slice(7);
     const productionZeroLengthPresence = fullLoadProductionFields.slice(7);
-    console.log(`Direct Pascal/production .ZZT WorldLoad with absent trailing board records matched seven deterministic fields: ${fullLoadProductionFields.slice(0, 7).join(' ')}. Zero-length BoardData[1]/[15] presence was Pascal=${pascalZeroLengthPresence.join('/')}, production=${productionZeroLengthPresence.join('/')}; this is reported separately under the allocation nondeterminism contract, and downstream board-open effects remain unverified.`);
+    const productionWorldSave = fullLoadSnapshot.subarray(13);
+    const productionBoardLength = productionWorldSave.readInt16LE(512);
+    const productionBoardBytes = productionWorldSave.subarray(514, 514 + productionBoardLength);
+    if (productionBoardLength < 0 || productionBoardBytes.length !== productionBoardLength) {
+      throw new Error(`Production WorldSave board length ${productionBoardLength} disagrees with ${productionBoardBytes.length} captured bytes.`);
+    }
+    const pascalBoardFile = fs.readFileSync(path.resolve(pascalMissingTrailingBoardOutputPath));
+    if (pascalBoardFile.length < 2) throw new Error('Pascal FULLBORD.BIN is missing its two-byte BoardLen prefix.');
+    const pascalBoardLength = pascalBoardFile.readInt16LE(0);
+    const pascalBoardBytes = pascalBoardFile.subarray(2);
+    if (pascalBoardLength < 0 || pascalBoardBytes.length !== pascalBoardLength) {
+      throw new Error(`Pascal BoardClose record length ${pascalBoardLength} disagrees with ${pascalBoardBytes.length} captured bytes.`);
+    }
+    const comparedBoardLength = Math.min(productionBoardLength, pascalBoardLength);
+    const boardDifference = productionBoardBytes.subarray(0, comparedBoardLength)
+      .findIndex((value, i) => value !== pascalBoardBytes[i]);
+    if (productionBoardLength !== pascalBoardLength || boardDifference !== -1) {
+      const firstDiff = boardDifference === -1 ? comparedBoardLength : boardDifference;
+      const start = Math.max(0, firstDiff - 8), end = Math.min(Math.max(productionBoardLength, pascalBoardLength), firstDiff + 9);
+      throw new Error(`WorldLoad/WorldSave board-record differential mismatch: lengths Pascal=${pascalBoardLength}, production=${productionBoardLength}; first differing board byte ${firstDiff} (Pascal=${pascalBoardBytes[firstDiff] ?? '<end>'}, production=${productionBoardBytes[firstDiff] ?? '<end>'}); context Pascal=${pascalBoardBytes.subarray(start, end).toString('hex')}, production=${productionBoardBytes.subarray(start, end).toString('hex')}.`);
+    }
+    const inputBoardLength = fullLoadFixture.readUInt16LE(512);
+    const inputBoardBytes = fullLoadFixture.subarray(514, 514 + inputBoardLength);
+    if (inputBoardLength !== pascalBoardLength || !pascalBoardBytes.equals(inputBoardBytes)) {
+      throw new Error(`Pascal BoardClose output did not reproduce the valid current board record: input=${inputBoardLength}, Pascal=${pascalBoardLength}.`);
+    }
+    console.log(`Direct Pascal/production .ZZT WorldLoad and production WorldSave with absent trailing board records matched seven deterministic world fields and the full current-board file-format record (${pascalBoardLength}/${productionBoardLength} bytes). Zero-length BoardData[1]/[15] presence was Pascal=${pascalZeroLengthPresence.join('/')}, production=${productionZeroLengthPresence.join('/')}; it remains a separate allocation observation, not part of the equality claim.`);
   } else {
     console.log('Production full-world load opens the valid current board and retains the declared count when trailing board records are absent');
   }
