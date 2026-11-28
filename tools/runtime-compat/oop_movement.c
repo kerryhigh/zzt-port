@@ -13,6 +13,7 @@ static int sidebar_update_count;
 static uint16_t sidebar_update_flags;
 static int centipede_random_count;
 static int16_t centipede_random_max[4];
+static int16_t centipede_random_value[4];
 static int creature_random_count;
 static int16_t creature_random_max[4];
 static int16_t creature_random_value[4];
@@ -25,6 +26,7 @@ static int16_t conveyor_tick_outputs[2 * 22];
 static int16_t star_tick_outputs[4 * 13];
 static int16_t tiger_tick_outputs[2 * 23];
 static int16_t centipede_tick_outputs[4 * 38];
+static int32_t centipede_rng_outputs[2 * 17];
 static int16_t ruffian_tick_outputs[3 * 22];
 static int16_t bear_tick_outputs[3 * 5];
 static int16_t shark_tick_outputs[2 * 7];
@@ -164,9 +166,20 @@ static int16_t test_centipede_random(zoo_state *test_state, int16_t max) {
 	(void) test_state;
 	if (centipede_random_count < (int) (sizeof(centipede_random_max) / sizeof(centipede_random_max[0]))) {
 		centipede_random_max[centipede_random_count] = max;
+		centipede_random_value[centipede_random_count] = 0;
 	}
 	centipede_random_count++;
 	return 0;
+}
+
+static int16_t centipede_seeded_random(zoo_state *test_state, int16_t max) {
+	int index = centipede_random_count++;
+	int16_t value = (int16_t) zoo_random_next(&test_state->random_seed, max);
+	if (index < (int) (sizeof(centipede_random_max) / sizeof(centipede_random_max[0]))) {
+		centipede_random_max[index] = max;
+		centipede_random_value[index] = value;
+	}
+	return value;
 }
 
 static int16_t test_creature_random(zoo_state *test_state, int16_t max) {
@@ -1528,6 +1541,79 @@ int32_t run_centipede_tick_capture_checks(void) {
 
 uint32_t centipede_tick_output_ptr(void) {
 	return (uint32_t) (uintptr_t) centipede_tick_outputs;
+}
+
+static void reset_centipede_rng_state(int16_t player_x, int16_t player_y) {
+	memset(&state, 0, sizeof(state));
+	memset(&video, 0, sizeof(video));
+	video.func_write = test_video_write;
+	state.d_video = &video;
+	state.func_random = centipede_seeded_random;
+	state.random_seed = 0;
+	state.board.stat_count = 1;
+	state.current_stat_tick = 1;
+	state.board.stats[0].x = (uint8_t) player_x;
+	state.board.stats[0].y = (uint8_t) player_y;
+	state.board.stats[0].under.element = ZOO_E_EMPTY;
+	state.board.stats[0].under.color = 0x70;
+	state.board.tiles[player_x][player_y].element = ZOO_E_PLAYER;
+	state.board.tiles[player_x][player_y].color = zoo_element_defs[ZOO_E_PLAYER].color;
+	state.board.stats[1].x = 10;
+	state.board.stats[1].y = 10;
+	state.board.stats[1].cycle = 1;
+	state.board.stats[1].step_x = 1;
+	state.board.stats[1].step_y = 0;
+	state.board.stats[1].p1 = 4;
+	state.board.stats[1].p2 = 0;
+	state.board.stats[1].leader = -1;
+	state.board.stats[1].follower = -1;
+	state.board.stats[1].under.element = ZOO_E_EMPTY;
+	state.board.stats[1].under.color = 0x70;
+	state.board.tiles[10][10].element = ZOO_E_CENTIPEDE_HEAD;
+	state.board.tiles[10][10].color = zoo_element_defs[ZOO_E_CENTIPEDE_HEAD].color;
+	centipede_random_count = 0;
+	memset(centipede_random_max, 0, sizeof(centipede_random_max));
+	memset(centipede_random_value, 0, sizeof(centipede_random_value));
+	video_write_count = 0;
+}
+
+static void capture_centipede_rng_state(int32_t case_id, int16_t destination_x,
+		int16_t destination_y) {
+	int32_t *out = &centipede_rng_outputs[(case_id - 1) * 17];
+	int index;
+	*out++ = 0; /* initial seed low word */
+	*out++ = 0; /* initial seed high word */
+	*out++ = centipede_random_count;
+	index = centipede_random_count > 0 ? 0 : -1;
+	*out++ = index >= 0 ? centipede_random_max[index] : -1;
+	*out++ = index >= 0 ? centipede_random_value[index] : -1;
+	*out++ = (int32_t) (state.random_seed & 0xFFFFu);
+	*out++ = (int32_t) (state.random_seed >> 16);
+	*out++ = state.board.stats[1].x;
+	*out++ = state.board.stats[1].y;
+	*out++ = state.board.stats[1].step_x;
+	*out++ = state.board.stats[1].step_y;
+	*out++ = state.board.tiles[10][10].element;
+	*out++ = state.board.tiles[10][10].color;
+	*out++ = destination_x;
+	*out++ = destination_y;
+	*out++ = state.board.tiles[destination_x][destination_y].element;
+	*out++ = state.board.tiles[destination_x][destination_y].color;
+}
+
+int32_t run_centipede_rng_caller_checks(void) {
+	reset_centipede_rng_state(10, 6);
+	zoo_element_defs[ZOO_E_CENTIPEDE_HEAD].tick_func(&state, 1);
+	capture_centipede_rng_state(1, 10, 9);
+
+	reset_centipede_rng_state(2, 10);
+	zoo_element_defs[ZOO_E_CENTIPEDE_HEAD].tick_func(&state, 1);
+	capture_centipede_rng_state(2, 9, 10);
+	return 0;
+}
+
+uint32_t centipede_rng_output_ptr(void) {
+	return (uint32_t) (uintptr_t) centipede_rng_outputs;
 }
 
 static void capture_star_draws(uint8_t start_color, int16_t phases, int16_t offset) {

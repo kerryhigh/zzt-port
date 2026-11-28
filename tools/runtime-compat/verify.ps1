@@ -320,6 +320,7 @@ $oopMovementArgs = @(
 	'-Wl,--export=run_star_tick_capture_checks', '-Wl,--export=star_tick_output_ptr',
 	'-Wl,--export=run_tiger_tick_capture_checks', '-Wl,--export=tiger_tick_output_ptr',
 	'-Wl,--export=run_centipede_tick_capture_checks', '-Wl,--export=centipede_tick_output_ptr',
+	'-Wl,--export=run_centipede_rng_caller_checks', '-Wl,--export=centipede_rng_output_ptr',
 	'-Wl,--export=run_element_draw_capture_checks', '-Wl,--export=element_draw_output_ptr',
 	'-Wl,--export=run_oop_object_tick_capture_checks', '-Wl,--export=object_tick_output_ptr',
 	'-Wl,--export=run_oop_object_touch_capture_checks', '-Wl,--export=object_touch_output_ptr',

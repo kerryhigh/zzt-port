@@ -306,6 +306,7 @@ $probeFiles = @(
     @{ Source = 'STARPRB.PAS'; DosName = 'STARPRB.PAS'; Program = 'STARPRB'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'TIGRPRB.PAS'; DosName = 'TIGRPRB.PAS'; Program = 'TIGRPRB'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'CENTIPR.PAS'; DosName = 'CENTIPR.PAS'; Program = 'CENTIPR'; CompileFlags = '/B /EBIN /UBIN' },
+    @{ Source = 'CENTIRNG.PAS'; DosName = 'CENTIRNG.PAS'; Program = 'CENTIRNG'; CompileFlags = '/B /EBIN /UBIN' },
     @{ Source = 'DRAWPRB.PAS'; DosName = 'DRAWPRB.PAS'; Program = 'DRAWPRB'; CompileFlags = '/B /EBIN /ISRC /USRC' },
     @{ Source = 'MSGTIK.PAS'; DosName = 'MSGTIK.PAS'; Program = 'MSGTIK'; CompileFlags = '/B /EBIN /ISRC /USRC' },
     @{ Source = 'PUSHDUP.PAS'; DosName = 'PUSHDUP.PAS'; Program = 'PUSHDUP'; CompileFlags = '/B /EBIN /ISRC /USRC' },
@@ -2032,6 +2033,10 @@ $expectedOutputs = [ordered]@{
         'segment-pending seed 0 draws  count 1 s1 10 10 1 0 -2 -1 4 0 row 0 0 0 0 45 255 0 112 seed-after 0',
         'segment-head seed 0 draws  count 1 s1 10 10 1 0 -2 -1 4 0 row 0 0 0 0 44 255 0 112 seed-after 0'
     )
+    'CENTIRNG.OUT' = @(
+        'x-aligned 0 0 1 10 0 1 0 10 9 0 -1 0 112 10 9 44 15',
+        'y-aligned 0 0 1 10 0 1 0 9 10 -1 0 0 112 9 10 44 15'
+    )
     'PUSHDUP.OUT' = @(
         'dup-tick 1 2 10 10 1 0 21 5 2 0 -1 -1 0 112 11 10 -1 1 4 6 7 8 -1 -1 0 112 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 112 12 14 36 42 0 0 0 0 0 0 -1 0 0 -1 -1 -1 -1 -1 -1 -1 -1',
         'dup-tick 2 3 10 10 1 0 21 0 2 0 -1 -1 0 112 11 10 -1 1 4 6 7 8 -1 -1 0 112 9 10 -1 1 4 6 7 8 -1 -1 0 112 36 42 12 14 36 42 0 0 0 0 0 0 3 1 10 48 2 50 2 52 2 53 2',
@@ -2498,6 +2503,10 @@ try {
         (Join-Path $stageRoot 'CENTIP.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_movement.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production Centipede tick comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-centipede-rng.js' `
+        (Join-Path $stageRoot 'CENTIRNG.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\oop_movement.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production Centipede aligned-axis RNG comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-element-draw.js' `
         (Join-Path $stageRoot 'DRAWPRB.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_movement.wasm')
