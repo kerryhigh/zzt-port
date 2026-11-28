@@ -3045,6 +3045,27 @@ end;
         $titleEmptyRestoreSave
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production empty .SAV refusal differential failed with exit code $LASTEXITCODE." }
 
+    $titleShortHeaderRestoreRoot = Join-Path $stageRoot 'TILSHRT'
+    New-Item -ItemType Directory -Force -Path $titleShortHeaderRestoreRoot | Out-Null
+    Copy-Item -LiteralPath (Join-Path $stageRoot 'DEMO.ZZT') -Destination (Join-Path $titleShortHeaderRestoreRoot 'DEMO.ZZT') -Force
+    Write-Host 'Running the direct GameTitleLoop one-byte-short .SAV header refusal replay: TITLEIN'
+    Invoke-DosboxSession 'TITLEIN-SHORT-HEADER-RESTORE' @('CD \TILSHRT', '..\BIN\TITLEIN.EXE T')
+    $titleShortHeaderRestoreOutput = Join-Path $titleShortHeaderRestoreRoot 'TITLFAIL.OUT'
+    $titleShortHeaderRestoreSave = Join-Path $titleShortHeaderRestoreRoot 'RESTORE.SAV'
+    if (-not (Test-Path -LiteralPath $titleShortHeaderRestoreOutput -PathType Leaf)) {
+        throw "Pascal GameTitleLoop short-header .SAV refusal did not write TITLFAIL.OUT. See $stageRoot\TITLEIN-SHORT-HEADER-RESTORE.LOG."
+    }
+    if (-not (Test-Path -LiteralPath $titleShortHeaderRestoreSave -PathType Leaf) -or
+        (Get-Item -LiteralPath $titleShortHeaderRestoreSave).Length -ne 511) {
+        throw "Pascal short-header .SAV fixture was not exactly 511 bytes. See $stageRoot\TITLEIN-SHORT-HEADER-RESTORE.LOG."
+    }
+    & node 'tools/pascal-compat/compare-title-lifecycle.js' `
+        $titleShortHeaderRestoreOutput `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm') `
+        '--restore-short-header' `
+        $titleShortHeaderRestoreSave
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production one-byte-short .SAV header differential failed with exit code $LASTEXITCODE." }
+
     Write-Host 'Compiling and running the direct Pascal player-abort decision replay: ABORTIN'
     Remove-Item -LiteralPath (Join-Path $stageRoot 'ABORT.OUT') -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath (Join-Path $stageRoot 'TQUIT.OUT') -Force -ErrorAction SilentlyContinue
@@ -3130,6 +3151,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 94 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty-SAV title-R refusal, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
+$directProbeCount = $probeFiles.Count + 95 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty- and short-header-SAV title-R refusals, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
 Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

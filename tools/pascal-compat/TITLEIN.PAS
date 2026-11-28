@@ -6,7 +6,7 @@ var
 	output: text;
 	restoreScenario, generateRestoreSave, badRestoreScenario, cancelRetryScenario,
 	savedWorldPlayScenario, worldSelectPlayScenario, emptyRestoreScenario,
-	refusedAbortReturnScenario: boolean;
+	refusedAbortReturnScenario, shortHeaderRestoreScenario: boolean;
 	fixtureFile: file;
 	malformedHeader: array[1..512] of byte;
 	malformedVersion: integer;
@@ -21,9 +21,17 @@ begin
 	worldSelectPlayScenario := (ParamCount > 0) and (ParamStr(1) = 'W');
 	emptyRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'E');
 	refusedAbortReturnScenario := (ParamCount > 0) and (ParamStr(1) = 'A');
+	shortHeaderRestoreScenario := (ParamCount > 0) and (ParamStr(1) = 'T');
 	if emptyRestoreScenario then begin
 		Assign(fixtureFile, 'RESTORE.SAV');
 		Rewrite(fixtureFile, 1);
+		Close(fixtureFile);
+	end;
+	if shortHeaderRestoreScenario then begin
+		FillChar(malformedHeader, SizeOf(malformedHeader), 0);
+		Assign(fixtureFile, 'RESTORE.SAV');
+		Rewrite(fixtureFile, 1);
+		BlockWrite(fixtureFile, malformedHeader, SizeOf(malformedHeader) - 1);
 		Close(fixtureFile);
 	end;
 	New(IoTmpBuf);
@@ -76,9 +84,11 @@ begin
 	GameLoopProbeTitleLifecycleEnabled := true;
 	GameLoopProbeTitleLifecyclePlayerReturned := false;
 	GameLoopProbeTitleAbortEnabled := refusedAbortReturnScenario;
-	GameLoopProbeTitleRestoreEnabled := restoreScenario or badRestoreScenario or cancelRetryScenario or emptyRestoreScenario;
-	GameLoopProbeTitleRestoreFailureEnabled := badRestoreScenario or emptyRestoreScenario;
-	GameLoopProbeTitleRestoreEmptyEnabled := emptyRestoreScenario;
+	GameLoopProbeTitleRestoreEnabled := restoreScenario or badRestoreScenario or
+		cancelRetryScenario or emptyRestoreScenario or shortHeaderRestoreScenario;
+	GameLoopProbeTitleRestoreFailureEnabled := badRestoreScenario or
+		emptyRestoreScenario or shortHeaderRestoreScenario;
+	GameLoopProbeTitleRestoreEmptyEnabled := emptyRestoreScenario or shortHeaderRestoreScenario;
 	GameLoopProbeTitleRestoreCancelOnceEnabled := cancelRetryScenario;
 	GameLoopProbeTitleRestoreCancelled := false;
 	GameLoopProbeTitleWorldSelectEnabled := worldSelectPlayScenario;
@@ -119,7 +129,7 @@ begin
 		InputProbeSetKeyBuffer('R')
 	else if badRestoreScenario then
 		InputProbeSetKeyBuffer('R')
-	else if emptyRestoreScenario then
+	else if emptyRestoreScenario or shortHeaderRestoreScenario then
 		InputProbeSetKeyBuffer('R')
 	else if refusedAbortReturnScenario then
 		InputProbeSetKeyBuffer('P')
@@ -135,10 +145,11 @@ begin
 	end;
 	if worldSelectPlayScenario and
 		((InputProbeGetKeyBuffer <> '') or (InputProbeGetReadKeys <> '')) then RunError(261);
-	if (restoreScenario or badRestoreScenario or cancelRetryScenario or emptyRestoreScenario) and
+	if (restoreScenario or badRestoreScenario or cancelRetryScenario or
+		emptyRestoreScenario or shortHeaderRestoreScenario) and
 		(InputProbeGetKeyBuffer <> '') then RunError(257);
 	if cancelRetryScenario and not GameLoopProbeTitleRestoreCancelled then RunError(256);
-	if badRestoreScenario or emptyRestoreScenario then begin
+	if badRestoreScenario or emptyRestoreScenario or shortHeaderRestoreScenario then begin
 		Assign(output, 'TITLFAIL.OUT');
 		Rewrite(output);
 		{ The leading zero is GameWorldLoad's false result on the R route. }
@@ -164,7 +175,7 @@ begin
 		FreeMem(GameLoopProbeCellWriteEvents, SizeOf(TGameLoopProbeCellWriteEventArray));
 		GameLoopProbeCellWriteEvents := nil;
 	end;
-	if not (badRestoreScenario or emptyRestoreScenario) then WorldUnload;
+	if not (badRestoreScenario or emptyRestoreScenario or shortHeaderRestoreScenario) then WorldUnload;
 	end;
 	Dispose(IoTmpBuf);
 end.
