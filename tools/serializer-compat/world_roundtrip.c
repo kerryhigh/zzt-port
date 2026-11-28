@@ -257,6 +257,22 @@ int run_world_load_missing_trailing(uint32_t input_len) {
     for (i = 1; i <= state.world.board_count; i++) {
         if (state.world.board_len[i] != 0 || state.world.board_data[i] != NULL) return -92;
     }
+    memset(output_data, 0, 13);
+    output_size = 0;
+    output_data[0] = 1;
+    output_data[1] = (uint8_t) state.world.board_count;
+    output_data[2] = (uint8_t) ((uint16_t) state.world.board_count >> 8);
+    output_data[3] = (uint8_t) state.world.info.current_board;
+    output_data[4] = (uint8_t) ((uint16_t) state.world.info.current_board >> 8);
+    output_data[5] = state.world.info.is_save ? 1 : 0;
+    output_data[6] = state.world.board_len[0] > 0 ? 1 : 0;
+    output_data[7] = (uint8_t) state.world.board_len[1];
+    output_data[8] = (uint8_t) ((uint16_t) state.world.board_len[1] >> 8);
+    output_data[9] = (uint8_t) state.world.board_len[state.world.board_count];
+    output_data[10] = (uint8_t) ((uint16_t) state.world.board_len[state.world.board_count] >> 8);
+    output_data[11] = state.world.board_data[1] != NULL ? 1 : 0;
+    output_data[12] = state.world.board_data[state.world.board_count] != NULL ? 1 : 0;
+    output_size = 13;
     return 0;
 }
 

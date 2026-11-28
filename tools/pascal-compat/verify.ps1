@@ -1888,7 +1888,6 @@ $expectedOutputs = [ordered]@{
         'overrun cell1275 5 15 cell1276 6 16 final 6 16 max-shots 77'
     )
     'WORLDTIT.OUT' = @('title-only 1 0 0 1 1')
-    'FULLLOAD.OUT' = @('full-load 1 15 0 0 1 missing-len 0 0')
     'SHORTLEN.OUT' = @('short-len 1 15 0 0 272 1')
     'NEGLEN.OUT' = @('negative-len 1 0 0 -1')
     'NEGBRD.OUT' = @('negative-brd 1 -1')
@@ -2119,6 +2118,18 @@ foreach ($fileName in $expectedOutputs.Keys) {
     Write-Host "Turbo Pascal probe passed: $fileName"
 }
 
+$fullLoadPath = Join-Path $stageRoot 'FULLLOAD.OUT'
+if (-not (Test-Path -LiteralPath $fullLoadPath -PathType Leaf)) {
+    throw "Turbo Pascal absent-trailing-board probe did not write FULLLOAD.OUT. See $stageRoot\FULLLOAD.LOG."
+}
+$fullLoadLines = [IO.File]::ReadAllLines($fullLoadPath)
+if ($fullLoadLines.Count -ne 1 -or $fullLoadLines[0] -notmatch '^full-load 1 15 0 0 1 missing-len 0 0 data-present ([01]) ([01])$') {
+    throw "Unexpected Turbo Pascal absent-trailing-board output: $([string]::Join('; ', $fullLoadLines))"
+}
+$fullLoadBoardOnePresent = [int]$Matches[1]
+$fullLoadLastBoardPresent = [int]$Matches[2]
+Write-Host "Turbo Pascal absent-trailing-board state: deterministic fields matched expected values; zero-length BoardData[1]/[15] presence was $fullLoadBoardOnePresent/$fullLoadLastBoardPresent in this DOSBox-X allocation history."
+
 $bindReuseOutput = [IO.File]::ReadAllLines((Join-Path $stageRoot 'BINDREUS.OUT'))
 if ($bindReuseOutput.Count -ne 4 -or $bindReuseOutput[0] -cne 'started' -or $bindReuseOutput[1] -cne 'bound' -or
     -not (($bindReuseOutput[2] -ceq 'reused 1' -and $bindReuseOutput[3] -ceq 'follower 7') -or
@@ -2215,7 +2226,9 @@ try {
         -PascalShortLengthOutput (Join-Path $stageRoot 'SHORTLEN.OUT') `
         -PascalShortLengthFixture (Join-Path $stageRoot 'PARTLEN.ZZT') `
         -PascalShortPayloadOutput (Join-Path $stageRoot 'SHORTRD.OUT') `
-        -PascalShortPayloadFixture (Join-Path $stageRoot 'PARTIAL.ZZT')
+        -PascalShortPayloadFixture (Join-Path $stageRoot 'PARTIAL.ZZT') `
+        -PascalMissingTrailingOutput (Join-Path $stageRoot 'FULLLOAD.OUT') `
+        -PascalMissingTrailingFixture (Join-Path $stageRoot 'FULLFILE.ZZT')
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw "Serializer compatibility suite failed with exit code $LASTEXITCODE." }
     & node 'tools/serializer-compat/compare-board-rle.js' `
         (Join-Path $stageRoot 'BOARDRLE.BIN') `

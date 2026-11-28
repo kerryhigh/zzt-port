@@ -9,6 +9,8 @@ var
 	output: text;
 	loaded: boolean;
 	boardPresent: byte;
+	missingBoardOnePresent: byte;
+	missingBoardLastPresent: byte;
 	boardId: integer;
 begin
 	VideoWriteText := QuietWrite;
@@ -24,9 +26,12 @@ begin
 	Rewrite(output);
 	if loaded then begin
 		if World.BoardLen[0] > 0 then boardPresent := 1 else boardPresent := 0;
+		if World.BoardData[1] <> nil then missingBoardOnePresent := 1 else missingBoardOnePresent := 0;
+		if World.BoardData[MAX_BOARD] <> nil then missingBoardLastPresent := 1 else missingBoardLastPresent := 0;
 		WriteLn(output, 'full-load ', Ord(loaded), ' ', World.BoardCount, ' ',
 			World.Info.CurrentBoard, ' ', Ord(World.Info.IsSave), ' ', boardPresent,
-			' missing-len ', World.BoardLen[1], ' ', World.BoardLen[15]);
+			' missing-len ', World.BoardLen[1], ' ', World.BoardLen[MAX_BOARD],
+			' data-present ', missingBoardOnePresent, ' ', missingBoardLastPresent);
 	end else begin
 		WriteLn(output, 'full-load 0');
 	end;
