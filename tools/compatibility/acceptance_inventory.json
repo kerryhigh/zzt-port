@@ -1191,7 +1191,7 @@
       "requirement": "Inventory every Pascal `Random` call site. Compare the PRNG primitive over a fixed documented seed vector including zero, wrap/high-bit and existing gameplay seeds; compare every call site's `Random(n)` range, call order, resulting RNG state, and gameplay decision against direct Pascal probes with identical initial seed.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:208",
       "status": "partial",
-      "evidence_class": "D+DP+S",
+      "evidence_class": "D+DP+I+S",
       "production_implementation": [
         "third_party/libzoo/src/libzoo/zoo_random.h::zoo_random_next",
         "third_party/libzoo/src/libzoo/zoo.c::zoo_default_random / zoo_state_init",
@@ -1211,7 +1211,9 @@
         "tools/pascal-compat/RUFFPRB.PAS",
         "tools/pascal-compat/CENTIPR.PAS",
         "tools/pascal-compat/SPINGUN.PAS",
-        "tools/pascal-compat/SHARKPRB.PAS"
+        "tools/pascal-compat/SHARKPRB.PAS",
+        "tools/pascal-compat/DARKIN.PAS (E2-10-F06 integrated cross-support; not counted again)",
+        "tools/pascal-compat/PAUSEIN.PAS (E2-10-F07 integrated cross-support; not counted again)"
       ],
       "oracle_output": {
         "path": "build/pascal-compat-verification/RNGVEC.OUT",
@@ -1223,7 +1225,7 @@
         "field_differences": 0,
         "caller_output_note": "Named direct gameplay outputs are checked by their committed comparators; pending caller rows have no direct output yet."
       },
-      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges (D/DP). Source maps 29/29 call sites; existing D/DP gameplay probes cover 15/29. Fourteen call sites, Randomize/time seeding, and GAME.PAS:1699 remain pending. Full clean suite passed 151/151 direct Pascal sessions and 76/76 configured differentials with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.",
+      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges (D/DP). Source maps 29/29 call sites; direct gameplay probes cover 15/29. F06/F07 provide integrated I support for three pending startup/scheduler sites, counted only under E2-10. Fourteen caller cases, Randomize/time seeding, and GAME.PAS:1699 remain pending. Full clean suite passed 151/151 direct Pascal sessions and 76/76 configured differentials with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.",
       "required_evidence_classes": [
         "D",
         "S",
@@ -22210,13 +22212,27 @@
         "routine": "GenerateTransitionTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:140",
         "source_text": "iy := Random(TransitionTableSize) + 1;",
-        "evidence_class": "S",
+        "evidence_class": "I+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/DARKIN.PAS",
+          "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md"
+        ],
+        "verification_result": "Integrated evidence only (E2-10-F06); latest clean record matched 126 checkpoints and 438702 state fields with zero state differences. This does not close the direct D/DP caller criterion.",
+        "oracle_output": {
+          "integrated_fixture": "E2-10-F06",
+          "reference_evidence": "tools/compatibility/evidence/2026-11-25-e2-10-dark-room-torch-energizer-timer-death.md",
+          "reference_output_file": "INTEGPR.OUT",
+          "reference_output_size_bytes": 927772,
+          "reference_output_sha256": "b338a11b65610bd878aa95c300ae547fb974a12a74ec58e255c1deab98488f5c",
+          "latest_verification_checkpoints": 126,
+          "latest_verification_state_fields": 438702,
+          "latest_verification_logical_cycles": 120,
+          "latest_verification_cycle_fields": 418216,
+          "scope_note": "DARKIN directly calls GenerateTransitionTable after RandSeed=0, before WorldCreate, then runs 120 actual gameplay cycles. The integrated capture supports startup sequence and resulting state; it does not assert the transition order table itself."
+        }
       },
       {
         "id": "E2-07-RNG-GAME-1276",
@@ -22364,13 +22380,27 @@
         "routine": "GameDrawSidebar",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1515",
         "source_text": "CurrentTick := Random(100);",
-        "evidence_class": "S",
+        "evidence_class": "I+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_start"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/PAUSEIN.PAS",
+          "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md"
+        ],
+        "verification_result": "Integrated evidence only (E2-10-F07); latest clean record matched 13 checkpoints and 44226 state fields with zero state differences. This does not close the direct D/DP caller criterion.",
+        "oracle_output": {
+          "integrated_fixture": "E2-10-F07",
+          "reference_evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md",
+          "reference_output_file": "INTEGPR.OUT",
+          "reference_output_size_bytes": 93020,
+          "reference_output_sha256": "b428274a4cdf8011b2d2c7e65e621ce5d4069b42bff2a10390dbfec6b15603e7",
+          "latest_verification_checkpoints": 13,
+          "latest_verification_state_fields": 44226,
+          "latest_verification_logical_cycles": 5,
+          "latest_verification_cycle_fields": 17010,
+          "scope_note": "PAUSEIN runs the original GamePlayLoop start path at positive speed and compares scheduler/RNG state in the integrated replay. This is E2-10 integrated support, not direct AC003 caller credit."
+        }
       },
       {
         "id": "E2-07-RNG-GAME-1564",
@@ -22379,13 +22409,27 @@
         "routine": "GameDrawSidebar",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1564",
         "source_text": "CurrentTick := Random(100);",
-        "evidence_class": "S",
+        "evidence_class": "I+S",
         "production_implementation": [
           "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_start"
         ],
-        "test_fixture": [],
-        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
-        "oracle_output": null
+        "test_fixture": [
+          "tools/pascal-compat/PAUSEIN.PAS",
+          "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md"
+        ],
+        "verification_result": "Integrated evidence only (E2-10-F07); latest clean record matched 13 checkpoints and 44226 state fields with zero state differences. This does not close the direct D/DP caller criterion.",
+        "oracle_output": {
+          "integrated_fixture": "E2-10-F07",
+          "reference_evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md",
+          "reference_output_file": "INTEGPR.OUT",
+          "reference_output_size_bytes": 93020,
+          "reference_output_sha256": "b428274a4cdf8011b2d2c7e65e621ce5d4069b42bff2a10390dbfec6b15603e7",
+          "latest_verification_checkpoints": 13,
+          "latest_verification_state_fields": 44226,
+          "latest_verification_logical_cycles": 5,
+          "latest_verification_cycle_fields": 17010,
+          "scope_note": "PAUSEIN runs the original GamePlayLoop resume path after delayed pause input and compares scheduler/RNG state in the integrated replay. This is E2-10 integrated support, not direct AC003 caller credit."
+        }
       },
       {
         "id": "E2-07-RNG-GAME-1699",

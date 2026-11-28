@@ -2297,7 +2297,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
-      "E2-07-AC003 partial: the direct Turbo Pascal 5.5 and production RNG vector matched 224/224 draws and 1,344/1,344 numeric fields for 16 seeds and 14 ranges. Frozen inventory maps all 29 Random sites; 15/29 have direct caller D/DP coverage and 14 remain pending. The clean suite passed 151 direct Pascal sessions, 76/76 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 logical cycles), exit 0. AC003 remains partial; see tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.",
+      "E2-07-AC003 partial: direct Turbo Pascal 5.5/production RNG vector matched 224/224 draws and 1,344/1,344 numeric fields. Source maps 29/29 sites; 15/29 have direct D/DP caller coverage and 14 remain pending direct evidence. Existing F06/F07 provide I support for three pending startup/scheduler sites and remain counted only under E2-10. Clean suite: 151 direct Pascal sessions, 76/76 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0.",
       "E2-02 missing trailing .ZZT records: direct Pascal WorldLoad and production zoo_world_load match seven deterministic fields; after loading, production zoo_world_save matches the full 1,135-byte Pascal BoardClose file record. An initial probe compared different private/internal record representations and was corrected; no engine change was needed. Pascal GetMem(0) presence was 1/0 for boards 1/15 across three same-setup DOSBox-X sessions, production stores NULL/NULL, and absent-board open remains unverified. Clean 2026-11-28 suite: 150 direct Pascal sessions, 75/75 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Frozen inventory remains 54 cases; E2-02 remains partial.",
       "E2-02 AC002: direct compiled-Pascal WorldSave wrote embedded NUL and CP437 bytes 00/80/82/FF to the world name, all ten flags, current board name, and message for both .ZZT (IsSave=0) and .SAV (IsSave=1). Production matched all 26 string-field instances and 52,930/52,930 file bytes (SHA-256 .ZZT 47c5a657b5c4fb9c04e99ac4fd8a623c79870cd5db9aaf3ba37f0f34ff33cdfa; .SAV 1eddbe003459ab80ff88730f070d03cc4d148b1d7c5be7a0bbe007f427f345d7). The clean run passed 149 direct Pascal sessions and 74/74 direct comparisons; F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md.",
       "E2-02 AC002: direct compiled-Pascal WorldSave ZZT raw Boolean/reserved cases preserved IsSave values 0, 1, 2, and 255 plus seven Keys bytes and 14 reserved bytes; all four 26,465-byte files (105,860 bytes total) match production. The same run rechecked paired SAV files. Clean suite: 149 sessions, 73/73 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial and the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-boolean-reserved.md.",
@@ -5710,7 +5710,14 @@
           "E2-07-RNG-SOUNDS-0128",
           "E2-07-RNG-SOUNDS-0130"
         ],
-        "evidence": "tools/compatibility/acceptance_inventory.json source_inventory.rng_call_sites"
+        "evidence": "tools/compatibility/acceptance_inventory.json source_inventory.rng_call_sites",
+        "integrated_support": 3,
+        "integrated_ids": [
+          "E2-07-RNG-GAME-0140",
+          "E2-07-RNG-GAME-1515",
+          "E2-07-RNG-GAME-1564"
+        ],
+        "integrated_credit_blocker": "E2-10 only; no extra fixture credit or direct D/DP callsite count"
       },
       "limitations": "The vector verifies only the fixed-seed primitive, not caller call order or gameplay decisions. CENTIPR short-circuits ELEMENTS.PAS:205 and :208. GAME.PAS:1699 has no production routine mapped. Four SOUNDS.PAS drum assignments differ structurally from the production static table and remain unresolved. Randomize/time-seed behavior remains pending.",
       "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md"
