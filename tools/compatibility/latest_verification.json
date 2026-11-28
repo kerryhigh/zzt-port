@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-28",
-    "root_revision": "b204b95708cc0d69cac582e2b7106bf678265695",
+    "root_revision": "52484d447aabc9ace8965e67d24a2a159f84ef99",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local 7b3fe1c643e777363364a36699c42141e05ec33c; tree 76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The .HI high-score verifier matched all 1,590 prefix lengths 0..1,589 and all 2,528,100 resulting table bytes; high-score comparisons total 1,606 with zero differences. The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local d88c5e9a3ccf72e8222ba932175f504ac334a159; tree 446eeafc00c3985a6c474da89af4020edb62ef8e): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The E2-07-AC001 direct input matrix matched all 256 lengths, 512 InputUpdate transitions, and 3,584 matrix fields, including exact logical residual queues; the wrapped-ring and existing burst/CP437 cases matched. The .HI high-score verifier matched all 1,590 prefix lengths 0..1,589 and all 2,528,100 resulting table bytes; high-score comparisons total 1,606 with zero differences. The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -247,13 +247,13 @@
       "sessions": 150,
       "standard_programs": 55,
       "standalone_sessions": 95,
-      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local 7b3fe1c643e777363364a36699c42141e05ec33c; tree 76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3)."
+      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local d88c5e9a3ccf72e8222ba932175f504ac334a159; tree 446eeafc00c3985a6c474da89af4020edb62ef8e)."
     },
     "direct_differential_comparisons": {
       "configured": 75,
       "passed": 75,
       "failed": 0,
-      "result": "75/75 configured direct Pascal-to-production comparison invocations passed on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local source commit 7b3fe1c643e777363364a36699c42141e05ec33c). The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
+      "result": "75/75 configured direct Pascal-to-production comparison invocations passed on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local source commit d88c5e9a3ccf72e8222ba932175f504ac334a159). The existing INPUTBUF comparison includes 256 lengths, 512 transitions, and 3,584 queue-matrix fields. The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -5260,7 +5260,7 @@
       "integrated_fixture_count": "10/10",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md"
     },
-    "source_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3",
+    "source_tree_sha": "446eeafc00c3985a6c474da89af4020edb62ef8e",
     "zzt_partial_length_word_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5319,8 +5319,8 @@
       "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
     },
-    "local_source_revision": "7b3fe1c643e777363364a36699c42141e05ec33c",
-    "verified_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3",
+    "local_source_revision": "d88c5e9a3ccf72e8222ba932175f504ac334a159",
+    "verified_tree_sha": "446eeafc00c3985a6c474da89af4020edb62ef8e",
     "zzt_short_payload_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5478,6 +5478,42 @@
       "local_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
       "source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
       "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-zzt-missing-trailing-boards.md"
+    },
+    "input_buffer_differential": {
+      "acceptance_case": "E2-07-AC001",
+      "verification_date": "2026-11-28",
+      "source_revision": "d88c5e9a3ccf72e8222ba932175f504ac334a159",
+      "published_revision": "52484d447aabc9ace8965e67d24a2a159f84ef99",
+      "evidence_class": "D+DP",
+      "result": "passed",
+      "configured_buffer_lengths": 256,
+      "matched_buffer_lengths": 256,
+      "configured_transitions": 512,
+      "matched_transitions": 512,
+      "fields_per_transition": 7,
+      "matrix_fields_compared": 3584,
+      "matrix_field_differences": 0,
+      "input_byte_permutation": "Each queue length uses the first N bytes from a deterministic permutation containing every byte 1 through 255 exactly once.",
+      "residual_queue_comparison": "After original InputUpdate, queue count is 0 or 1; compared count plus remaining byte therefore captures the exact complete logical residual queue.",
+      "ring_wrap": {
+        "head_before_enqueue": 252,
+        "input_bytes_ascii": "ABCDEF",
+        "transitions_matched": 2,
+        "result": "passed"
+      },
+      "oracle_outputs": [
+        {
+          "path": "build/pascal-compat-verification/INPUTBUF.OUT",
+          "size_bytes": 548,
+          "sha256": "1fc3eb4e65f445b474ea84f858470cb62eb0ef1c9ef78740a41efc8853cc2f6c"
+        },
+        {
+          "path": "build/pascal-compat-verification/INPUTMAT.OUT",
+          "size_bytes": 13127,
+          "sha256": "e295f5a2e375916e174f22b1a8263b934f5410d0c0790a68e339a0474dfc0185"
+        }
+      ],
+      "included_in_existing_probe_and_comparison_counts": true
     }
   }
 }

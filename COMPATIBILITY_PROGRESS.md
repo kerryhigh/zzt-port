@@ -18,7 +18,7 @@ Counts below are generated from the frozen checklist inventory and the latest re
 | E2-04 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-05 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-06 | open | 0/5 | 0 | 5 | 0.0% |
-| E2-07 | open | 0/5 | 0 | 5 | 0.0% |
+| E2-07 | partial | 1/5 | 0 | 4 | 20.0% |
 | E2-08 | partial | 0/5 | 1 | 4 | 0.0% |
 | E2-09 | partial | 1/5 | 3 | 1 | 20.0% |
 | E2-10 | closed | 5/5 | 0 | 0 | 100.0% |
@@ -28,19 +28,20 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Acceptance case status
 
-- Passing/complete: **9**; partial: **10**; pending: **35**; failing: **0**.
+- Passing/complete: **10**; partial: **10**; pending: **34**; failing: **0**.
 - Required evidence classes mapped: **54/54**; D: 42, S: 15, P: 11, DP: 49, I: 10 cases (categories can overlap; required evidence is not a passing result).
 - Acceptance cases missing or invalid required evidence classes: **0**; IDs: none.
-- Acceptance cases without an evidence classification: **35**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC001, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
+- Acceptance cases without an evidence classification: **34**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
 - Unclassified source inventory entries: **1464**; explicitly excluded adapter/presentation entries: **10**.
 - Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P counts recorded production-only regressions; I counts only completed full integrated fixtures.
 
 ## Evidence inventory
 
 - Direct compiled-Pascal probe sessions in the last completed full suite: **150** (55 standard programs; 95 standalone sessions).
-- Direct Pascal-to-production differential invocations in the last completed full suite: **75/75** passed; failed: **0**; last complete result: **75/75 configured direct Pascal-to-production comparison invocations passed on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local source commit 7b3fe1c643e777363364a36699c42141e05ec33c). The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch**.
+- Direct Pascal-to-production differential invocations in the last completed full suite: **75/75** passed; failed: **0**; last complete result: **75/75 configured direct Pascal-to-production comparison invocations passed on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local source commit d88c5e9a3ccf72e8222ba932175f504ac334a159). The existing INPUTBUF comparison includes 256 lengths, 512 transitions, and 3,584 queue-matrix fields. The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch**.
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **1606/1606** passed (1 save, 1598 load/reset, 7 insertion cases); source-model rows: **256**.
 - Direct `.HI` incomplete-prefix sweep: **1590/1590** lengths (0–1589); **2528100/2528100** table bytes matched; matrix SHA-256 `B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983`.
+- Direct input-buffer differential for E2-07-AC001: **256/256** lengths; **512/512** transitions / 3584 fields; differences: 0; wrapped ring result: passed; `INPUTMAT.OUT` SHA-256 `e295f5a2e375916e174f22b1a8263b934f5410d0c0790a68e339a0474dfc0185` (D+DP; included in existing probe/comparison counts).
 - Direct Pascal `.BRD` `BoardClose` record: **289/289** payload bytes matched through shared LibZoo import/export; external file: 291 bytes; SHA-256 `e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd`.
 - Direct Pascal `.BRD` short-string boundaries: **9/9** complete records matched; 289/289 bytes per record; raw lengths 0, 1, 49, 50, 51, 127, 255, 50, 1; AC002 remains partial.
 - Direct Pascal `.BRD` Boolean/reserved bytes: **4/4** complete records matched; raw values 0, 1, 2, 255 for both Boolean fields; 16 reserved bytes and 289/289 record bytes per case; AC002 remains partial.
@@ -391,7 +392,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - Latest integrated Pascal differential `E2-10-F10`: exit 0; 24015 snapshot fields, 0 logical sound events, 29 ordered playfield cell writes, 610/610 generated-save stable bytes, and 858/858 loaded-file round-trip stable bytes matched.
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; executable SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
 - Platform build toolchains: Windows: Visual Studio 2022 MSBuild 17.14.19, Windows SDK 10.0.26100.0, x64; CTest 3/3 passed; Android: Gradle 8.11.1 offline; Android NDK 27.2.12479018; arm64-v8a and x86_64.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: b204b95708cc0d69cac582e2b7106bf678265695.
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 52484d447aabc9ace8965e67d24a2a159f84ef99.
 - Last completed full Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
