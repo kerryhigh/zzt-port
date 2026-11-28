@@ -202,7 +202,7 @@ Every blocker is mandatory. A blocker closes only with committed automated evide
 
 ### E2-07 — Input queue, player control state, RNG, and tick callers — [~]
 
-- [ ] For the engine's normalized input queue, directly compare empty, one-byte, every buffer-length boundary 0–255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Assert consumed-byte order and exact residual buffer.
+- [x] E2-07-AC001: for the engine's normalized input queue, direct Pascal/production coverage compares empty, one-byte, every buffer-length boundary 0–255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Consumed-byte order and exact residual queues match across 256 lengths and 512 transitions; see [evidence](tools/compatibility/evidence/2026-11-28-e2-07-input-buffer-matrix.md).
 - [ ] Exercise all input-to-engine actions that are part of the shared core, including fire/shoot tap, direction, pause, menu decision, and reset after death; exclude keyboard layout, Android touch, Win32 messages, and host key-repeat timing.
 - [ ] Inventory every Pascal `Random` call site. Compare the PRNG primitive over a fixed documented seed vector including zero, wrap/high-bit and existing gameplay seeds; compare every call site's `Random(n)` range, call order, resulting RNG state, and gameplay decision against direct Pascal probes with identical initial seed.
 - [ ] Exercise existing tick speed/clock cases plus any unresolved timer callers surfaced by the call-site inventory. Use injected BIOS time and logical ticks.
