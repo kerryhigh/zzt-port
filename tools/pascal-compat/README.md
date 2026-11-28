@@ -79,6 +79,8 @@ INPUTBUF.PAS drives the original `InputUpdate` through a test-only setter inject
 
 `PLAYERMV.PAS`, `PLAYERST.PAS`, `PLAYERKEY.PAS`, `PLAYERDE.PAS`, and `PAUSEMV.PAS` compare original player ticks for direction, shooting, pause/sound keys, death reset, and paused movement. `ABORTIN.PAS`, `ABORTLP.PAS`, and `ABORTREF.PAS` compare menu choices and the actual accepted/refused `GamePlayLoop` exit paths. The existing comparators matched 243 player-tick fields and 107 prompt/loop fields. F07 separately verifies five actual pause/resume cycles in the ten-fixture integrated corpus. See [E2-07-AC002 evidence](../compatibility/evidence/2026-11-28-e2-07-player-control-actions.md); F07 remains counted only under E2-10.
 
+`RNGVEC.PAS` assigns 16 documented `RandSeed` values and directly calls Turbo Pascal 5.5 `Random` across 14 ranges, including zero, signed high-bit/wrap values, gameplay seeds, and 32767. `compare-rng-vector.js` checks 224 results and both 16-bit halves of each resulting 32-bit seed against the production PRNG (1,344 numeric fields total). The primitive vector passes; E2-07-AC003 remains partial because direct caller-level range, call-order, resulting-state, and gameplay checks cover only 15 of the 29 frozen source call sites. See [RNG seed-vector evidence](../compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md).
+
 Run the reproducible oracle and production comparison suite from the repository root:
 
 powershell -ExecutionPolicy Bypass -File tools\pascal-compat\verify.ps1 -PascalToolchain path\to\folder\containing\TPC.EXE -DosboxExecutable path\to\dosbox-x.exe

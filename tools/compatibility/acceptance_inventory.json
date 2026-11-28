@@ -1190,17 +1190,46 @@
       "kind": "acceptance_requirement",
       "requirement": "Inventory every Pascal `Random` call site. Compare the PRNG primitive over a fixed documented seed vector including zero, wrap/high-bit and existing gameplay seeds; compare every call site's `Random(n)` range, call order, resulting RNG state, and gameplay decision against direct Pascal probes with identical initial seed.",
       "checklist_location": "ENGINE_2.0_CHECKLIST.md:208",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "status": "partial",
+      "evidence_class": "D+DP+S",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_random.h::zoo_random_next",
+        "third_party/libzoo/src/libzoo/zoo.c::zoo_default_random / zoo_state_init",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_calc_direction_rnd / zoo_calc_direction_seek / zoo_game_start",
+        "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_lion_tick / zoo_e_tiger_tick / zoo_e_ruffian_tick / zoo_e_centipede_head_tick / zoo_e_spinning_gun_tick / zoo_e_shark_tick / zoo_draw_player_surroundings",
+        "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction",
+        "third_party/libzoo/src/libzoo/zoo_sound.c::zoo_sound_drums"
+      ],
+      "test_fixture": [
+        "tools/pascal-compat/RNGVEC.PAS",
+        "tools/pascal-compat/compare-rng-vector.js",
+        "tools/runtime-compat/rng.c",
+        "tools/runtime-compat/verify.ps1",
+        "tools/pascal-compat/verify.ps1",
+        "tools/pascal-compat/LIONPRB.PAS",
+        "tools/pascal-compat/TIGRPRB.PAS",
+        "tools/pascal-compat/RUFFPRB.PAS",
+        "tools/pascal-compat/CENTIPR.PAS",
+        "tools/pascal-compat/SPINGUN.PAS",
+        "tools/pascal-compat/SHARKPRB.PAS"
+      ],
+      "oracle_output": {
+        "path": "build/pascal-compat-verification/RNGVEC.OUT",
+        "size_bytes": 5235,
+        "sha256": "300DFDD9F8C62887731B5D5E9DB88FB51F2D3C068CF643CD0FA98D7488B2C980",
+        "retained_in_repository": false,
+        "draws_matched": 224,
+        "numeric_fields_matched": 1344,
+        "field_differences": 0,
+        "caller_output_note": "Named direct gameplay outputs are checked by their committed comparators; pending caller rows have no direct output yet."
+      },
+      "verification_result": "Partial, 2026-11-28: 224/224 direct seeded draws and 1,344/1,344 numeric fields matched across 16 seeds and 14 ranges (D/DP). Source maps 29/29 call sites; existing D/DP gameplay probes cover 15/29. Fourteen call sites, Randomize/time seeding, and GAME.PAS:1699 remain pending. Full clean suite passed 151/151 direct Pascal sessions and 76/76 configured differentials with zero unexplained comparable mismatches. See tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.",
       "required_evidence_classes": [
         "D",
         "S",
         "DP"
-      ]
+      ],
+      "oracle_instrumentation": "RNGVEC.PAS assigns RandSeed and calls unmodified Turbo Pascal 5.5 Random; it writes text output. Production comparison invokes the shared zoo_random_next wrapper. No reference gameplay semantics are patched for this vector."
     },
     {
       "id": "E2-07-AC004",
@@ -22181,10 +22210,13 @@
         "routine": "GenerateTransitionTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:140",
         "source_text": "iy := Random(TransitionTableSize) + 1;",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo.c::zoo_state_init"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-GAME-1276",
@@ -22193,10 +22225,55 @@
         "routine": "CalcDirectionRnd",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1276",
         "source_text": "deltaX := Random(3) - 1;",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_calc_direction_rnd"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/LIONPRB.PAS",
+          "tools/pascal-compat/compare-lion-tick.js",
+          "tools/pascal-compat/RUFFPRB.PAS",
+          "tools/pascal-compat/compare-ruffian-tick.js",
+          "tools/pascal-compat/CENTIPR.PAS",
+          "tools/pascal-compat/compare-centipede-tick.js",
+          "tools/pascal-compat/SPINGUN.PAS",
+          "tools/pascal-compat/compare-spinning-gun.js",
+          "tools/pascal-compat/SHARKPRB.PAS",
+          "tools/pascal-compat/compare-shark-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/LIONPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/LION.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-lion-tick.js"
+          },
+          {
+            "probe": "tools/pascal-compat/RUFFPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/RUFFIAN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-ruffian-tick.js"
+          },
+          {
+            "probe": "tools/pascal-compat/CENTIPR.PAS",
+            "expected_output": "build/pascal-compat-verification/CENTIP.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-centipede-tick.js"
+          },
+          {
+            "probe": "tools/pascal-compat/SPINGUN.PAS",
+            "expected_output": "build/pascal-compat-verification/SPINGUN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-spinning-gun.js"
+          },
+          {
+            "probe": "tools/pascal-compat/SHARKPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/SHARK.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-shark-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-GAME-1279",
@@ -22205,10 +22282,55 @@
         "routine": "CalcDirectionRnd",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1279",
         "source_text": "deltaY := Random(2) * 2 - 1",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_calc_direction_rnd"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/LIONPRB.PAS",
+          "tools/pascal-compat/compare-lion-tick.js",
+          "tools/pascal-compat/RUFFPRB.PAS",
+          "tools/pascal-compat/compare-ruffian-tick.js",
+          "tools/pascal-compat/CENTIPR.PAS",
+          "tools/pascal-compat/compare-centipede-tick.js",
+          "tools/pascal-compat/SPINGUN.PAS",
+          "tools/pascal-compat/compare-spinning-gun.js",
+          "tools/pascal-compat/SHARKPRB.PAS",
+          "tools/pascal-compat/compare-shark-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/LIONPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/LION.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-lion-tick.js"
+          },
+          {
+            "probe": "tools/pascal-compat/RUFFPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/RUFFIAN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-ruffian-tick.js"
+          },
+          {
+            "probe": "tools/pascal-compat/CENTIPR.PAS",
+            "expected_output": "build/pascal-compat-verification/CENTIP.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-centipede-tick.js"
+          },
+          {
+            "probe": "tools/pascal-compat/SPINGUN.PAS",
+            "expected_output": "build/pascal-compat-verification/SPINGUN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-spinning-gun.js"
+          },
+          {
+            "probe": "tools/pascal-compat/SHARKPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/SHARK.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-shark-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-GAME-1289",
@@ -22217,10 +22339,23 @@
         "routine": "CalcDirectionSeek",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1289",
         "source_text": "if (Random(2) < 1) or (Board.Stats[0].Y = y) then",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_calc_direction_seek"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/LIONPRB.PAS",
+          "tools/pascal-compat/compare-lion-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/LIONPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/LION.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-lion-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-GAME-1515",
@@ -22229,10 +22364,13 @@
         "routine": "GameDrawSidebar",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1515",
         "source_text": "CurrentTick := Random(100);",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_start"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-GAME-1564",
@@ -22241,10 +22379,13 @@
         "routine": "GameDrawSidebar",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1564",
         "source_text": "CurrentTick := Random(100);",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_start"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-GAME-1699",
@@ -22253,10 +22394,11 @@
         "routine": "GamePrintRegisterMessage",
         "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS:1699",
         "source_text": "s := 'END' + Chr(49 + Random(4)) + '.MSG';",
-        "evidence_class": null,
+        "evidence_class": "S",
         "production_implementation": [],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. No corresponding LibZoo production routine is mapped; confirm whether this is an intentional omission or compatibility defect.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0090",
@@ -22265,10 +22407,23 @@
         "routine": "ElementLionTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:90",
         "source_text": "if P1 < Random(10) then",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_lion_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/LIONPRB.PAS",
+          "tools/pascal-compat/compare-lion-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/LIONPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/LION.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-lion-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0113",
@@ -22277,10 +22432,23 @@
         "routine": "ElementTigerTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:113",
         "source_text": "if (Random(10) * 3) <= (P2 mod $80) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_tiger_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/TIGRPRB.PAS",
+          "tools/pascal-compat/compare-tiger-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/TIGRPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/TIGER.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-tiger-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0135",
@@ -22289,10 +22457,23 @@
         "routine": "ElementRuffianTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:135",
         "source_text": "if (P2 + 8) <= Random(17) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_ruffian_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/RUFFPRB.PAS",
+          "tools/pascal-compat/compare-ruffian-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/RUFFPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/RUFFIAN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-ruffian-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0136",
@@ -22301,10 +22482,23 @@
         "routine": "ElementRuffianTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:136",
         "source_text": "if P1 >= Random(9) then",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_ruffian_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/RUFFPRB.PAS",
+          "tools/pascal-compat/compare-ruffian-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/RUFFPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/RUFFIAN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-ruffian-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0142",
@@ -22313,10 +22507,23 @@
         "routine": "ElementRuffianTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:142",
         "source_text": "if ((Y = Board.Stats[0].Y) or (X = Board.Stats[0].X)) and (Random(9) <= P1) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_ruffian_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/RUFFPRB.PAS",
+          "tools/pascal-compat/compare-ruffian-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/RUFFPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/RUFFIAN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-ruffian-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0151",
@@ -22325,10 +22532,23 @@
         "routine": "ElementRuffianTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:151",
         "source_text": "if (P2 + 8) <= Random(17) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_ruffian_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/RUFFPRB.PAS",
+          "tools/pascal-compat/compare-ruffian-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/RUFFPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/RUFFIAN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-ruffian-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0205",
@@ -22337,10 +22557,13 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:205",
         "source_text": "if (X = Board.Stats[0].X) and (Random(10) < P1) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. CENTIPR short-circuits before this call in its current fixtures; no direct evidence is credited.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0208",
@@ -22349,10 +22572,13 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:208",
         "source_text": "end else if (Y = Board.Stats[0].Y) and (Random(10) < P1) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. CENTIPR short-circuits before this call in its current fixtures; no direct evidence is credited.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0211",
@@ -22361,10 +22587,23 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:211",
         "source_text": "end else if ((Random(10) * 4) < P2) or ((StepX = 0) and (StepY = 0)) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/CENTIPR.PAS",
+          "tools/pascal-compat/compare-centipede-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/CENTIPR.PAS",
+            "expected_output": "build/pascal-compat-verification/CENTIP.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-centipede-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0220",
@@ -22373,10 +22612,23 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:220",
         "source_text": "tmp := ((Random(2) * 2) - 1) * StepY;",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/CENTIPR.PAS",
+          "tools/pascal-compat/compare-centipede-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/CENTIPR.PAS",
+            "expected_output": "build/pascal-compat-verification/CENTIP.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-centipede-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0221",
@@ -22385,10 +22637,23 @@
         "routine": "ElementCentipedeHeadTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:221",
         "source_text": "StepY := ((Random(2) * 2) - 1) * StepX;",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_centipede_head_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/CENTIPR.PAS",
+          "tools/pascal-compat/compare-centipede-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/CENTIPR.PAS",
+            "expected_output": "build/pascal-compat-verification/CENTIP.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-centipede-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0426",
@@ -22397,10 +22662,23 @@
         "routine": "ElementSpinningGunTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:426",
         "source_text": "if Random(9) < (P2 mod $80) then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_spinning_gun_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/SPINGUN.PAS",
+          "tools/pascal-compat/compare-spinning-gun.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/SPINGUN.PAS",
+            "expected_output": "build/pascal-compat-verification/SPINGUN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-spinning-gun.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0427",
@@ -22409,10 +22687,23 @@
         "routine": "ElementSpinningGunTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:427",
         "source_text": "if Random(9) <= P1 then begin",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_spinning_gun_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/SPINGUN.PAS",
+          "tools/pascal-compat/compare-spinning-gun.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/SPINGUN.PAS",
+            "expected_output": "build/pascal-compat-verification/SPINGUN.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-spinning-gun.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-0785",
@@ -22421,10 +22712,23 @@
         "routine": "ElementSharkTick",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:785",
         "source_text": "if P1 < Random(10) then",
-        "evidence_class": null,
-        "production_implementation": [],
-        "test_fixture": [],
-        "verification_result": "unclassified"
+        "evidence_class": "D+DP+S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_shark_tick"
+        ],
+        "test_fixture": [
+          "tools/pascal-compat/SHARKPRB.PAS",
+          "tools/pascal-compat/compare-shark-tick.js"
+        ],
+        "verification_result": "The named direct Pascal and production tick fixture passed in the latest clean suite; evidence covers the reachable branch in that fixture.",
+        "oracle_output": [
+          {
+            "probe": "tools/pascal-compat/SHARKPRB.PAS",
+            "expected_output": "build/pascal-compat-verification/SHARK.OUT",
+            "expected_output_definition": "tools/pascal-compat/verify.ps1 expected rows and named comparator",
+            "comparator": "tools/pascal-compat/compare-shark-tick.js"
+          }
+        ]
       },
       {
         "id": "E2-07-RNG-ELEMENTS-1290",
@@ -22433,10 +22737,13 @@
         "routine": "DrawPlayerSurroundings",
         "source_location": "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:1290",
         "source_text": "Color := $09 + Random(7);",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_draw_player_surroundings"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-OOP-0143",
@@ -22445,10 +22752,13 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:143",
         "source_text": "dy := Random(2) * 2 - 1;",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Random OOP direction aliases have not yet been directly probed.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-OOP-0145",
@@ -22457,10 +22767,13 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:145",
         "source_text": "dx := Random(2);",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Random OOP direction aliases have not yet been directly probed.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-OOP-0158",
@@ -22469,10 +22782,13 @@
         "routine": "OopParseDirection",
         "source_location": "third_party/reconstruction-of-zzt/SRC/OOP.PAS:158",
         "source_text": "if Random(2) = 0 then",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_oop.c::zoo_oop_parse_direction"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Random OOP direction aliases have not yet been directly probed.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-SOUNDS-0118",
@@ -22481,10 +22797,13 @@
         "routine": "SoundInitDrumTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/SOUNDS.PAS:118",
         "source_text": "SoundDrumTable[4].Data[i] := Random(5000) + 500;",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_sound.c::zoo_sound_drums"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Reconcile the original randomized drum-table assignment with LibZoo's static drum table, including RNG state effects.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-SOUNDS-0121",
@@ -22493,10 +22812,13 @@
         "routine": "SoundInitDrumTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/SOUNDS.PAS:121",
         "source_text": "SoundDrumTable[5].Data[i * 2] := Random(1600) + 800;",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_sound.c::zoo_sound_drums"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Reconcile the original randomized drum-table assignment with LibZoo's static drum table, including RNG state effects.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-SOUNDS-0128",
@@ -22505,10 +22827,13 @@
         "routine": "SoundInitDrumTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/SOUNDS.PAS:128",
         "source_text": "SoundDrumTable[8].Data[i] := (i * 20 + 1200) - Random(i * 40);",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_sound.c::zoo_sound_drums"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Reconcile the original randomized drum-table assignment with LibZoo's static drum table, including RNG state effects.",
+        "oracle_output": null
       },
       {
         "id": "E2-07-RNG-SOUNDS-0130",
@@ -22517,10 +22842,13 @@
         "routine": "SoundInitDrumTable",
         "source_location": "third_party/reconstruction-of-zzt/SRC/SOUNDS.PAS:130",
         "source_text": "SoundDrumTable[9].Data[i] := Random(440) + 220;",
-        "evidence_class": null,
-        "production_implementation": [],
+        "evidence_class": "S",
+        "production_implementation": [
+          "third_party/libzoo/src/libzoo/zoo_sound.c::zoo_sound_drums"
+        ],
         "test_fixture": [],
-        "verification_result": "unclassified"
+        "verification_result": "Source-derived mapping only. Caller range, conditional call order, resulting RNG state, and gameplay result remain pending direct comparison. Reconcile the original randomized drum-table assignment with LibZoo's static drum table, including RNG state effects.",
+        "oracle_output": null
       }
     ],
     "editor_routines_requiring_scope_or_mutation_mapping": [

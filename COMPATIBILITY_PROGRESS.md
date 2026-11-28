@@ -18,7 +18,7 @@ Counts below are generated from the frozen checklist inventory and the latest re
 | E2-04 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-05 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-06 | open | 0/5 | 0 | 5 | 0.0% |
-| E2-07 | partial | 2/5 | 0 | 3 | 40.0% |
+| E2-07 | partial | 2/5 | 1 | 2 | 40.0% |
 | E2-08 | partial | 0/5 | 1 | 4 | 0.0% |
 | E2-09 | partial | 1/5 | 3 | 1 | 20.0% |
 | E2-10 | closed | 5/5 | 0 | 0 | 100.0% |
@@ -28,21 +28,22 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Acceptance case status
 
-- Passing/complete: **11**; partial: **10**; pending: **33**; failing: **0**.
+- Passing/complete: **11**; partial: **11**; pending: **32**; failing: **0**.
 - Required evidence classes mapped: **54/54**; D: 42, S: 15, P: 11, DP: 49, I: 10 cases (categories can overlap; required evidence is not a passing result).
 - Acceptance cases missing or invalid required evidence classes: **0**; IDs: none.
-- Acceptance cases without an evidence classification: **33**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
-- Unclassified source inventory entries: **1464**; explicitly excluded adapter/presentation entries: **10**.
+- Acceptance cases without an evidence classification: **32**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
+- Unclassified source inventory entries: **1435**; explicitly excluded adapter/presentation entries: **10**.
 - Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P counts recorded production-only regressions; I counts only completed full integrated fixtures.
 
 ## Evidence inventory
 
-- Direct compiled-Pascal probe sessions in the last completed full suite: **150** (55 standard programs; 95 standalone sessions).
-- Direct Pascal-to-production differential invocations in the last completed full suite: **75/75** passed; failed: **0**; last complete result: **75/75 configured direct Pascal-to-production comparison invocations passed on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local source commit d88c5e9a3ccf72e8222ba932175f504ac334a159). The existing INPUTBUF comparison includes 256 lengths, 512 transitions, and 3,584 queue-matrix fields. The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch**.
+- Direct compiled-Pascal probe sessions in the last completed full suite: **151** (56 standard programs; 95 standalone sessions).
+- Direct Pascal-to-production differential invocations in the last completed full suite: **76/76** passed; failed: **0**; last complete result: **76/76 configured direct Pascal-to-production comparison invocations passed on published mirror 853ef9de7bc9f8e1ae374d5121d294bca56fb473 (local tested source commit 820ce38e3139ae8810998eafe084ab5bc477393f). The seeded RNG primitive comparison covered 224 draws and 1,344 numeric fields. E2-10 remained 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch**.
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **1606/1606** passed (1 save, 1598 load/reset, 7 insertion cases); source-model rows: **256**.
 - Direct `.HI` incomplete-prefix sweep: **1590/1590** lengths (0–1589); **2528100/2528100** table bytes matched; matrix SHA-256 `B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983`.
 - Direct input-buffer differential for E2-07-AC001: **256/256** lengths; **512/512** transitions / 3584 fields; differences: 0; wrapped ring result: passed; `INPUTMAT.OUT` SHA-256 `e295f5a2e375916e174f22b1a8263b934f5410d0c0790a68e339a0474dfc0185` (D+DP; included in existing probe/comparison counts).
 - Direct player-action differential for E2-07-AC002: **350/350** fields across 16 player-tick cases, 10 prompt cases, and 3 abort-loop paths; differences: 0; F07 support: 13/13 checkpoints and 5/5 cycles (D+DP; focused comparisons are included in the existing 75/75, F07 remains counted only in E2-10).
+- Direct Turbo Pascal seeded RNG primitive vector for E2-07-AC003: **224/224** draws and **1344/1344** numeric fields matched; call sites source-mapped **29/29**, directly verified **15/29**, pending direct caller evidence **14** (E2-07-RNG-GAME-0140, E2-07-RNG-GAME-1515, E2-07-RNG-GAME-1564, E2-07-RNG-GAME-1699, E2-07-RNG-ELEMENTS-0205, E2-07-RNG-ELEMENTS-0208, E2-07-RNG-ELEMENTS-1290, E2-07-RNG-OOP-0143, E2-07-RNG-OOP-0145, E2-07-RNG-OOP-0158, E2-07-RNG-SOUNDS-0118, E2-07-RNG-SOUNDS-0121, E2-07-RNG-SOUNDS-0128, E2-07-RNG-SOUNDS-0130); output SHA-256 `300DFDD9F8C62887731B5D5E9DB88FB51F2D3C068CF643CD0FA98D7488B2C980`; AC003 remains partial.
 - Direct Pascal `.BRD` `BoardClose` record: **289/289** payload bytes matched through shared LibZoo import/export; external file: 291 bytes; SHA-256 `e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd`.
 - Direct Pascal `.BRD` short-string boundaries: **9/9** complete records matched; 289/289 bytes per record; raw lengths 0, 1, 49, 50, 51, 127, 255, 50, 1; AC002 remains partial.
 - Direct Pascal `.BRD` Boolean/reserved bytes: **4/4** complete records matched; raw values 0, 1, 2, 255 for both Boolean fields; 16 reserved bytes and 289/289 record bytes per case; AC002 remains partial.
@@ -81,11 +82,11 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 | Pascal branch sites | 991 | 8 | 6 | 977 |
 | OOP words and aliases | 58 | 0 | 0 | 58 |
 | Serialized fields | 87 | 0 | 0 | 87 |
-| RNG call sites | 29 | 0 | 0 | 29 |
+| RNG call sites | 29 | 29 | 0 | 0 |
 | Editor routines requiring scope/mutation mapping | 27 | 3 | 2 | 22 |
 | Input paths requiring core/adapter mapping | 11 | 0 | 0 | 11 |
 
-Total unclassified source inventory entries: **1464**; explicitly excluded: **10**. Source locations, routine-to-production candidates, callback branches, parser words, serialized fields, RNG sites, editor procedures, and input routines are kept as explicit acceptance records; an empty test mapping is not treated as coverage.
+Total unclassified source inventory entries: **1435**; explicitly excluded: **10**. Source locations, routine-to-production candidates, callback branches, parser words, serialized fields, RNG sites, editor procedures, and input routines are kept as explicit acceptance records; an empty test mapping is not treated as coverage.
 
 ## Per-cycle integrated replay
 
@@ -369,7 +370,7 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.
 - E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The six-case empty/one-byte-header and 0-3-byte-payload EditorTransferBoard matrix, five-value signed .BRD and nine-field .SAV boundary differentials, .BRD stat counts 0/1/149/150 (10,660 payload bytes matched) and .SAV/.ZZT WorldSave board counts 0/1/99/100 (8 full files / 467,992 bytes matched), strings, Boolean/reserved records, and one shared-script DataLen=-2 alias record (2,025 bytes matched), .SAV Boolean/reserved records, embedded NUL and CP437 00/80/82/FF bytes in all 13 WorldSave strings per .SAV/.ZZT file, including all ten flags, and .SAV/.ZZT stale-tail records covering four strings each (26,465 bytes matched per file), now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.
 - E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.
-- E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.
+- E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer cases. E2-07 has 29/29 RNG source sites mapped and 15/29 directly verified; 14 caller cases, Randomize/time seeding, and the unresolved GAME.PAS:1699 register-message path remain mandatory.
 - E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.
 - E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record.
 
@@ -393,12 +394,13 @@ Total unclassified source inventory entries: **1464**; explicitly excluded: **10
 - Latest integrated Pascal differential `E2-10-F10`: exit 0; 24015 snapshot fields, 0 logical sound events, 29 ordered playfield cell writes, 610/610 generated-save stable bytes, and 858/858 loaded-file round-trip stable bytes matched.
 - Toolchain: Borland Turbo Pascal 5.5 (TPC.EXE and TURBO.TPL; excluded from repository); DOSBox-X 2026.10.01; executable SHA-256 B8D6A5D0FB7C6C3BB4CE18BB3E306EED77F0865B898E262322AC94C7D11971D3; external tool, not redistributed.
 - Platform build toolchains: Windows: Visual Studio 2022 MSBuild 17.14.19, Windows SDK 10.0.26100.0, x64; CTest 3/3 passed; Android: Gradle 8.11.1 offline; Android NDK 27.2.12479018; arm64-v8a and x86_64.
-- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 52484d447aabc9ace8965e67d24a2a159f84ef99.
+- Source revision: LibZoo baseline `7fb3e89a8467e66a4b8cbc290c708b9fa5290886`; local LibZoo overlay `e5d2fe7`; Pascal source hashes in the manifest; root Git revision: 853ef9de7bc9f8e1ae374d5121d294bca56fb473.
 - Last completed full Pascal suite exit code: 0; command recorded: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0`.
 - Run record: [`latest_verification.json`](tools/compatibility/latest_verification.json).
 
 ## Recent progress
 
+- E2-07-AC003 partial: the direct Turbo Pascal 5.5 and production RNG vector matched 224/224 draws and 1,344/1,344 numeric fields for 16 seeds and 14 ranges. Frozen inventory maps all 29 Random sites; 15/29 have direct caller D/DP coverage and 14 remain pending. The clean suite passed 151 direct Pascal sessions, 76/76 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 logical cycles), exit 0. AC003 remains partial; see tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.
 - E2-02 missing trailing .ZZT records: direct Pascal WorldLoad and production zoo_world_load match seven deterministic fields; after loading, production zoo_world_save matches the full 1,135-byte Pascal BoardClose file record. An initial probe compared different private/internal record representations and was corrected; no engine change was needed. Pascal GetMem(0) presence was 1/0 for boards 1/15 across three same-setup DOSBox-X sessions, production stores NULL/NULL, and absent-board open remains unverified. Clean 2026-11-28 suite: 150 direct Pascal sessions, 75/75 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Frozen inventory remains 54 cases; E2-02 remains partial.
 - E2-02 AC002: direct compiled-Pascal WorldSave wrote embedded NUL and CP437 bytes 00/80/82/FF to the world name, all ten flags, current board name, and message for both .ZZT (IsSave=0) and .SAV (IsSave=1). Production matched all 26 string-field instances and 52,930/52,930 file bytes (SHA-256 .ZZT 47c5a657b5c4fb9c04e99ac4fd8a623c79870cd5db9aaf3ba37f0f34ff33cdfa; .SAV 1eddbe003459ab80ff88730f070d03cc4d148b1d7c5be7a0bbe007f427f345d7). The clean run passed 149 direct Pascal sessions and 74/74 direct comparisons; F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md.
 - E2-02 AC002: direct compiled-Pascal WorldSave ZZT raw Boolean/reserved cases preserved IsSave values 0, 1, 2, and 255 plus seven Keys bytes and 14 reserved bytes; all four 26,465-byte files (105,860 bytes total) match production. The same run rechecked paired SAV files. Clean suite: 149 sessions, 73/73 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial and the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-boolean-reserved.md.

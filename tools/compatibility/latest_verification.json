@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-28",
-    "root_revision": "52484d447aabc9ace8965e67d24a2a159f84ef99",
+    "root_revision": "853ef9de7bc9f8e1ae374d5121d294bca56fb473",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local d88c5e9a3ccf72e8222ba932175f504ac334a159; tree 446eeafc00c3985a6c474da89af4020edb62ef8e): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The E2-07-AC001 direct input matrix matched all 256 lengths, 512 InputUpdate transitions, and 3,584 matrix fields, including exact logical residual queues; the wrapped-ring and existing burst/CP437 cases matched. The .HI high-score verifier matched all 1,590 prefix lengths 0..1,589 and all 2,528,100 resulting table bytes; high-score comparisons total 1,606 with zero differences. The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published mirror 853ef9de7bc9f8e1ae374d5121d294bca56fb473 (local tested source commit 820ce38e3139ae8810998eafe084ab5bc477393f; tree 2f63a92fbc7f2f0f3fb28b8a1646fc2ed718e7c7): 151 direct Pascal sessions (56 standard, 95 standalone), 76/76 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The 224-draw seeded RNG vector matched 1,344 numeric fields; zero unexplained comparable mismatches; full runner exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -244,16 +244,16 @@
       "android_gradle": "Gradle 8.11.1 offline; Android NDK 27.2.12479018; arm64-v8a and x86_64."
     },
     "direct_pascal": {
-      "sessions": 150,
-      "standard_programs": 55,
+      "sessions": 151,
+      "standard_programs": 56,
       "standalone_sessions": 95,
-      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local d88c5e9a3ccf72e8222ba932175f504ac334a159; tree 446eeafc00c3985a6c474da89af4020edb62ef8e)."
+      "session_result": "151 direct Turbo Pascal 5.5 compile/run sessions passed on published mirror 853ef9de7bc9f8e1ae374d5121d294bca56fb473 (local tested source commit 820ce38e3139ae8810998eafe084ab5bc477393f; tree 2f63a92fbc7f2f0f3fb28b8a1646fc2ed718e7c7)."
     },
     "direct_differential_comparisons": {
-      "configured": 75,
-      "passed": 75,
+      "configured": 76,
+      "passed": 76,
       "failed": 0,
-      "result": "75/75 configured direct Pascal-to-production comparison invocations passed on published source commit 52484d447aabc9ace8965e67d24a2a159f84ef99 (local source commit d88c5e9a3ccf72e8222ba932175f504ac334a159). The existing INPUTBUF comparison includes 256 lengths, 512 transitions, and 3,584 queue-matrix fields. The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
+      "result": "76/76 configured direct Pascal-to-production comparison invocations passed on published mirror 853ef9de7bc9f8e1ae374d5121d294bca56fb473 (local tested source commit 820ce38e3139ae8810998eafe084ab5bc477393f). The seeded RNG primitive comparison covered 224 draws and 1,344 numeric fields. E2-10 remained 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2288,7 +2288,7 @@
       "E2-01: complete source-to-shared-engine routine mapping; centralize remaining editor mutations and normalize source inventory scope exclusions.",
       "E2-02: complete the frozen byte/error boundary matrix for all four formats, including per-field serialization cases, applicable truncation boundaries, returned errors, reset/preservation, and untouched-buffer suffix comparisons. The six-case empty/one-byte-header and 0-3-byte-payload EditorTransferBoard matrix, five-value signed .BRD and nine-field .SAV boundary differentials, .BRD stat counts 0/1/149/150 (10,660 payload bytes matched) and .SAV/.ZZT WorldSave board counts 0/1/99/100 (8 full files / 467,992 bytes matched), strings, Boolean/reserved records, and one shared-script DataLen=-2 alias record (2,025 bytes matched), .SAV Boolean/reserved records, embedded NUL and CP437 00/80/82/FF bytes in all 13 WorldSave strings per .SAV/.ZZT file, including all ten flags, and .SAV/.ZZT stale-tail records covering four strings each (26,465 bytes matched per file), now have D/DP evidence; keep E2-02 open until the remaining frozen matrix passes.",
       "E2-03: finish lifecycle-transition cases and the exact transition pass gate. Player-abort decisions, accepted-abort boundary (22/22), refused No/Escape aftermath (44/44), the title-P refused-abort/zero-speed-cycle/accepted-abort/return-to-title route (3 checkpoints / 10,242 fields), six edge-callback outcomes (60/60 under service stubs) plus six full production board-edge routes (60/60 through actual BoardChange, serialized BoardClose/Open, call-stack continuation, and BoardEnter), title quit, unsupported-version refusal, empty-file refusal, cancel/retry, and missing-world reload now have partial D/DP evidence; remaining save/return outcomes and the broader successful/refused board/world transition matrix remain mandatory.",
-      "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer acceptance cases.",
+      "E2-04 through E2-08: close remaining element, OOP, allocator/alias, input/RNG, virtual-cell/text-window, and broader sound producer/timer cases. E2-07 has 29/29 RNG source sites mapped and 15/29 directly verified; 14 caller cases, Randomize/time seeding, and the unresolved GAME.PAS:1699 register-message path remain mandatory.",
       "E2-09: complete editor board/property/stat/object/copy-paste mutations and their direct Pascal comparisons; high-score table byte semantics are shared and directly verified.",
       "E2-11: after E2-01 through E2-10 close, complete the fresh staging run, repeat heap-sensitive cases, and publish the completion record."
     ],
@@ -2297,6 +2297,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
+      "E2-07-AC003 partial: the direct Turbo Pascal 5.5 and production RNG vector matched 224/224 draws and 1,344/1,344 numeric fields for 16 seeds and 14 ranges. Frozen inventory maps all 29 Random sites; 15/29 have direct caller D/DP coverage and 14 remain pending. The clean suite passed 151 direct Pascal sessions, 76/76 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 logical cycles), exit 0. AC003 remains partial; see tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md.",
       "E2-02 missing trailing .ZZT records: direct Pascal WorldLoad and production zoo_world_load match seven deterministic fields; after loading, production zoo_world_save matches the full 1,135-byte Pascal BoardClose file record. An initial probe compared different private/internal record representations and was corrected; no engine change was needed. Pascal GetMem(0) presence was 1/0 for boards 1/15 across three same-setup DOSBox-X sessions, production stores NULL/NULL, and absent-board open remains unverified. Clean 2026-11-28 suite: 150 direct Pascal sessions, 75/75 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Frozen inventory remains 54 cases; E2-02 remains partial.",
       "E2-02 AC002: direct compiled-Pascal WorldSave wrote embedded NUL and CP437 bytes 00/80/82/FF to the world name, all ten flags, current board name, and message for both .ZZT (IsSave=0) and .SAV (IsSave=1). Production matched all 26 string-field instances and 52,930/52,930 file bytes (SHA-256 .ZZT 47c5a657b5c4fb9c04e99ac4fd8a623c79870cd5db9aaf3ba37f0f34ff33cdfa; .SAV 1eddbe003459ab80ff88730f070d03cc4d148b1d7c5be7a0bbe007f427f345d7). The clean run passed 149 direct Pascal sessions and 74/74 direct comparisons; F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md.",
       "E2-02 AC002: direct compiled-Pascal WorldSave ZZT raw Boolean/reserved cases preserved IsSave values 0, 1, 2, and 255 plus seven Keys bytes and 14 reserved bytes; all four 26,465-byte files (105,860 bytes total) match production. The same run rechecked paired SAV files. Clean suite: 149 sessions, 73/73 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial and the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-boolean-reserved.md.",
@@ -2390,7 +2391,10 @@
     },
     "unresolved_compatibility_questions": [
       "Do any supported ZZT operation cases expose materially different serialized or editor state across the remaining controlled allocator histories and truncation boundaries? The single-byte 03 short-header behavior is now directly captured for one documented allocator setup; broader matrix comparisons will determine whether further mandatory cases are needed.",
-      "When the original GamePlayLoop reaches a board whose WorldLoad record was absent and BoardLen is zero, does controlled Turbo Pascal heap state yield any stable board-entry behavior that production must preserve, or is the BoardOpen read outside the zero-length allocation environment-dependent?"
+      "When the original GamePlayLoop reaches a board whose WorldLoad record was absent and BoardLen is zero, does controlled Turbo Pascal heap state yield any stable board-entry behavior that production must preserve, or is the BoardOpen read outside the zero-length allocation environment-dependent?",
+      "What deterministic BIOS-time input and initial RandSeed does the original Randomize/time-seed path produce under controlled DOS conditions, and how should production compare that environment-dependent seed while preserving gameplay decisions?",
+      "Does GAME.PAS:1699 GamePrintRegisterMessage exist in the intended shared production behavior, or is it an unimplemented compatibility path? No matching LibZoo production routine is currently mapped.",
+      "How do the randomized SOUNDS.PAS drum-table assignments at lines 118, 121, 128, and 130 correspond to LibZoo's static zoo_sound_drums table, including their RNG state effects?"
     ],
     "production_only_regression_results": {
       "configured_targeted_cases": 2,
@@ -5319,8 +5323,8 @@
       "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
     },
-    "local_source_revision": "d88c5e9a3ccf72e8222ba932175f504ac334a159",
-    "verified_tree_sha": "446eeafc00c3985a6c474da89af4020edb62ef8e",
+    "local_source_revision": "820ce38e3139ae8810998eafe084ab5bc477393f",
+    "verified_tree_sha": "2f63a92fbc7f2f0f3fb28b8a1646fc2ed718e7c7",
     "zzt_short_payload_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5518,8 +5522,8 @@
     "player_action_differential": {
       "acceptance_case": "E2-07-AC002",
       "verification_date": "2026-11-28",
-      "source_revision": "d88c5e9a3ccf72e8222ba932175f504ac334a159",
-      "published_code_revision": "52484d447aabc9ace8965e67d24a2a159f84ef99",
+      "source_revision": "820ce38e3139ae8810998eafe084ab5bc477393f",
+      "published_code_revision": "853ef9de7bc9f8e1ae374d5121d294bca56fb473",
       "evidence_class": "D+DP",
       "result": "passed",
       "direct_fields_compared": 350,
@@ -5611,6 +5615,105 @@
         }
       ],
       "included_in_existing_probe_and_comparison_counts": true
+    },
+    "rng_seed_vector_differential": {
+      "acceptance_case": "E2-07-AC003",
+      "verification_date": "2026-11-28",
+      "source_revision": "820ce38e3139ae8810998eafe084ab5bc477393f",
+      "published_code_revision": "853ef9de7bc9f8e1ae374d5121d294bca56fb473",
+      "tree_sha": "2f63a92fbc7f2f0f3fb28b8a1646fc2ed718e7c7",
+      "evidence_class": "D+DP",
+      "result": "passed",
+      "seed_count": 16,
+      "range_count": 14,
+      "draws_configured": 224,
+      "draws_matched": 224,
+      "numeric_fields_compared": 1344,
+      "numeric_fields_matched": 1344,
+      "field_differences": 0,
+      "seeds": [
+        0,
+        1,
+        123,
+        2147483647,
+        -2147483648,
+        -1,
+        -2147483647,
+        330,
+        26,
+        3,
+        85,
+        256,
+        454,
+        -596792289,
+        -1860696767,
+        134775814
+      ],
+      "ranges": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        7,
+        9,
+        10,
+        17,
+        100,
+        440,
+        1600,
+        5000,
+        32767
+      ],
+      "oracle_output_path": "build/pascal-compat-verification/RNGVEC.OUT",
+      "oracle_output_size_bytes": 5235,
+      "oracle_output_sha256": "300DFDD9F8C62887731B5D5E9DB88FB51F2D3C068CF643CD0FA98D7488B2C980",
+      "primitive_production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_random.h::zoo_random_next",
+        "tools/runtime-compat/rng.c::rng_vector_next"
+      ],
+      "call_site_inventory": {
+        "source_mapped": 29,
+        "total": 29,
+        "direct_D_DP": 15,
+        "pending_direct": 14,
+        "direct_ids": [
+          "E2-07-RNG-ELEMENTS-0090",
+          "E2-07-RNG-ELEMENTS-0113",
+          "E2-07-RNG-ELEMENTS-0135",
+          "E2-07-RNG-ELEMENTS-0136",
+          "E2-07-RNG-ELEMENTS-0142",
+          "E2-07-RNG-ELEMENTS-0151",
+          "E2-07-RNG-ELEMENTS-0211",
+          "E2-07-RNG-ELEMENTS-0220",
+          "E2-07-RNG-ELEMENTS-0221",
+          "E2-07-RNG-ELEMENTS-0426",
+          "E2-07-RNG-ELEMENTS-0427",
+          "E2-07-RNG-ELEMENTS-0785",
+          "E2-07-RNG-GAME-1276",
+          "E2-07-RNG-GAME-1279",
+          "E2-07-RNG-GAME-1289"
+        ],
+        "pending_ids": [
+          "E2-07-RNG-ELEMENTS-0205",
+          "E2-07-RNG-ELEMENTS-0208",
+          "E2-07-RNG-ELEMENTS-1290",
+          "E2-07-RNG-GAME-0140",
+          "E2-07-RNG-GAME-1515",
+          "E2-07-RNG-GAME-1564",
+          "E2-07-RNG-GAME-1699",
+          "E2-07-RNG-OOP-0143",
+          "E2-07-RNG-OOP-0145",
+          "E2-07-RNG-OOP-0158",
+          "E2-07-RNG-SOUNDS-0118",
+          "E2-07-RNG-SOUNDS-0121",
+          "E2-07-RNG-SOUNDS-0128",
+          "E2-07-RNG-SOUNDS-0130"
+        ],
+        "evidence": "tools/compatibility/acceptance_inventory.json source_inventory.rng_call_sites"
+      },
+      "limitations": "The vector verifies only the fixed-seed primitive, not caller call order or gameplay decisions. CENTIPR short-circuits ELEMENTS.PAS:205 and :208. GAME.PAS:1699 has no production routine mapped. Four SOUNDS.PAS drum assignments differ structurally from the production static table and remain unresolved. Randomize/time-seed behavior remains pending.",
+      "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-rng-seed-vector.md"
     }
   }
 }
