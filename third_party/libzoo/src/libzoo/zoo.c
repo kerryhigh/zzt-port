@@ -120,6 +120,22 @@ static int16_t zoo_default_random(zoo_state *state, int16_t max) {
 	return zoo_random_next(&state->random_seed, max);
 }
 
+static void zoo_transition_table_init(zoo_state *state) {
+	int16_t i, j;
+	uint16_t swap;
+	const int16_t transition_table_size = ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT;
+
+	for (i = 0; i < transition_table_size; i++) {
+		state->transition_order[i] = (uint16_t) i;
+	}
+	for (i = 0; i < transition_table_size; i++) {
+		j = zoo_default_random(state, transition_table_size);
+		swap = state->transition_order[j];
+		state->transition_order[j] = state->transition_order[i];
+		state->transition_order[i] = swap;
+	}
+}
+
 static uint32_t zoo_randomize_seed(void) {
 	struct timespec now;
 	struct tm local_time;
@@ -204,10 +220,6 @@ static void zoo_default_draw_sidebar(zoo_state *state, uint16_t flags) {
 }
 
 void zoo_state_init(zoo_state *state) {
-	int16_t i, j;
-	const int16_t transition_table_size = ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT;
-	uint16_t swap;
-
 	memset(state, 0, sizeof(zoo_state));
 	state->d_video = &d_video_none;
 
@@ -220,15 +232,7 @@ void zoo_state_init(zoo_state *state) {
 	state->random_seed = zoo_randomize_seed();
 	// Pascal builds this shuffled 60x25 table before WorldCreate and reuses it
 	// for board-change transitions. Keep the draw count and order identical.
-	for (i = 0; i < transition_table_size; i++) {
-		state->transition_order[i] = (uint16_t) i;
-	}
-	for (i = 0; i < transition_table_size; i++) {
-		j = zoo_default_random(state, transition_table_size);
-		swap = state->transition_order[j];
-		state->transition_order[j] = state->transition_order[i];
-		state->transition_order[i] = swap;
-	}
+	zoo_transition_table_init(state);
 
 	state->input.repeat_start = 4;
 	state->input.repeat_end = 6;

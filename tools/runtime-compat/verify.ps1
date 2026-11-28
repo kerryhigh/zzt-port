@@ -377,6 +377,7 @@ $integratedGameplayArgs = @(
 	'-Wl,--export=integrated_board_edge_actual_output_ptr',
 	'-Wl,--export=integrated_board_edge_actual_output_rows',
 	'-Wl,--export=integrated_board_edge_actual_output_columns',
+	'-Wl,--export=run_transition_table_capture_checks', '-Wl,--export=transition_table_output_ptr',
 	'-Wl,--export=run_integrated_dark_room_torch_energizer_timers_death_checks',
 	'-Wl,--export=run_integrated_pause_scheduler_checks',
 	'-Wl,--export=run_integrated_save_restore_world_reload_checks',

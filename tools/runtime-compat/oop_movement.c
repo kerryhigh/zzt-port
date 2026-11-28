@@ -378,6 +378,31 @@ void zoo_sound_queue(zoo_sound_state *sound, int16_t priority, const uint8_t *da
 #define zoo_has_hsecs_elapsed zoo_has_hsecs_elapsed_host
 #include "../../third_party/libzoo/src/libzoo/zoo.c"
 #undef zoo_has_hsecs_elapsed
+
+static uint16_t transition_table_outputs[2 * ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT + 2];
+
+uint32_t transition_table_output_ptr(void) {
+	return (uint32_t) (uintptr_t) transition_table_outputs;
+}
+
+int32_t run_transition_table_capture_checks(void) {
+	int16_t index;
+	uint16_t cell;
+
+	memset(&state, 0, sizeof(state));
+	state.random_seed = 0;
+	zoo_transition_table_init(&state);
+	for (index = 0; index < ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT; index++) {
+		cell = state.transition_order[index];
+		transition_table_outputs[index * 2] = (uint16_t) (cell % ZOO_BOARD_WIDTH + 1);
+		transition_table_outputs[index * 2 + 1] = (uint16_t) (cell / ZOO_BOARD_WIDTH + 1);
+	}
+	transition_table_outputs[2 * ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT] =
+		(uint16_t) (state.random_seed & 0xFFFFu);
+	transition_table_outputs[2 * ZOO_BOARD_WIDTH * ZOO_BOARD_HEIGHT + 1] =
+		(uint16_t) (state.random_seed >> 16);
+	return 0;
+}
 #endif
 
 bool zoo_has_hsecs_elapsed(zoo_state *test_state, int16_t *counter, int16_t value) {

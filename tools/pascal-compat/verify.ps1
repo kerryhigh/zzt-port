@@ -366,6 +366,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OBJTIK.PAS') -Destination (Join
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OBJTOUCH.PAS') -Destination (Join-Path $stageRoot 'OBJTOUCH.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPFLOW.PAS') -Destination (Join-Path $stageRoot 'OOPFLOW.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPRND.PAS') -Destination (Join-Path $stageRoot 'OOPRND.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TRNTBL.PAS') -Destination (Join-Path $stageRoot 'TRNTBL.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPPARSE.PAS') -Destination (Join-Path $stageRoot 'OOPPARSE.PAS')
 
 # Seed the HighScoresLoad oracle with nonzero name payload bytes so a short
@@ -1128,6 +1129,28 @@ for ($caseId = 1; $caseId -le 6; $caseId++) {
     if ($oopRandomRows[$caseId - 1] -notmatch ('^{0}(?:\s+-?\d+){{10}}$' -f $caseId)) {
         throw "Unexpected Turbo Pascal OOP random-direction case $caseId output: $($oopRandomRows[$caseId - 1])"
     }
+}
+
+Write-Host 'Compiling and running the direct Turbo Pascal GenerateTransitionTable probe: TRNTBLPRB'
+Invoke-DosboxSession 'TRNTBLPRB' @(
+    'TPC.EXE /B /EBIN /UBIN TRNTBL.PAS > TRNTBL.LOG',
+    'BIN\TRNTBL.EXE'
+)
+$transitionTableOutputPath = Join-Path $stageRoot 'TRNTBL.OUT'
+if (-not (Test-Path -LiteralPath $transitionTableOutputPath -PathType Leaf)) {
+    throw "Turbo Pascal transition-table probe did not create TRNTBL.OUT. See $stageRoot\TRNTBL.LOG."
+}
+$transitionTableRows = [IO.File]::ReadAllLines($transitionTableOutputPath)
+if ($transitionTableRows.Count -ne 1501) {
+    throw "Turbo Pascal transition-table probe should contain 1501 rows; found $($transitionTableRows.Count)."
+}
+for ($index = 1; $index -le 1500; $index++) {
+    if ($transitionTableRows[$index - 1] -notmatch ('^{0}(?:\s+\d+){{2}}$' -f $index)) {
+        throw "Unexpected Turbo Pascal transition-table row $index output: $($transitionTableRows[$index - 1])"
+    }
+}
+if ($transitionTableRows[1500] -notmatch '^SEED(?:\s+\d+){2}$') {
+    throw "Unexpected Turbo Pascal transition-table RandSeed output: $($transitionTableRows[1500])"
 }
 
 Write-Host 'Compiling and running direct Turbo Pascal OOP parser and line-reader cases: OOPPARSEPRB'
@@ -2435,6 +2458,10 @@ try {
         (Join-Path $stageRoot 'OOPRND.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_label.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production OOP random-direction comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-transition-table.js' `
+        (Join-Path $stageRoot 'TRNTBL.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\integrated_gameplay.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production GenerateTransitionTable comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-oop-parser.js' `
         (Join-Path $stageRoot 'OOPPARSE.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_label.wasm')
@@ -3226,6 +3253,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 96 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, six-case OOPRND session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty- and short-header-SAV title-R refusals, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including OOPRND, ABORTLP/ABORTREF, and MISSLOAD-COMPILE/RUN)."
+$directProbeCount = $probeFiles.Count + 97 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, six-case OOPRND session, TRNTBL GenerateTransitionTable session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty- and short-header-SAV title-R refusals, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including OOPRND, TRNTBL, ABORTLP/ABORTREF, and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"
