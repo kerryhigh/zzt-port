@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-28",
-    "root_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
+    "root_revision": "b204b95708cc0d69cac582e2b7106bf678265695",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local 8d19daab7532f629e058ac95f723034c947dcc40; tree 65b666e72e559115628494e046c41816ac5efab8): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, high-score, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local 7b3fe1c643e777363364a36699c42141e05ec33c; tree 76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The .HI high-score verifier matched all 1,590 prefix lengths 0..1,589 and all 2,528,100 resulting table bytes; high-score comparisons total 1,606 with zero differences. The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -247,13 +247,13 @@
       "sessions": 150,
       "standard_programs": 55,
       "standalone_sessions": 95,
-      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local 8d19daab7532f629e058ac95f723034c947dcc40; tree 65b666e72e559115628494e046c41816ac5efab8)."
+      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local 7b3fe1c643e777363364a36699c42141e05ec33c; tree 76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3)."
     },
     "direct_differential_comparisons": {
       "configured": 75,
       "passed": 75,
       "failed": 0,
-      "result": "75/75 configured direct Pascal-to-production comparison invocations passed on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local source commit 8d19daab7532f629e058ac95f723034c947dcc40). The missing-trailing-board invocation compared seven deterministic WorldLoad fields and the complete 1,135-byte on-disk board record after production WorldSave; zero-length GetMem pointer presence is reported separately. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
+      "result": "75/75 configured direct Pascal-to-production comparison invocations passed on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local source commit 7b3fe1c643e777363364a36699c42141e05ec33c). The high-score invocation includes 1,590 distinct .HI prefix-length cases and 2,528,100 byte-for-byte result bytes. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2263,9 +2263,9 @@
         "fixture_corpus_completion_credit": 0
       },
       "fixture_manifest": "tools/compatibility/integrated_replay_fixture_manifest.json",
-      "verification_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
-      "verification_published_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
-      "verification_source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8"
+      "verification_source_revision": "7b3fe1c643e777363364a36699c42141e05ec33c",
+      "verification_published_revision": "b204b95708cc0d69cac582e2b7106bf678265695",
+      "verification_source_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3"
     },
     "other_suites": {
       "serializer": "Passed in the clean Turbo Pascal runner on published source commit ec49c6a17f46cc4c43c7124d7e90ec5c7019abf7 (local 759c6691db7a2208704cf36e382301ecc8d96e3d); tools/serializer-compat/verify.ps1 exited 0. Exhaustive codec check covered all 65,536 signed words and 256 packed signed bytes; existing .ZZT/.SAV/.BRD fixtures, all 16 DEMO boards, malformed reads, RLE, stale strings, raw Boolean/reserved bytes, stat aliasing, partial board-length reads, and full WorldLoad partial payloads passed. The SHORTRD.PAS comparison matched ten deterministic values; the unread allocator tail is excluded. Full per-field/error-boundary matrix remains open.",
@@ -2360,15 +2360,33 @@
     "high_score_differential": {
       "production": "third_party/libzoo/src/libzoo/zoo_high_scores.c",
       "comparison_unit": "entire 1,590-byte THighScoreList record/output",
-      "configured": 16,
-      "passed": 16,
+      "configured": 1606,
+      "passed": 1606,
       "failed": 0,
       "save_cases": 1,
-      "load_reset_cases": 8,
+      "load_reset_cases": 1598,
       "add_cases": 7,
       "source_derived_model_rows": 256,
       "android_cp437_adapter_assertions": 5,
-      "result": "all direct Pascal byte comparisons passed; 256 source-model rows and five Android adapter assertions are reported separately"
+      "result": "all 1,606 direct Pascal table comparisons passed; 1,590 incomplete input prefixes (0..1,589) matched 2,528,100 output bytes; 256 source-model rows and five Android adapter assertions remain reported separately",
+      "truncation_sweep": {
+        "source_probe": "tools/pascal-compat/HILOADPRB.PAS",
+        "production_operation": "zoo_high_score_table_load",
+        "cases_configured": 1590,
+        "cases_matched": 1590,
+        "first_length": 0,
+        "last_length": 1589,
+        "bytes_matched": 2528100,
+        "bytes_total": 2528100,
+        "bytes_per_case": 1590,
+        "pascal_matrix_sha256": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983",
+        "production_matrix_sha256": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983",
+        "seed_sha256": "6877D89201EB906538370007F96774757AF5A0CD17294681EF552D041C3CF4E7",
+        "unexplained_differences": 0,
+        "evidence_class": "D+DP",
+        "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md",
+        "result": "passed"
+      }
     },
     "unresolved_compatibility_questions": [
       "Do any supported ZZT operation cases expose materially different serialized or editor state across the remaining controlled allocator histories and truncation boundaries? The single-byte 03 short-header behavior is now directly captured for one documented allocator setup; broader matrix comparisons will determine whether further mandatory cases are needed.",
@@ -2407,7 +2425,7 @@
     "latest_attempt": {
       "date": "2026-11-28",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
+      "source_revision": "b204b95708cc0d69cac582e2b7106bf678265695",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 150,
       "configured_differentials_passed": 75,
@@ -2419,7 +2437,7 @@
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local 8d19daab7532f629e058ac95f723034c947dcc40; tree 65b666e72e559115628494e046c41816ac5efab8): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, high-score, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit b204b95708cc0d69cac582e2b7106bf678265695 (local 7b3fe1c643e777363364a36699c42141e05ec33c; tree 76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The .HI high-score verifier matched all 1,590 prefix lengths 0..1,589 and all 2,528,100 resulting table bytes; high-score comparisons total 1,606 with zero differences. The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 238,
       "integrated_state_fields_compared": 824821,
@@ -3463,7 +3481,7 @@
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md"
       },
-      "verified_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
+      "verified_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3",
       "brd_transfer_cases_passed": 6,
       "integrated_fixture_ids_completed": [
         "E2-10-F01",
@@ -3480,8 +3498,8 @@
       "integrated_logical_cycles": 169,
       "unexplained_comparable_mismatches": 0,
       "session_count_correction": "The prior short-header run printed 149 because the former standalone count formula used +94. The formula is now +95, and this clean run printed the manifest-backed total of 150 (55 standard + 95 standalone); no test behavior or expected result changed.",
-      "local_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
-      "source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
+      "local_source_revision": "7b3fe1c643e777363364a36699c42141e05ec33c",
+      "source_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3",
       "partial_length_world_differential": {
         "fields_compared": 6,
         "fields_matched": 6,
@@ -3581,7 +3599,10 @@
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-short-payload.md"
       },
       "integrated_fixture_count": "10/10",
-      "probe_boundary_note": "The first expanded comparison inspected LibZoo's 1,159-byte private in-memory board buffer against Pascal's file-format record. That compared different representations. The corrected probe uses production WorldSave output and matches all 1,135 file-format bytes; no engine change or oracle-output adjustment was made."
+      "probe_boundary_note": "The first expanded comparison inspected LibZoo's 1,159-byte private in-memory board buffer against Pascal's file-format record. That compared different representations. The corrected probe uses production WorldSave output and matches all 1,135 file-format bytes; no engine change or oracle-output adjustment was made.",
+      "high_score_truncation_cases": 1590,
+      "high_score_truncation_matrix_bytes": 2528100,
+      "high_score_truncation_matrix_sha256": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983"
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -5239,7 +5260,7 @@
       "integrated_fixture_count": "10/10",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md"
     },
-    "source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
+    "source_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3",
     "zzt_partial_length_word_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5298,8 +5319,8 @@
       "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
     },
-    "local_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
-    "verified_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
+    "local_source_revision": "7b3fe1c643e777363364a36699c42141e05ec33c",
+    "verified_tree_sha": "76b97997d67d1e8dfc3e3bc676f19e3b042d2ba3",
     "zzt_short_payload_differential": {
       "acceptance_cases": [
         "E2-02-AC001",

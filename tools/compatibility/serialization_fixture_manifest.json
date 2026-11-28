@@ -70,7 +70,7 @@
         "bytes_matched": 1590,
         "bytes_total": 1590,
         "exit_code": 0,
-        "note": "This source-produced save is one of sixteen direct Pascal high-score byte comparisons."
+        "note": "The source-produced save is included in the current 1,606 direct Pascal high-score comparisons; this manifest entry describes the valid 1,590-byte save fixture."
       }
     }
   ],
@@ -109,10 +109,49 @@
       "comparison": "The shared editor-transfer operation matched the outcome, eight selected state fields, board-name bytes, and four neighbor links under the documented 60,000-byte heap-sink history.",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md",
       "scope_note": "This controlled one-byte-header subcase passes. It does not complete the four-format serialized-field or truncation matrix."
+    },
+    {
+      "probe": "tools/pascal-compat/HILOADPRB.PAS / HITRUNC.HI",
+      "acceptance_cases": [
+        "E2-02-AC003",
+        "E2-02-AC004"
+      ],
+      "evidence_class": "D+DP",
+      "fixture": {
+        "seed_file": "build/pascal-compat-verification/HISEED.HI (generated, not committed)",
+        "seed_size_bytes": 1590,
+        "seed_sha256": "6877D89201EB906538370007F96774757AF5A0CD17294681EF552D041C3CF4E7",
+        "input_prefix_lengths_inclusive": [
+          0,
+          1589
+        ],
+        "input_cases": 1590
+      },
+      "pascal_output": {
+        "file": "build/pascal-compat-verification/HITRUNC.MAT (generated, not committed)",
+        "size_bytes": 2528100,
+        "sha256": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983"
+      },
+      "production_output": {
+        "file": "build/highscore-compatibility/pascal-highscores-truncation-matrix.bin (generated, not committed)",
+        "size_bytes": 2528100,
+        "sha256": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983"
+      },
+      "comparison": {
+        "operation": "zoo_high_score_table_load",
+        "complete_result_bytes_matched": 2528100,
+        "complete_result_bytes_total": 2528100,
+        "cases_matched": 1590,
+        "cases_total": 1590,
+        "unexplained_differences": 0,
+        "configured_runner_invocations_added": 0
+      },
+      "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md",
+      "scope_note": "All .HI prefix lengths 0 through 1,589 pass D/DP. Other .HI malformed/read-error cases and the remaining .ZZT/.SAV/.BRD matrix remain open; this does not complete AC003/AC004 or E2-02."
     }
   ],
   "remaining": [
     "Check in a versioned generated fixture set for every required serialized field and value boundary across the four formats.",
-    "Complete truncation-at-every-boundary and malformed/error-class comparisons where the corresponding DOS operation supports them."
+    "Complete the remaining truncation-at-every-boundary and malformed/error-class comparisons for .ZZT, .SAV, and .BRD, plus any .HI cases beyond the completed 0..1,589 prefix sweep where the corresponding DOS operation supports them."
   ]
 }

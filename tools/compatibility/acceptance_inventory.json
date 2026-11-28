@@ -441,13 +441,78 @@
         "tools/serializer-compat/run.js (--pascal-short-length; compares six result fields)",
         "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md",
         "build/pascal-compat-verification/PARTLEN.ZZT (generated, exact fixture; not committed)",
-        "build/pascal-compat-verification/SHORTLEN.OUT (generated direct Pascal output; not committed)"
+        "build/pascal-compat-verification/SHORTLEN.OUT (generated direct Pascal output; not committed)",
+        "tools/pascal-compat/HILOADPRB.PAS",
+        "tools/pascal-compat/verify.ps1",
+        "tools/highscore-compat/verify.ps1",
+        "tools/highscore-compat/verify.js",
+        "tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0; Direct compiled-Pascal GameTitleLoop R restore against a 511-byte RESTORE.SAV: 3,384/3,386 comparable state fields matched; production returned ZOO_ERROR_INVAL (-2). Input SHA-256 117985087e92cba0e8fdd6b35599d4ef451dda3ed40c865cad00b01708721666; TITLFAIL.OUT (7,113 bytes) SHA-256 61003ce108e18dfd7bf5b7826df3801ddbfda76ae93bebdbefd9115e523bcc42; see tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md.; tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md; PARTLEN.ZZT 1,650 bytes SHA-256 76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f; SHORTLEN.OUT 26 bytes SHA-256 039bb3873ae5a7f73e173cafc47e79ae11961fc21f6b290c9de88a8add289f10; D/DP values matched: 1 15 0 0 272 1.",
-      "verification_result": "Partial D/DP: direct captures include title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after short editor payload. A controlled one-byte SHORTHD.BRD header now directly completes EditorTransferBoard and matches production: visible BoardLen 259, reopened prior board, cleared neighbors. Prior uncontrolled retries are not counted. Truncation at every format boundary remains unverified. The direct title-R .SAV case now captures a 511-byte header: Pascal rejects it, production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable fields match; World.BoardLen[0] and the modal InputKeyPressed value are excluded. The remaining format matrix stays open. The clean 2026-11-27 run directly compared SHORTLEN.PAS against shared zoo_world_load using the exact 1,650-byte PARTLEN.ZZT; all six values matched (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present). This is D/DP evidence only; the broader four-format field/error matrix remains open. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0; Direct compiled-Pascal GameTitleLoop R restore against a 511-byte RESTORE.SAV: 3,384/3,386 comparable state fields matched; production returned ZOO_ERROR_INVAL (-2). Input SHA-256 117985087e92cba0e8fdd6b35599d4ef451dda3ed40c865cad00b01708721666; TITLFAIL.OUT (7,113 bytes) SHA-256 61003ce108e18dfd7bf5b7826df3801ddbfda76ae93bebdbefd9115e523bcc42; see tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md.; tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md; PARTLEN.ZZT 1,650 bytes SHA-256 76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f; SHORTLEN.OUT 26 bytes SHA-256 039bb3873ae5a7f73e173cafc47e79ae11961fc21f6b290c9de88a8add289f10; D/DP values matched: 1 15 0 0 272 1. Direct .HI truncation sweep: 1,590 compiled-Pascal prefix loads, lengths 0..1,589; 2,528,100 complete result bytes matched shared zoo_high_score_table_load, SHA-256 B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983; see tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md.",
+      "verification_result": "Partial D/DP: direct captures include title-only load, absent trailing board records, unsigned 0xFFFF lengths, all RLE count bytes, partial length/payload reads, and BoardCreate after short editor payload. A controlled one-byte SHORTHD.BRD header now directly completes EditorTransferBoard and matches production: visible BoardLen 259, reopened prior board, cleared neighbors. Prior uncontrolled retries are not counted. Truncation at every format boundary remains unverified. The direct title-R .SAV case now captures a 511-byte header: Pascal rejects it, production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable fields match; World.BoardLen[0] and the modal InputKeyPressed value are excluded. The remaining format matrix stays open. The clean 2026-11-27 run directly compared SHORTLEN.PAS against shared zoo_world_load using the exact 1,650-byte PARTLEN.ZZT; all six values matched (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present). This is D/DP evidence only; the broader four-format field/error matrix remains open. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md. The complete .HI incomplete-prefix subcase now passes D/DP for lengths 0..1,589: 1,590 complete-table results and 2,528,100 bytes match; this does not close the remaining format matrix. Evidence: tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md.",
       "required_evidence_classes": [
         "D",
         "DP"
+      ],
+      "latest_evidence": {
+        "hi_truncation_prefix_sweep": {
+          "acceptance_cases": [
+            "E2-02-AC003",
+            "E2-02-AC004"
+          ],
+          "evidence_class": [
+            "D",
+            "DP"
+          ],
+          "status": "passed_subcase_only",
+          "source_location": {
+            "probe": "tools/pascal-compat/HILOADPRB.PAS",
+            "routine": "main truncLength loop and original HighScoresLoad call",
+            "lines": "45-59"
+          },
+          "production_implementation": "third_party/libzoo/src/libzoo/zoo_high_scores.c::zoo_high_score_table_load",
+          "test_fixture": [
+            "tools/pascal-compat/HILOADPRB.PAS",
+            "tools/pascal-compat/verify.ps1",
+            "tools/highscore-compat/verify.ps1",
+            "tools/highscore-compat/verify.js"
+          ],
+          "oracle_setup": {
+            "seed": "build/pascal-compat-verification/HISEED.HI, generated in clean runner",
+            "seed_bytes": 1590,
+            "seed_sha256": "6877D89201EB906538370007F96774757AF5A0CD17294681EF552D041C3CF4E7",
+            "initial_table_restored_before_each_case": true,
+            "prefix_lengths_inclusive": [
+              0,
+              1589
+            ],
+            "cases": 1590
+          },
+          "oracle_output": {
+            "pascal_matrix": "build/pascal-compat-verification/HITRUNC.MAT (ignored build output)",
+            "production_matrix": "build/highscore-compatibility/pascal-highscores-truncation-matrix.bin (ignored build output)",
+            "bytes_per_case": 1590,
+            "bytes_matched": 2528100,
+            "bytes_total": 2528100,
+            "sha256_both": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983",
+            "unexplained_differences": 0
+          },
+          "verification": {
+            "result": "passed",
+            "toolchain": "Turbo Pascal 5.5; DOSBox-X 2026.10.01; full runner exit code 0",
+            "full_runner_direct_pascal_sessions": "150/150 (55 standard, 95 standalone)",
+            "full_runner_configured_differential_invocations": "75/75; this sweep is within an existing high-score invocation",
+            "full_runner_integrated": "F01-F10, 238 checkpoints, 824821 state fields, 169 logical cycles",
+            "full_runner_unexplained_comparable_mismatches": 0,
+            "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md"
+          },
+          "limitation": "Completes only .HI input prefixes 0..1,589; remaining format boundaries and other error classes stay pending.",
+          "coverage_key": "HI_PREFIX_RANGE_0000_1589"
+        }
+      },
+      "source_locations": [
+        "tools/pascal-compat/HILOADPRB.PAS:45-59 (source probe around original HighScoresLoad)",
+        "third_party/libzoo/src/libzoo/zoo_high_scores.c::zoo_high_score_table_load"
       ]
     },
     {
@@ -477,13 +542,78 @@
         "tools/serializer-compat/run.js (--pascal-short-length; compares six result fields)",
         "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md",
         "build/pascal-compat-verification/PARTLEN.ZZT (generated, exact fixture; not committed)",
-        "build/pascal-compat-verification/SHORTLEN.OUT (generated direct Pascal output; not committed)"
+        "build/pascal-compat-verification/SHORTLEN.OUT (generated direct Pascal output; not committed)",
+        "tools/pascal-compat/HILOADPRB.PAS",
+        "tools/pascal-compat/verify.ps1",
+        "tools/highscore-compat/verify.ps1",
+        "tools/highscore-compat/verify.js",
+        "tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md"
       ],
-      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0; Direct compiled-Pascal GameTitleLoop R restore against a 511-byte RESTORE.SAV: 3,384/3,386 comparable state fields matched; production returned ZOO_ERROR_INVAL (-2). Input SHA-256 117985087e92cba0e8fdd6b35599d4ef451dda3ed40c865cad00b01708721666; TITLFAIL.OUT (7,113 bytes) SHA-256 61003ce108e18dfd7bf5b7826df3801ddbfda76ae93bebdbefd9115e523bcc42; see tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md.; tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md; PARTLEN.ZZT 1,650 bytes SHA-256 76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f; SHORTLEN.OUT 26 bytes SHA-256 039bb3873ae5a7f73e173cafc47e79ae11961fc21f6b290c9de88a8add289f10; D/DP values matched: 1 15 0 0 272 1.",
-      "verification_result": "Partial D/DP: the short-payload transfer matches outcome plus eight selected board/player fields. The controlled SHORTHD.BRD one-byte-header case matches outcome plus eight selected fields, board-name bytes, and all four neighbor values; see tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md. Pascal BoardClose/WorldSave also matches all 25,928 output bytes. Untouched-buffer suffix behavior and the complete format/error matrix remain pending. The direct title-R .SAV case now captures a 511-byte header: Pascal rejects it, production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable fields match; World.BoardLen[0] and the modal InputKeyPressed value are excluded. The remaining format matrix stays open. The clean 2026-11-27 run directly compared SHORTLEN.PAS against shared zoo_world_load using the exact 1,650-byte PARTLEN.ZZT; all six values matched (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present). This is D/DP evidence only; the broader four-format field/error matrix remains open. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md.",
+      "oracle_output": "tools/compatibility/evidence/2026-11-27-e2-02-brdxfer-memory-context.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0; Direct compiled-Pascal GameTitleLoop R restore against a 511-byte RESTORE.SAV: 3,384/3,386 comparable state fields matched; production returned ZOO_ERROR_INVAL (-2). Input SHA-256 117985087e92cba0e8fdd6b35599d4ef451dda3ed40c865cad00b01708721666; TITLFAIL.OUT (7,113 bytes) SHA-256 61003ce108e18dfd7bf5b7826df3801ddbfda76ae93bebdbefd9115e523bcc42; see tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md.; tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md; PARTLEN.ZZT 1,650 bytes SHA-256 76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f; SHORTLEN.OUT 26 bytes SHA-256 039bb3873ae5a7f73e173cafc47e79ae11961fc21f6b290c9de88a8add289f10; D/DP values matched: 1 15 0 0 272 1. Direct .HI truncation sweep: 1,590 compiled-Pascal prefix loads, lengths 0..1,589; 2,528,100 complete result bytes matched shared zoo_high_score_table_load, SHA-256 B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983; see tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md.",
+      "verification_result": "Partial D/DP: the short-payload transfer matches outcome plus eight selected board/player fields. The controlled SHORTHD.BRD one-byte-header case matches outcome plus eight selected fields, board-name bytes, and all four neighbor values; see tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md. Pascal BoardClose/WorldSave also matches all 25,928 output bytes. Untouched-buffer suffix behavior and the complete format/error matrix remain pending. The direct title-R .SAV case now captures a 511-byte header: Pascal rejects it, production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable fields match; World.BoardLen[0] and the modal InputKeyPressed value are excluded. The remaining format matrix stays open. The clean 2026-11-27 run directly compared SHORTLEN.PAS against shared zoo_world_load using the exact 1,650-byte PARTLEN.ZZT; all six values matched (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present). This is D/DP evidence only; the broader four-format field/error matrix remains open. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md. The complete .HI incomplete-prefix subcase now passes D/DP for lengths 0..1,589: 1,590 complete-table results and 2,528,100 bytes match; this does not close the remaining format matrix. Evidence: tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md.",
       "required_evidence_classes": [
         "D",
         "DP"
+      ],
+      "latest_evidence": {
+        "hi_truncation_prefix_sweep": {
+          "acceptance_cases": [
+            "E2-02-AC003",
+            "E2-02-AC004"
+          ],
+          "evidence_class": [
+            "D",
+            "DP"
+          ],
+          "status": "passed_subcase_only",
+          "source_location": {
+            "probe": "tools/pascal-compat/HILOADPRB.PAS",
+            "routine": "main truncLength loop and original HighScoresLoad call",
+            "lines": "45-59"
+          },
+          "production_implementation": "third_party/libzoo/src/libzoo/zoo_high_scores.c::zoo_high_score_table_load",
+          "test_fixture": [
+            "tools/pascal-compat/HILOADPRB.PAS",
+            "tools/pascal-compat/verify.ps1",
+            "tools/highscore-compat/verify.ps1",
+            "tools/highscore-compat/verify.js"
+          ],
+          "oracle_setup": {
+            "seed": "build/pascal-compat-verification/HISEED.HI, generated in clean runner",
+            "seed_bytes": 1590,
+            "seed_sha256": "6877D89201EB906538370007F96774757AF5A0CD17294681EF552D041C3CF4E7",
+            "initial_table_restored_before_each_case": true,
+            "prefix_lengths_inclusive": [
+              0,
+              1589
+            ],
+            "cases": 1590
+          },
+          "oracle_output": {
+            "pascal_matrix": "build/pascal-compat-verification/HITRUNC.MAT (ignored build output)",
+            "production_matrix": "build/highscore-compatibility/pascal-highscores-truncation-matrix.bin (ignored build output)",
+            "bytes_per_case": 1590,
+            "bytes_matched": 2528100,
+            "bytes_total": 2528100,
+            "sha256_both": "B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983",
+            "unexplained_differences": 0
+          },
+          "verification": {
+            "result": "passed",
+            "toolchain": "Turbo Pascal 5.5; DOSBox-X 2026.10.01; full runner exit code 0",
+            "full_runner_direct_pascal_sessions": "150/150 (55 standard, 95 standalone)",
+            "full_runner_configured_differential_invocations": "75/75; this sweep is within an existing high-score invocation",
+            "full_runner_integrated": "F01-F10, 238 checkpoints, 824821 state fields, 169 logical cycles",
+            "full_runner_unexplained_comparable_mismatches": 0,
+            "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md"
+          },
+          "limitation": "Completes only .HI input prefixes 0..1,589; remaining format boundaries and other error classes stay pending.",
+          "coverage_key": "HI_PREFIX_RANGE_0000_1589"
+        }
+      },
+      "source_locations": [
+        "tools/pascal-compat/HILOADPRB.PAS:45-59 (source probe around original HighScoresLoad)",
+        "third_party/libzoo/src/libzoo/zoo_high_scores.c::zoo_high_score_table_load"
       ]
     },
     {
@@ -514,7 +644,7 @@
         "build/pascal-compat-verification/SHORTLEN.OUT (generated direct Pascal output; not committed)"
       ],
       "oracle_output": "tools/compatibility/evidence/2026-11-24-verification.md; tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md; BRDHDR.OUT: 38 bytes, SHA-256 5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5; output: board 6 41 0 21 47 30 12 259 0 0 0 0; Direct compiled-Pascal GameTitleLoop R restore against a 511-byte RESTORE.SAV: 3,384/3,386 comparable state fields matched; production returned ZOO_ERROR_INVAL (-2). Input SHA-256 117985087e92cba0e8fdd6b35599d4ef451dda3ed40c865cad00b01708721666; TITLFAIL.OUT (7,113 bytes) SHA-256 61003ce108e18dfd7bf5b7826df3801ddbfda76ae93bebdbefd9115e523bcc42; see tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md.; tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md; PARTLEN.ZZT 1,650 bytes SHA-256 76ec912c33de4d742133a6f6016270f106295ad86033c9235f029dbdfde6ac5f; SHORTLEN.OUT 26 bytes SHA-256 039bb3873ae5a7f73e173cafc47e79ae11961fc21f6b290c9de88a8add289f10; D/DP values matched: 1 15 0 0 272 1.",
-      "verification_result": "Partial: latest clean run passed 150/150 direct Pascal sessions and 75/75 configured comparisons, including the short-payload and controlled short-header editor-transfer D/DP cases, 16 direct .HI byte comparisons, and a full 25,928-byte BoardClose/WorldSave comparison. No unexplained mismatch exists in compared cases. Many serialized-field and malformed-read cases in AC002/AC003 remain unpaired. The direct title-R .SAV case now captures a 511-byte header: Pascal rejects it, production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable fields match; World.BoardLen[0] and the modal InputKeyPressed value are excluded. The remaining format matrix stays open. The clean 2026-11-27 run directly compared SHORTLEN.PAS against shared zoo_world_load using the exact 1,650-byte PARTLEN.ZZT; all six values matched (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present). This is D/DP evidence only; the broader four-format field/error matrix remains open. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md.",
+      "verification_result": "Partial: latest clean run passed 150/150 direct Pascal sessions and 75/75 configured comparisons, including the short-payload and controlled short-header editor-transfer D/DP cases, 16 direct .HI byte comparisons, and a full 25,928-byte BoardClose/WorldSave comparison. No unexplained mismatch exists in compared cases. Many serialized-field and malformed-read cases in AC002/AC003 remain unpaired. The direct title-R .SAV case now captures a 511-byte header: Pascal rejects it, production returns ZOO_ERROR_INVAL (-2), and 3,384/3,386 comparable fields match; World.BoardLen[0] and the modal InputKeyPressed value are excluded. The remaining format matrix stays open. The clean 2026-11-27 run directly compared SHORTLEN.PAS against shared zoo_world_load using the exact 1,650-byte PARTLEN.ZZT; all six values matched (load=1, BoardCount=15, CurrentBoard=0, IsSave=0, BoardLen[1]=0x0110, data present). This is D/DP evidence only; the broader four-format field/error matrix remains open. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md. The clean 2026-11-28 run now reports 1,606 direct .HI Pascal-to-production table comparisons, including all 1,590 incomplete prefixes; zero mismatches for these compared cases. AC005 remains partial because other E2-02 cases lack paired evidence. Evidence: tools/compatibility/evidence/2026-11-28-e2-02-pascal-hi-truncation-matrix.md.",
       "required_evidence_classes": [
         "D",
         "DP"
