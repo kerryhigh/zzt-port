@@ -4,10 +4,10 @@
   ],
   "verification": {
     "date": "2026-11-28",
-    "root_revision": "6c3b0287d7c29f4076cea7187549945dee749e87",
+    "root_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
     "libzoo_local_commit": "e5d2fe7",
     "failing_acceptance_cases": 0,
-    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit 6c3b0287d7c29f4076cea7187549945dee749e87 (local f99756b6efaee10af92011593c87b158ce9a0b94; tree a748eaaf0b207e643d277a7f9ff2ea27db09d019): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). Full .ZZT WorldLoad cases matched six partial-length fields, ten short-payload values, and seven deterministic missing-trailing-board fields; zero-length GetMem pointer presence was recorded separately. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Existing serialization, high-score, runtime, lifecycle, editor, and integrated checks passed. No unexplained comparable mismatch; full runner exit code 0.",
+    "pascal_suite_result": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local 8d19daab7532f629e058ac95f723034c947dcc40; tree 65b666e72e559115628494e046c41816ac5efab8): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, high-score, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
     "pascal_exit_code": 0,
     "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
     "brd_short_read_probe": {
@@ -247,13 +247,13 @@
       "sessions": 150,
       "standard_programs": 55,
       "standalone_sessions": 95,
-      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit 6c3b0287d7c29f4076cea7187549945dee749e87 (local f99756b6efaee10af92011593c87b158ce9a0b94): 55 standard probes and 95 standalone compile/run or fixture sessions. FULLLOAD.PAS now captures zero-length BoardData pointer presence as a D-only allocation diagnostic; its seven deterministic state fields match shared zoo_world_load."
+      "session_result": "150 direct Turbo Pascal 5.5 compile/run sessions passed on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local 8d19daab7532f629e058ac95f723034c947dcc40; tree 65b666e72e559115628494e046c41816ac5efab8)."
     },
     "direct_differential_comparisons": {
       "configured": 75,
       "passed": 75,
       "failed": 0,
-      "result": "75/75 direct Pascal-to-production comparison invocations passed on published source commit 6c3b0287d7c29f4076cea7187549945dee749e87. The existing serializer invocation includes SHORTLEN.PAS (six fields), SHORTRD.PAS (ten deterministic values; unread tail excluded), and FULLLOAD.PAS (seven deterministic values; zero-length pointer presence reported separately). The 511-byte title-R .SAV refusal matched on 3,384/3,386 comparable fields. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
+      "result": "75/75 configured direct Pascal-to-production comparison invocations passed on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local source commit 8d19daab7532f629e058ac95f723034c947dcc40). The missing-trailing-board invocation compared seven deterministic WorldLoad fields and the complete 1,135-byte on-disk board record after production WorldSave; zero-length GetMem pointer presence is reported separately. F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical-cycle snapshots. No unexplained comparable mismatch."
     },
     "evidence_case_counts": {
       "source_derived_expectations": 256,
@@ -2263,7 +2263,9 @@
         "fixture_corpus_completion_credit": 0
       },
       "fixture_manifest": "tools/compatibility/integrated_replay_fixture_manifest.json",
-      "verification_source_revision": "b617c48eb25969a03add95f887ae0aca1a115b76"
+      "verification_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
+      "verification_published_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
+      "verification_source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8"
     },
     "other_suites": {
       "serializer": "Passed in the clean Turbo Pascal runner on published source commit ec49c6a17f46cc4c43c7124d7e90ec5c7019abf7 (local 759c6691db7a2208704cf36e382301ecc8d96e3d); tools/serializer-compat/verify.ps1 exited 0. Exhaustive codec check covered all 65,536 signed words and 256 packed signed bytes; existing .ZZT/.SAV/.BRD fixtures, all 16 DEMO boards, malformed reads, RLE, stale strings, raw Boolean/reserved bytes, stat aliasing, partial board-length reads, and full WorldLoad partial payloads passed. The SHORTRD.PAS comparison matched ten deterministic values; the unread allocator tail is excluded. Full per-field/error-boundary matrix remains open.",
@@ -2295,7 +2297,7 @@
       "Allocator reuse, unread destination tails, BIOS time, and physical sound output follow the explicit environment-dependent compatibility contract in ENGINE_2.0_CHECKLIST.md."
     ],
     "recent_progress": [
-      "E2-02 missing trailing .ZZT records: direct FULLLOAD.PAS versus shared zoo_world_load matched seven deterministic fields. Pascal GetMem(0) presence was 1/0 for missing boards 1/15 across three same-setup DOSBox-X runs; production stores NULL/NULL. No absent-board open was attempted because Pascal BoardOpen reads beyond a zero-length allocation. Full clean runner on 2026-11-28 passed 150 direct Pascal sessions, 75/75 comparisons, and F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Existing 54 acceptance cases remain frozen; E2-02 remains partial. Evidence: tools/compatibility/evidence/2026-11-28-e2-02-pascal-zzt-missing-trailing-boards.md.",
+      "E2-02 missing trailing .ZZT records: direct Pascal WorldLoad and production zoo_world_load match seven deterministic fields; after loading, production zoo_world_save matches the full 1,135-byte Pascal BoardClose file record. An initial probe compared different private/internal record representations and was corrected; no engine change was needed. Pascal GetMem(0) presence was 1/0 for boards 1/15 across three same-setup DOSBox-X sessions, production stores NULL/NULL, and absent-board open remains unverified. Clean 2026-11-28 suite: 150 direct Pascal sessions, 75/75 differentials, F01-F10 (238 checkpoints / 824,821 fields / 169 cycles), exit 0. Frozen inventory remains 54 cases; E2-02 remains partial.",
       "E2-02 AC002: direct compiled-Pascal WorldSave wrote embedded NUL and CP437 bytes 00/80/82/FF to the world name, all ten flags, current board name, and message for both .ZZT (IsSave=0) and .SAV (IsSave=1). Production matched all 26 string-field instances and 52,930/52,930 file bytes (SHA-256 .ZZT 47c5a657b5c4fb9c04e99ac4fd8a623c79870cd5db9aaf3ba37f0f34ff33cdfa; .SAV 1eddbe003459ab80ff88730f070d03cc4d148b1d7c5be7a0bbe007f427f345d7). The clean run passed 149 direct Pascal sessions and 74/74 direct comparisons; F01-F10 matched 238 checkpoints, 824,821 state fields, and 169 logical cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md.",
       "E2-02 AC002: direct compiled-Pascal WorldSave ZZT raw Boolean/reserved cases preserved IsSave values 0, 1, 2, and 255 plus seven Keys bytes and 14 reserved bytes; all four 26,465-byte files (105,860 bytes total) match production. The same run rechecked paired SAV files. Clean suite: 149 sessions, 73/73 direct comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial and the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-boolean-reserved.md.",
       "E2-02 AC002: direct compiled-Pascal WorldSave board-count boundaries 0, 1, 99, and 100 passed for both .SAV and .ZZT. Eight complete files and 467,992/467,992 bytes matched production with IsSave=1/0; counts 99/100 contain 100/101 board records. Clean run: 149 direct sessions, 73/73 comparisons, F01-F10 at 238 checkpoints / 824,821 fields / 169 cycles. AC002 remains partial; the frozen 54-case inventory is unchanged. Evidence: tools/compatibility/evidence/2026-11-27-e2-02-pascal-world-board-counts.md.",
@@ -2405,19 +2407,19 @@
     "latest_attempt": {
       "date": "2026-11-28",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/pascal-compat/verify.ps1 -PascalToolchain 'build/pascal-compat-run/Z' -DosboxExecutable '<external DOSBox-X 2026.10.01 executable>'; exit 0",
-      "source_revision": "6c3b0287d7c29f4076cea7187549945dee749e87",
+      "source_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
       "full_pascal_runner_exit_code": 0,
       "direct_pascal_sessions_passed": 150,
       "configured_differentials_passed": 75,
       "configured_differentials_failed": 0,
       "failure": null,
-      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 150 manifest-counted sessions (the runner printed 149 before its count formula was corrected). WORLDSAV additionally copies serialized board 0 into unique Pascal allocations for board IDs 1..100 before the WorldSave count-boundary cases, because the original save frees and replaces its current board buffer. WORLDSAV also writes ZZT files from the same raw Boolean Move values used by the SAV cases; production checks raw IsSave/Keys bytes and the reserved pattern without normalizing them. WORLDSAV additionally writes CP437.ZZT with raw 80/82/FF bytes in the world name, first flag, current board name, and message; the original WorldSave routine writes the file without gameplay hooks. WORLDSAV additionally writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true, each containing raw 80/82/FF bytes in the world name, first flag, current board name, and message; both are emitted by the original WorldSave routine. WORLDSAV writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true; both files contain embedded NUL and CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message, produced by the original WorldSave routine. TITLEIN mode T writes a 511-byte .SAV and runs the original GameTitleLoop R path; the staged TextWindow hook injects Escape only at the existing error-dialog acknowledgement. SHORTLEN.PAS initializes board 1 with prior length 0x0100 and an allocated buffer, then calls original WorldLoad with the generated one-byte-short length fixture. The production wrapper seeds equivalent state and receives the exact Pascal-generated PARTLEN.ZZT; only output capture is added. FULLLOAD.PAS initializes BoardData[1..MAX_BOARD] to nil, runs the unmodified original WorldLoad on the generated FULLFILE.ZZT, and captures deterministic state plus pointer-presence flags; no Pascal gameplay routine is patched.",
+      "staging_boundary_intervention": "BRDXFER uses original ZZT {$M 49152,163840,655360} memory limits. Staged EDITOR.PAS supplies prompt values and, only for SHORTHD, allocates a 60,000-byte sink before import then frees it just after BoardClose within the original EditorTransferBoard routine to control allocator reuse. Staged GAME.PAS substitutes only the post-Escape state at the TextWindowSelect acknowledgement boundary. The original file reads, IOResult behavior, DisplayIOError to acknowledgement, BoardOpen, and editor cleanup remain. The controlled short-header output is included among the 150 manifest-counted sessions (the runner printed 149 before its count formula was corrected). WORLDSAV additionally copies serialized board 0 into unique Pascal allocations for board IDs 1..100 before the WorldSave count-boundary cases, because the original save frees and replaces its current board buffer. WORLDSAV also writes ZZT files from the same raw Boolean Move values used by the SAV cases; production checks raw IsSave/Keys bytes and the reserved pattern without normalizing them. WORLDSAV additionally writes CP437.ZZT with raw 80/82/FF bytes in the world name, first flag, current board name, and message; the original WorldSave routine writes the file without gameplay hooks. WORLDSAV additionally writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true, each containing raw 80/82/FF bytes in the world name, first flag, current board name, and message; both are emitted by the original WorldSave routine. WORLDSAV writes CP437.ZZT with IsSave=false and CP437.SAV with IsSave=true; both files contain embedded NUL and CP437 bytes 00/80/82/FF in the world name, all ten flags, current board name, and message, produced by the original WorldSave routine. TITLEIN mode T writes a 511-byte .SAV and runs the original GameTitleLoop R path; the staged TextWindow hook injects Escape only at the existing error-dialog acknowledgement. SHORTLEN.PAS initializes board 1 with prior length 0x0100 and an allocated buffer, then calls original WorldLoad with the generated one-byte-short length fixture. The production wrapper seeds equivalent state and receives the exact Pascal-generated PARTLEN.ZZT; only output capture is added. FULLLOAD.PAS initializes BoardData[1..MAX_BOARD] to nil, runs the unmodified original WorldLoad on the generated FULLFILE.ZZT, and captures deterministic state plus pointer-presence flags; no Pascal gameplay routine is patched. FULLLOAD.PAS additionally captures the full Pascal BoardClose board-0 record. The production comparator calls zoo_world_load then zoo_world_save and compares the external board-0 record from the saved world; LibZoo's private internal buffer is not treated as a DOS file record.",
       "integrated_pascal_probe": "F10IN.PAS; direct malformed WorldLoad, fallback WorldCreate, HighScoresLoad/Add/Save, original GamePlayLoop, and SAV reload",
       "integrated_differential_command": "Run compare-integrated-gameplay.js for F10 against the shared malformed-world/gameplay/high-score replay harness.",
       "integrated_differential_exit_code": 0,
       "integrated_diagnostic_negative_control_exit_code": 0,
       "runtime_compatibility_exit_code": 0,
-      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit 6c3b0287d7c29f4076cea7187549945dee749e87 (local f99756b6efaee10af92011593c87b158ce9a0b94; tree a748eaaf0b207e643d277a7f9ff2ea27db09d019): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). Full .ZZT WorldLoad cases matched six partial-length fields, ten short-payload values, and seven deterministic missing-trailing-board fields; zero-length GetMem pointer presence was recorded separately. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Existing serialization, high-score, runtime, lifecycle, editor, and integrated checks passed. No unexplained comparable mismatch; full runner exit code 0.",
+      "status": "Clean Turbo Pascal 5.5/DOSBox-X 2026.10.01 run on published source commit d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1 (local 8d19daab7532f629e058ac95f723034c947dcc40; tree 65b666e72e559115628494e046c41816ac5efab8): 150 direct Pascal sessions (55 standard, 95 standalone), 75/75 configured Pascal-to-production comparisons, and E2-10 F01-F10 (238 checkpoints, 824,821 state fields, 169 logical-cycle snapshots). The full-load missing-trailing-board case matched seven deterministic WorldLoad fields and all 1,135 on-disk current-board bytes through production WorldSave; GetMem(0) presence remains a separate allocation observation. The 511-byte title-R .SAV refusal matched 3,384/3,386 comparable fields. Serialization, high-score, runtime, lifecycle, editor, and integrated checks passed; no unexplained comparable mismatch; full runner exit code 0.",
       "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. The public record omits the user-specific absolute path and records the observed tool version and executable SHA-256.",
       "integrated_checkpoint_count": 238,
       "integrated_state_fields_compared": 824821,
@@ -2500,12 +2502,10 @@
         "state_fields_compared": 24015,
         "sound_events": 0,
         "cell_writes": 29,
-        "stable_save_bytes_matched": 610,
-        "stable_save_byte_differences": 0,
+        "generated_save_stable_bytes_matched": 610,
+        "generated_save_stable_bytes_total": 610,
         "roundtrip_stable_bytes_matched": 858,
-        "roundtrip_stable_byte_differences": 0,
-        "high_score_bytes_matched": 1590,
-        "high_score_byte_differences": 0
+        "roundtrip_stable_bytes_total": 858
       },
       "integrated_pascal_probe_note": "STATORD has no sound events; its generated-save pointer differences are classified process-specific Pascal data pointers, not stable-field mismatches.",
       "integrated_f04_fixture": {
@@ -3463,7 +3463,7 @@
         ],
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-cp437-strings.md"
       },
-      "verified_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
+      "verified_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
       "brd_transfer_cases_passed": 6,
       "integrated_fixture_ids_completed": [
         "E2-10-F01",
@@ -3480,8 +3480,8 @@
       "integrated_logical_cycles": 169,
       "unexplained_comparable_mismatches": 0,
       "session_count_correction": "The prior short-header run printed 149 because the former standalone count formula used +94. The formula is now +95, and this clean run printed the manifest-backed total of 150 (55 standard + 95 standalone); no test behavior or expected result changed.",
-      "local_source_revision": "759c6691db7a2208704cf36e382301ecc8d96e3d",
-      "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
+      "local_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
+      "source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
       "partial_length_world_differential": {
         "fields_compared": 6,
         "fields_matched": 6,
@@ -3579,7 +3579,9 @@
         "local_source_revision": "759c6691db7a2208704cf36e382301ecc8d96e3d",
         "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
         "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-short-payload.md"
-      }
+      },
+      "integrated_fixture_count": "10/10",
+      "probe_boundary_note": "The first expanded comparison inspected LibZoo's 1,159-byte private in-memory board buffer against Pascal's file-format record. That compared different representations. The corrected probe uses production WorldSave output and matches all 1,135 file-format bytes; no engine change or oracle-output adjustment was made."
     },
     "command_redaction_note": "The actual invocation supplied an external DOSBox-X executable path. This public record omits its user-specific absolute path; identify the executable by the version and SHA-256 in toolchain.",
     "integrated_f08_fixture": {
@@ -5237,7 +5239,7 @@
       "integrated_fixture_count": "10/10",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-sav-short-header.md"
     },
-    "source_tree_sha": "a748eaaf0b207e643d277a7f9ff2ea27db09d019",
+    "source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
     "zzt_partial_length_word_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5296,8 +5298,8 @@
       "source_tree_sha": "0b64b4d565f56894e44305e1715b87776f9c7a99",
       "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-pascal-zzt-partial-length.md"
     },
-    "local_source_revision": "f99756b6efaee10af92011593c87b158ce9a0b94",
-    "verified_tree_sha": "a748eaaf0b207e643d277a7f9ff2ea27db09d019",
+    "local_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
+    "verified_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
     "zzt_short_payload_differential": {
       "acceptance_cases": [
         "E2-02-AC001",
@@ -5376,30 +5378,40 @@
         "E2-02-AC002"
       ],
       "evidence_class": "D+DP",
-      "result": "partial; seven deterministic state fields matched; zero-length Pascal/production allocation presence differs; downstream absent-board open remains unverified",
-      "pascal_probe": "tools/pascal-compat/FULLLOAD.PAS / reconstructed GAME.PAS::WorldLoad",
+      "status": "partial",
+      "source_location": "third_party/reconstruction-of-zzt/SRC/GAME.PAS::WorldLoad and ::BoardClose",
       "production_implementation": [
         "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_read",
-        "third_party/libzoo/src/libzoo/zoo.c::zoo_world_load",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_load",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_world_save",
+        "third_party/libzoo/src/libzoo/zoo_game_io.c::zoo_io_world_write",
         "tools/serializer-compat/world_roundtrip.c::run_world_load_missing_trailing"
       ],
       "comparator": "tools/serializer-compat/run.js --pascal-missing-trailing",
       "fixture_path": "build/pascal-compat-verification/FULLFILE.ZZT (generated staging fixture; not committed)",
       "fixture_size_bytes": 1649,
       "fixture_sha256": "82a6352e96c1cbe5f09f1f23bdc5696b9e63445191fb38159240b57e6ae22cdf",
-      "pascal_output": "build/pascal-compat-verification/FULLLOAD.OUT",
-      "pascal_output_size_bytes": 55,
-      "pascal_output_sha256": "58f59910cf5505eead48d0ded298ac51e157279a4979b264e40097523a7b6ce1",
-      "pascal_output_text": "full-load 1 15 0 0 1 missing-len 0 0 data-present 1 0",
-      "deterministic_field_names": [
-        "load_success",
-        "board_count",
-        "current_board",
-        "is_save",
-        "board_0_data_present",
-        "board_len_1",
-        "board_len_15"
-      ],
+      "pascal_output": {
+        "file": "build/pascal-compat-verification/FULLLOAD.OUT (generated staging output; not committed)",
+        "bytes": 55,
+        "sha256": "58f59910cf5505eead48d0ded298ac51e157279a4979b264e40097523a7b6ce1",
+        "text": "full-load 1 15 0 0 1 missing-len 0 0 data-present 1 0"
+      },
+      "board_record_comparison": {
+        "result": "passed",
+        "pascal_operation": "WorldLoad followed by original BoardClose",
+        "production_operation": "zoo_world_load followed by zoo_world_save; extract external board 0 from saved world",
+        "record_bytes_total": 1135,
+        "record_bytes_matched": 1135,
+        "differences": 0,
+        "pascal_capture_file": "build/pascal-compat-verification/FULLBORD.BIN (generated staging output; not committed)",
+        "pascal_capture_file_bytes": 1137,
+        "pascal_capture_file_sha256": "fc62b842453fb8b84233923f2a7338aaed694b634d3454570f0149c2926a50c4",
+        "record_sha256": "a3d2047bfb634fa41945e9469166bb6ef18fdd8a47e99a894d681146ac3082a4",
+        "production_output": "captured in the serializer WASM output buffer and compared by run.js",
+        "private_internal_buffer": "not compared; LibZoo private representation includes runtime metadata and is not the DOS board record"
+      },
+      "matched_deterministic_fields": 7,
       "pascal_fields": [
         1,
         15,
@@ -5418,35 +5430,32 @@
         0,
         0
       ],
-      "matched_fields": 7,
-      "zero_length_pointer_presence": {
+      "allocation_observation": {
         "fields": [
           "BoardData[1]",
           "BoardData[15]"
         ],
-        "pascal_values": [
+        "pascal_zero_length_presence": [
           1,
           0
         ],
-        "production_values": [
+        "production_zero_length_presence": [
           0,
           0
         ],
         "repeated_pascal_sessions": 3,
-        "classification": "D-only allocation diagnostic; numeric pointer values are not compared; no equality credit"
+        "downstream_absent_board_open": "unverified",
+        "classification": "D-only allocation diagnostic; pointer identity/value is not compared and gets no equality credit"
       },
-      "downstream_board_open": {
-        "result": "not run",
-        "reason": "Original Pascal BoardOpen dereferences the selected buffer without checking BoardLen; the GetMem(0) pointer does not identify a valid serialized board record. Production reads are bounded to the zero-length record."
-      },
+      "verification_result": "Partial D/DP. Seven deterministic fields and all 1,135 current-board file-record bytes matched in the 2026-11-28 clean run (150 direct Pascal sessions; 75/75 comparisons; F01-F10: 238 checkpoints, 824821 fields, 169 logical cycles; exit 0). GetMem(0) presence differs under the recorded allocator history; opening an absent board remains unverified. AC001/AC002 remain partial.",
       "unexplained_comparable_differences": 0,
       "full_clean_runner_exit_code": 0,
       "direct_pascal_sessions": 150,
       "configured_differential_invocations": 75,
       "integrated_fixture_count": "10/10; 238 checkpoints; 824821 fields; 169 logical cycles",
-      "source_revision": "6c3b0287d7c29f4076cea7187549945dee749e87",
-      "local_source_revision": "f99756b6efaee10af92011593c87b158ce9a0b94",
-      "source_tree_sha": "a748eaaf0b207e643d277a7f9ff2ea27db09d019",
+      "source_revision": "d76e4b4581e9f2ba85e17b2909b791f1c9c0f0e1",
+      "local_source_revision": "8d19daab7532f629e058ac95f723034c947dcc40",
+      "source_tree_sha": "65b666e72e559115628494e046c41816ac5efab8",
       "evidence": "tools/compatibility/evidence/2026-11-28-e2-02-pascal-zzt-missing-trailing-boards.md"
     }
   }
