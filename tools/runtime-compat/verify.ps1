@@ -182,6 +182,7 @@ $oopArgs = @(
 	'-Wl,--export=run_oop_bind_selector_checks', '-Wl,--export=oop_bind_selector_output_ptr',
 	'-Wl,--export=run_oop_flow_control_checks',
 	'-Wl,--export=run_oop_flow_capture_checks', '-Wl,--export=oop_flow_output_ptr',
+	'-Wl,--export=run_oop_random_walk_capture_checks', '-Wl,--export=oop_random_walk_output_ptr',
 	'-Wl,--export=run_oop_object_command_checks',
 	'-Wl,--export=run_oop_char_capture_checks', '-Wl,--export=oop_char_output_ptr',
 	'-Wl,--export=run_oop_put_capture_checks', '-Wl,--export=oop_put_output_ptr',

@@ -365,6 +365,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPSEND.PAS') -Destination (Joi
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OBJTIK.PAS') -Destination (Join-Path $stageRoot 'OBJTIK.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OBJTOUCH.PAS') -Destination (Join-Path $stageRoot 'OBJTOUCH.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPFLOW.PAS') -Destination (Join-Path $stageRoot 'OOPFLOW.PAS')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPRND.PAS') -Destination (Join-Path $stageRoot 'OOPRND.PAS')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'OOPPARSE.PAS') -Destination (Join-Path $stageRoot 'OOPPARSE.PAS')
 
 # Seed the HighScoresLoad oracle with nonzero name payload bytes so a short
@@ -1107,6 +1108,25 @@ if ($oopFlowRows.Count -ne 11) {
 for ($caseId = 1; $caseId -le 11; $caseId++) {
     if ($oopFlowRows[$caseId - 1] -notmatch ('^{0}(?:\s+-?\d+){{10}}$' -f $caseId)) {
         throw "Unexpected Turbo Pascal OOP flow case $caseId output: $($oopFlowRows[$caseId - 1])"
+    }
+}
+
+Write-Host 'Compiling and running direct Turbo Pascal random OOP-direction movement cases: OOPRNDPRB'
+Invoke-DosboxSession 'OOPRNDPRB' @(
+    'TPC.EXE /B /EBIN /UBIN OOPRND.PAS > OOPRND.LOG',
+    'BIN\OOPRND.EXE'
+)
+$oopRandomOutputPath = Join-Path $stageRoot 'OOPRND.OUT'
+if (-not (Test-Path -LiteralPath $oopRandomOutputPath -PathType Leaf)) {
+    throw "Turbo Pascal OOP random-direction probe did not create OOPRND.OUT. See $stageRoot\OOPRND.LOG."
+}
+$oopRandomRows = [IO.File]::ReadAllLines($oopRandomOutputPath)
+if ($oopRandomRows.Count -ne 6) {
+    throw "Turbo Pascal OOP random-direction probe should contain six cases; found $($oopRandomRows.Count)."
+}
+for ($caseId = 1; $caseId -le 6; $caseId++) {
+    if ($oopRandomRows[$caseId - 1] -notmatch ('^{0}(?:\s+-?\d+){{10}}$' -f $caseId)) {
+        throw "Unexpected Turbo Pascal OOP random-direction case $caseId output: $($oopRandomRows[$caseId - 1])"
     }
 }
 
@@ -2102,6 +2122,14 @@ $expectedOutputs = [ordered]@{
     'SIZF60.OUT' = @('F60 60 1 0 0 88 88')
     'SIZF63.OUT' = @('F63 63 1 0 0 88 88')
     'SIZF64.OUT' = @('F64 64 0 0 0 35 35')
+    'OOPRND.OUT' = @(
+        '1 7 10 9 0 0 0 0 36 1 0',
+        '2 7 10 11 0 0 0 0 36 2059 4113',
+        '3 7 10 9 0 0 0 0 36 1 0',
+        '4 7 11 10 0 0 0 0 36 2059 4113',
+        '5 12 11 10 0 0 0 0 36 1 0',
+        '6 12 9 10 0 0 0 0 36 2059 4113'
+    )
     'OOPIF.OUT' = @(
         '1 1', '2 0', '3 1', '4 0', '5 1', '6 0', '7 1', '8 0',
         '9 1', '10 0', '11 1', '12 0', '13 1', '14 0', '15 1', '16 0',
@@ -2403,6 +2431,10 @@ try {
         (Join-Path $stageRoot 'OOPFLOW.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_label.wasm')
     if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production OOP flow comparison failed with exit code $LASTEXITCODE." }
+    & node 'tools/pascal-compat/compare-oop-random-walk.js' `
+        (Join-Path $stageRoot 'OOPRND.OUT') `
+        (Join-Path $repoRoot 'build\runtime-compatibility\oop_label.wasm')
+    if ($LASTEXITCODE -ne 0) { throw "Turbo Pascal/production OOP random-direction comparison failed with exit code $LASTEXITCODE." }
     & node 'tools/pascal-compat/compare-oop-parser.js' `
         (Join-Path $stageRoot 'OOPPARSE.OUT') `
         (Join-Path $repoRoot 'build\runtime-compatibility\oop_label.wasm')
@@ -3194,6 +3226,6 @@ finally {
     Pop-Location
 }
 
-$directProbeCount = $probeFiles.Count + 95 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty- and short-header-SAV title-R refusals, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
-Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including ABORTLP/ABORTREF and MISSLOAD-COMPILE/RUN)."
+$directProbeCount = $probeFiles.Count + 96 # Includes previous isolated compile/run probes plus the BRDALI alias session, controlled short-header BRDXFER session, six-case OOPRND session, refused-abort return-to-title replay, MISSLOAD-COMPILE/RUN, title-P backing-world reload, title-W selection followed by P play, empty- and short-header-SAV title-R refusals, ABORTLP-COMPILE/RUN, and ABORTREF compile plus No/Escape sessions.
+Write-Host "Direct Pascal 5.5 probe sessions passed: $directProbeCount ($($probeFiles.Count) standard probes plus standalone compile/run and fixture sessions, including OOPRND, ABORTLP/ABORTREF, and MISSLOAD-COMPILE/RUN)."
 Write-Host "Pascal oracle and production compatibility suites passed. Staging output: $stageRoot"

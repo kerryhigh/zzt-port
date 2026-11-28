@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zoo.h>
+#include "../../third_party/libzoo/src/libzoo/zoo_random.h"
 
 int strncmp(const char *left, const char *right, size_t count);
 
@@ -65,6 +66,7 @@ static uint8_t oop_change_outputs[(ZOO_BOARD_WIDTH + 1) * (ZOO_BOARD_HEIGHT + 1)
 static uint8_t oop_flag_capture_outputs[2 * ZOO_MAX_FLAG * (ZOO_LEN_FLAG + 1) + 7 * sizeof(int16_t)];
 static uint8_t oop_send_capture_outputs[23];
 static int16_t oop_flow_outputs[11 * 11];
+static int16_t oop_random_walk_outputs[6 * 11];
 static int oop_counter_output_count;
 static char oop_any_name[64];
 static uint8_t oop_value_input[64];
@@ -1085,6 +1087,73 @@ int32_t run_oop_flow_control_checks(void) {
 	if (position != (int16_t) (sizeof(go_source) - 1) || test_state.board.stats[1].cycle != 0) return 9;
 
 	return 0;
+}
+
+static int16_t production_oop_random(zoo_state *state, int16_t max) {
+	return zoo_random_next(&state->random_seed, max);
+}
+
+static void reset_oop_random_walk_case(char *source, uint32_t seed) {
+	memset(&test_state, 0, sizeof(test_state));
+	test_state.func_random = production_oop_random;
+	test_state.random_seed = seed;
+	test_state.board.stat_count = 1;
+	test_state.board.stats[1].x = 10;
+	test_state.board.stats[1].y = 10;
+	test_state.board.stats[1].cycle = 1;
+	test_state.board.stats[1].under.element = ZOO_E_EMPTY;
+	test_state.board.stats[1].under.color = 0x70;
+	test_state.board.stats[1].data = source;
+	test_state.board.stats[1].data_len = (int16_t) strlen(source);
+	test_state.board.tiles[10][10].element = ZOO_E_OBJECT;
+	test_state.board.tiles[10][10].color = 0x0F;
+	test_state.board.tiles[9][10].element = ZOO_E_EMPTY;
+	test_state.board.tiles[11][10].element = ZOO_E_EMPTY;
+	test_state.board.tiles[10][9].element = ZOO_E_EMPTY;
+	test_state.board.tiles[10][11].element = ZOO_E_EMPTY;
+	test_state.world.info.health = 10;
+}
+
+static int16_t capture_oop_random_walk_output(int16_t case_id, int16_t position,
+	int16_t output_index) {
+	int16_t *out = &oop_random_walk_outputs[output_index * 11];
+	const zoo_stat *stat = &test_state.board.stats[1];
+	out[0] = case_id;
+	out[1] = position;
+	out[2] = stat->x;
+	out[3] = stat->y;
+	out[4] = stat->step_x;
+	out[5] = stat->step_y;
+	out[6] = stat->data_pos;
+	out[7] = test_state.board.tiles[10][10].element;
+	out[8] = test_state.board.tiles[stat->x][stat->y].element;
+	out[9] = test_state.random_seed & 0xFFFFU;
+	out[10] = test_state.random_seed >> 16;
+	return (int16_t) (output_index + 1);
+}
+
+uint32_t oop_random_walk_output_ptr(void) {
+	return (uint32_t) (uintptr_t) oop_random_walk_outputs;
+}
+
+int32_t run_oop_random_walk_capture_checks(void) {
+	static char rndns_source[] = "/RNDNS\r";
+	static char rndne_source[] = "/RNDNE\r";
+	static char rndp_source[] = "/RNDP NORTH\r";
+	static char *const sources[6] = {
+		rndns_source, rndns_source, rndne_source, rndne_source, rndp_source, rndp_source
+	};
+	static const uint32_t seeds[6] = {0, 2, 0, 2, 0, 2};
+	int16_t output_index = 0;
+	int16_t case_id;
+	int16_t position;
+	for (case_id = 0; case_id < 6; case_id++) {
+		reset_oop_random_walk_case(sources[case_id], seeds[case_id]);
+		position = 0;
+		zoo_oop_execute(&test_state, 1, &position, "Random direction probe");
+		output_index = capture_oop_random_walk_output(case_id + 1, position, output_index);
+	}
+	return output_index == 6 ? 0 : 1;
 }
 
 int32_t run_oop_object_command_checks(void) {
