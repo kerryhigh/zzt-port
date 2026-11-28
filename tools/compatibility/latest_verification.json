@@ -5514,6 +5514,103 @@
         }
       ],
       "included_in_existing_probe_and_comparison_counts": true
+    },
+    "player_action_differential": {
+      "acceptance_case": "E2-07-AC002",
+      "verification_date": "2026-11-28",
+      "source_revision": "d88c5e9a3ccf72e8222ba932175f504ac334a159",
+      "published_code_revision": "52484d447aabc9ace8965e67d24a2a159f84ef99",
+      "evidence_class": "D+DP",
+      "result": "passed",
+      "direct_fields_compared": 350,
+      "direct_fields_matched": 350,
+      "direct_field_differences": 0,
+      "player_tick_cases": 16,
+      "player_tick_fields_compared": 243,
+      "prompt_decision_cases": 10,
+      "prompt_and_loop_fields_compared": 107,
+      "loop_paths": 3,
+      "focused_comparators": [
+        {
+          "path": "tools/pascal-compat/compare-player-tick.js",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "path": "tools/pascal-compat/compare-player-abort.js",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "f07_support": {
+        "fixture_id": "E2-10-F07",
+        "result": "passed",
+        "checkpoints": 13,
+        "matched_checkpoints": 13,
+        "cycles": 5,
+        "matched_cycles": 5,
+        "fields_compared": 44226,
+        "state_differences": 0,
+        "cell_writes": 4,
+        "save_stable_bytes_matched": 461,
+        "roundtrip_stable_bytes_matched": 829,
+        "evidence": "tools/compatibility/evidence/2026-11-25-e2-10-pause-positive-scheduler.md",
+        "fixture_counted_again_for_ac002": false
+      },
+      "limitations": "The isolated zoo_input_shoot_requested helper regression remains production-only and is not credited as D/DP; the direct comparison covers its mapped held/tap behavior through ElementPlayerTick.",
+      "output_files": [
+        {
+          "path": "PLAYERMV.OUT",
+          "size_bytes": 396,
+          "sha256": "7991ea360a63940b7334aff1b2ea84262a3e83d1045995e9385a4df3162040d0"
+        },
+        {
+          "path": "PLAYERST.OUT",
+          "size_bytes": 465,
+          "sha256": "6663dc8753de7b5321ab259c6524b9a2300f69d3faae39ecaf5fb7c50cd675a7"
+        },
+        {
+          "path": "PLAYERKY.OUT",
+          "size_bytes": 179,
+          "sha256": "ece0a4a71fa115562d863ccedce49f4acaa0bc0a917a9b338db9443c83728914"
+        },
+        {
+          "path": "PLAYERDE.OUT",
+          "size_bytes": 272,
+          "sha256": "39833714d983774a7d749a3cf3238e605966f4a9910ef9aac513ebbc950d53e8"
+        },
+        {
+          "path": "PAUSEMV.OUT",
+          "size_bytes": 316,
+          "sha256": "15bed9fdda843b520ddad393d23f906322fb18748325b10f32c140ee873081a9"
+        },
+        {
+          "path": "ABORT.OUT",
+          "size_bytes": 83,
+          "sha256": "b81bbc6d066e636bf3eec8a236376cf2f7bf51c8af94314716899b37a00e9511"
+        },
+        {
+          "path": "TQUIT.OUT",
+          "size_bytes": 15,
+          "sha256": "183886d371228921f1f961df371ee891d14ec00cc771f6f376d389964697aea4"
+        },
+        {
+          "path": "ABORTLP.OUT",
+          "size_bytes": 51,
+          "sha256": "faef2d8e8ee74b138178b061437af70dacc8f792eca498d155fb0b731c680f65"
+        },
+        {
+          "path": "ABORTN.OUT",
+          "size_bytes": 51,
+          "sha256": "d51169e041296f0d5b093250239f464f5a101c88a9668d5e64a79928b63d06f9"
+        },
+        {
+          "path": "ABORTE.OUT",
+          "size_bytes": 51,
+          "sha256": "d51169e041296f0d5b093250239f464f5a101c88a9668d5e64a79928b63d06f9"
+        }
+      ],
+      "included_in_existing_probe_and_comparison_counts": true
     }
   }
 }

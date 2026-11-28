@@ -1067,7 +1067,7 @@
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
       "requirement": "For the engine's normalized input queue, directly compare empty, one-byte, every buffer-length boundary 0–255, wrap/shift, repeated identical keys, and mixed-byte sequences including extended-key and CP437 bytes. Assert consumed-byte order and exact residual buffer.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:205",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:206",
       "status": "complete",
       "evidence_class": "D+DP",
       "production_implementation": [
@@ -1097,24 +1097,99 @@
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
       "requirement": "Exercise all input-to-engine actions that are part of the shared core, including fire/shoot tap, direction, pause, menu decision, and reset after death; exclude keyboard layout, Android touch, Win32 messages, and host key-repeat timing.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:206",
-      "status": "pending",
-      "evidence_class": null,
-      "production_implementation": [],
-      "test_fixture": [],
-      "oracle_output": null,
-      "verification_result": "pending",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:207",
+      "status": "complete",
+      "evidence_class": "D+DP",
+      "production_implementation": [
+        "third_party/libzoo/src/libzoo/zoo_input.c::zoo_input_action_down",
+        "third_party/libzoo/src/libzoo/zoo_input.c::zoo_input_action_up",
+        "third_party/libzoo/src/libzoo/zoo_input.c::zoo_input_shoot_requested",
+        "third_party/libzoo/src/libzoo/zoo_input.c::zoo_input_dead_player_reset",
+        "third_party/libzoo/src/libzoo/zoo_elements.c::zoo_e_player_tick",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_resolve_end_play",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_game_resolve_title_quit",
+        "third_party/libzoo/src/libzoo/zoo_game.c::zoo_tick"
+      ],
+      "test_fixture": [
+        "tools/pascal-compat/PLAYERMV.PAS, PLAYERST.PAS, PLAYERKEY.PAS, PLAYERDE.PAS, PAUSEMV.PAS",
+        "tools/pascal-compat/ABORTIN.PAS, ABORTLP.PAS, ABORTREF.PAS",
+        "tools/pascal-compat/PAUSEIN.PAS (existing E2-10-F07 real-loop replay; cross-reference only)",
+        "tools/pascal-compat/compare-player-tick.js",
+        "tools/pascal-compat/compare-player-abort.js",
+        "tools/compatibility/evidence/2026-11-28-e2-07-player-control-actions.md"
+      ],
+      "oracle_output": "Transient direct outputs in build/pascal-compat-verification are content-addressed in oracle_output_files. The focused comparators matched 243 player-tick fields and 107 prompt/loop fields. Existing F07 contributes 13/13 checkpoints and five pause/resume cycles as a separate E2-10 fixture; it is not counted again here.",
+      "verification_result": "Passed 2026-11-28: compare-player-tick.js and compare-player-abort.js both exited 0. All 350 direct D/DP fields matched across shooting, direction, pause, death reset, prompt choices, title quit, and accepted/refused loop paths. Existing F07 separately matched 13/13 checkpoints and five pause/resume cycles. The full clean suite passed 150/150 direct Pascal sessions and 75/75 configured comparisons with exit code 0 and no unexplained comparable mismatches.",
       "required_evidence_classes": [
         "D",
         "DP"
-      ]
+      ],
+      "reference_source_locations": [
+        "third_party/reconstruction-of-zzt/SRC/ELEMENTS.PAS:1302-1432 (GamePromptEndPlay and ElementPlayerTick)",
+        "third_party/reconstruction-of-zzt/SRC/GAME.PAS:611-628 (SidebarPromptYesNo)",
+        "third_party/reconstruction-of-zzt/SRC/INPUT.PAS:193-236 (InputUpdate)"
+      ],
+      "oracle_instrumentation": "PLAYERMV/PLAYERST/PLAYERKY/PLAYERDE/PAUSEMV directly seed controlled engine state and replace only VideoWriteText with a quiet stub. ABORTIN/ABORTLP/ABORTREF use staged queued ReadKey responses and controlled timer inputs. The original player callbacks, prompt routines, GamePlayLoop, and production zoo_tick remain in control.",
+      "oracle_output_files": [
+        {
+          "path": "PLAYERMV.OUT",
+          "size_bytes": 396,
+          "sha256": "7991ea360a63940b7334aff1b2ea84262a3e83d1045995e9385a4df3162040d0"
+        },
+        {
+          "path": "PLAYERST.OUT",
+          "size_bytes": 465,
+          "sha256": "6663dc8753de7b5321ab259c6524b9a2300f69d3faae39ecaf5fb7c50cd675a7"
+        },
+        {
+          "path": "PLAYERKY.OUT",
+          "size_bytes": 179,
+          "sha256": "ece0a4a71fa115562d863ccedce49f4acaa0bc0a917a9b338db9443c83728914"
+        },
+        {
+          "path": "PLAYERDE.OUT",
+          "size_bytes": 272,
+          "sha256": "39833714d983774a7d749a3cf3238e605966f4a9910ef9aac513ebbc950d53e8"
+        },
+        {
+          "path": "PAUSEMV.OUT",
+          "size_bytes": 316,
+          "sha256": "15bed9fdda843b520ddad393d23f906322fb18748325b10f32c140ee873081a9"
+        },
+        {
+          "path": "ABORT.OUT",
+          "size_bytes": 83,
+          "sha256": "b81bbc6d066e636bf3eec8a236376cf2f7bf51c8af94314716899b37a00e9511"
+        },
+        {
+          "path": "TQUIT.OUT",
+          "size_bytes": 15,
+          "sha256": "183886d371228921f1f961df371ee891d14ec00cc771f6f376d389964697aea4"
+        },
+        {
+          "path": "ABORTLP.OUT",
+          "size_bytes": 51,
+          "sha256": "faef2d8e8ee74b138178b061437af70dacc8f792eca498d155fb0b731c680f65"
+        },
+        {
+          "path": "ABORTN.OUT",
+          "size_bytes": 51,
+          "sha256": "d51169e041296f0d5b093250239f464f5a101c88a9668d5e64a79928b63d06f9"
+        },
+        {
+          "path": "ABORTE.OUT",
+          "size_bytes": 51,
+          "sha256": "d51169e041296f0d5b093250239f464f5a101c88a9668d5e64a79928b63d06f9"
+        }
+      ],
+      "evidence": "tools/compatibility/evidence/2026-11-28-e2-07-player-control-actions.md"
     },
     {
       "id": "E2-07-AC003",
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
       "requirement": "Inventory every Pascal `Random` call site. Compare the PRNG primitive over a fixed documented seed vector including zero, wrap/high-bit and existing gameplay seeds; compare every call site's `Random(n)` range, call order, resulting RNG state, and gameplay decision against direct Pascal probes with identical initial seed.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:207",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:208",
       "status": "pending",
       "evidence_class": null,
       "production_implementation": [],
@@ -1132,7 +1207,7 @@
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
       "requirement": "Exercise existing tick speed/clock cases plus any unresolved timer callers surfaced by the call-site inventory. Use injected BIOS time and logical ticks.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:208",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:209",
       "status": "pending",
       "evidence_class": null,
       "production_implementation": [],
@@ -1149,7 +1224,7 @@
       "blocker": "E2-07",
       "kind": "acceptance_requirement",
       "requirement": "100% input mutation paths and RNG call sites accounted, exact queue/residual bytes and seeded random decisions match, and no OS event timing is used as a substitute for logical semantics.",
-      "checklist_location": "ENGINE_2.0_CHECKLIST.md:209",
+      "checklist_location": "ENGINE_2.0_CHECKLIST.md:210",
       "status": "pending",
       "evidence_class": null,
       "production_implementation": [],

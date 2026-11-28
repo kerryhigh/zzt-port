@@ -18,7 +18,7 @@ Counts below are generated from the frozen checklist inventory and the latest re
 | E2-04 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-05 | open | 0/5 | 0 | 5 | 0.0% |
 | E2-06 | open | 0/5 | 0 | 5 | 0.0% |
-| E2-07 | partial | 1/5 | 0 | 4 | 20.0% |
+| E2-07 | partial | 2/5 | 0 | 3 | 40.0% |
 | E2-08 | partial | 0/5 | 1 | 4 | 0.0% |
 | E2-09 | partial | 1/5 | 3 | 1 | 20.0% |
 | E2-10 | closed | 5/5 | 0 | 0 | 100.0% |
@@ -28,10 +28,10 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 
 ## Acceptance case status
 
-- Passing/complete: **10**; partial: **10**; pending: **34**; failing: **0**.
+- Passing/complete: **11**; partial: **10**; pending: **33**; failing: **0**.
 - Required evidence classes mapped: **54/54**; D: 42, S: 15, P: 11, DP: 49, I: 10 cases (categories can overlap; required evidence is not a passing result).
 - Acceptance cases missing or invalid required evidence classes: **0**; IDs: none.
-- Acceptance cases without an evidence classification: **34**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC002, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
+- Acceptance cases without an evidence classification: **33**; IDs: E2-01-AC001, E2-01-AC003, E2-01-AC004, E2-01-AC005, E2-03-AC004, E2-04-AC001, E2-04-AC002, E2-04-AC003, E2-04-AC004, E2-04-AC005, E2-05-AC001, E2-05-AC002, E2-05-AC003, E2-05-AC004, E2-05-AC005, E2-06-AC001, E2-06-AC002, E2-06-AC003, E2-06-AC004, E2-06-AC005, E2-07-AC003, E2-07-AC004, E2-07-AC005, E2-08-AC001, E2-08-AC002, E2-08-AC004, E2-08-AC005, E2-09-AC001, E2-11-AC001, E2-11-AC002, E2-11-AC003, E2-11-AC004, E2-11-AC005.
 - Unclassified source inventory entries: **1464**; explicitly excluded adapter/presentation entries: **10**.
 - Evidence totals remain separate: D counts compiled-Pascal sessions; DP counts configured direct comparisons; S counts source-derived model rows; P counts recorded production-only regressions; I counts only completed full integrated fixtures.
 
@@ -42,6 +42,7 @@ A percentage is shown only for a finite checklist-case denominator. Source enume
 - Direct `.HI` Pascal-to-shared-engine byte comparisons: **1606/1606** passed (1 save, 1598 load/reset, 7 insertion cases); source-model rows: **256**.
 - Direct `.HI` incomplete-prefix sweep: **1590/1590** lengths (0–1589); **2528100/2528100** table bytes matched; matrix SHA-256 `B084CD783C682E52904A78249DA5C7BD79337303CAB91BC0968BDDB44EF48983`.
 - Direct input-buffer differential for E2-07-AC001: **256/256** lengths; **512/512** transitions / 3584 fields; differences: 0; wrapped ring result: passed; `INPUTMAT.OUT` SHA-256 `e295f5a2e375916e174f22b1a8263b934f5410d0c0790a68e339a0474dfc0185` (D+DP; included in existing probe/comparison counts).
+- Direct player-action differential for E2-07-AC002: **350/350** fields across 16 player-tick cases, 10 prompt cases, and 3 abort-loop paths; differences: 0; F07 support: 13/13 checkpoints and 5/5 cycles (D+DP; focused comparisons are included in the existing 75/75, F07 remains counted only in E2-10).
 - Direct Pascal `.BRD` `BoardClose` record: **289/289** payload bytes matched through shared LibZoo import/export; external file: 291 bytes; SHA-256 `e97bfa7b3c33355f54bd04e8574bf5eb3e4d14ad834918d021e590ad04a7dddd`.
 - Direct Pascal `.BRD` short-string boundaries: **9/9** complete records matched; 289/289 bytes per record; raw lengths 0, 1, 49, 50, 51, 127, 255, 50, 1; AC002 remains partial.
 - Direct Pascal `.BRD` Boolean/reserved bytes: **4/4** complete records matched; raw values 0, 1, 2, 255 for both Boolean fields; 16 reserved bytes and 289/289 record bytes per case; AC002 remains partial.
