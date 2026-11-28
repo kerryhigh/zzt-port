@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "acceptance_case": "E2-02-AC001",
-  "last_verified": "2026-11-27",
+  "last_verified": "2026-11-28",
   "runner": "tools/pascal-compat/verify.ps1",
   "status": "partial",
   "note": "One compiled-Pascal source-produced sample per legacy format has a passing production byte comparison. Outputs are generated in the ignored Pascal staging directory; this manifest records their reproducible source, hashes, and comparison paths. The full serialized-field and boundary fixture matrix is incomplete.",
@@ -88,9 +88,31 @@
     "tools/highscore-compat/"
   ],
   "boundary_matrix_complete": false,
+  "verified_boundary_subcases": [
+    {
+      "probe": "tools/pascal-compat/BRDXFER.PAS / SHORTHD.BRD",
+      "acceptance_cases": [
+        "E2-02-AC003",
+        "E2-02-AC004"
+      ],
+      "evidence_class": "D+DP",
+      "fixture": {
+        "size_bytes": 1,
+        "sha256": "084fed08b978af4d7d196a7446a86b58009e636b611db16211b65a9aadff29c5"
+      },
+      "pascal_output": {
+        "file": "BRDHDR.OUT",
+        "size_bytes": 38,
+        "sha256": "5aa640be916c4a7f2c4e32dda24cf081902743ee85ca0ce1a219e959e00786f5",
+        "summary": "board 6 41 0 21 47 30 12 259 0 0 0 0"
+      },
+      "comparison": "The shared editor-transfer operation matched the outcome, eight selected state fields, board-name bytes, and four neighbor links under the documented 60,000-byte heap-sink history.",
+      "evidence": "tools/compatibility/evidence/2026-11-27-e2-02-short-header-controlled-reopen.md",
+      "scope_note": "This controlled one-byte-header subcase passes. It does not complete the four-format serialized-field or truncation matrix."
+    }
+  ],
   "remaining": [
     "Check in a versioned generated fixture set for every required serialized field and value boundary across the four formats.",
-    "Complete truncation-at-every-boundary and malformed/error-class comparisons where the corresponding DOS operation supports them.",
-    "Resolve the direct Pascal short-header BoardOpen path under a stable, documented allocator history."
+    "Complete truncation-at-every-boundary and malformed/error-class comparisons where the corresponding DOS operation supports them."
   ]
 }
